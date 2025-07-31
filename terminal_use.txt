@@ -1,0 +1,45 @@
+# === 0. 進入 Git 專案資料夾 ===
+cd financial-agent
+
+# === 1. 將桌面上的檔案複製進來 ===
+# 請根據實際檔名修改路徑與檔名，如果檔案本來就在financial裡面就不用做
+cp 檔案位置及路徑 .
+cp /Users/liweichen/Desktop/OOP/lec5_112704050_test.py .
+
+# === 2. 檢查 Git 狀態，確認有變更 ===
+git status
+
+# === 3. 將變更的檔案加入暫存區 ===
+git add lec5_112704050.py
+git add lec5_112704050_test.py
+或直接git add .就會上傳全部檔案
+
+
+#取消並刪除
+git restore --staged lec5_112704050_test.py
+rm lec5_112704050_test.py
+
+# === 4. 提交變更（請寫上有意義的 commit 訊息）===
+git commit -m "你想備注的訊息"
+
+# === 5. 推送到 GitHub 上的 main 分支 ===
+git push 
+
+# === 6. 驗證狀態（確認已經同步）===
+git status
+
+# === 7. 其他用法 ===
+open 檔案 ＃打開檔案
+cat 檔案 #讀取檔案
+code 檔案 ＃用vscode打開檔案
+cd 資料夾 ＃進入資料夾
+
+
+
+
+
+
+
+
+
+
