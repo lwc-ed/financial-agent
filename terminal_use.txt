@@ -1,6 +1,6 @@
 # === 0. 進入 Git 專案資料夾 ===
 cd financial-agent
-
+git pull ##更新repo
 # === 1. 將桌面上的檔案複製進來 ===
 # 請根據實際檔名修改路徑與檔名，如果檔案本來就在financial裡面就不用做
 cp 檔案位置及路徑 .
