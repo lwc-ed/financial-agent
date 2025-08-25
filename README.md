@@ -12,7 +12,7 @@
     ```bash
     ngrok http 8000
     ```  
-4.  複製 `https://81f3d5915d67.ngrok-free.app` (在終端機B裡，要找一下)  
+4.  複製 `https://13d62ea100e6.ngrok-free.app` (在終端機B裡，要找一下)  
     範例：
     ```
     ngrok                                                                               (Ctrl+C to quit)
@@ -25,14 +25,14 @@
     Region                        Japan (jp)                                                            
     Latency                       40ms                                                                  
     Web Interface                 http://127.0.0.1:4040                                                 
-    Forwarding                    **https://13d62ea100e6.ngrok-free.app** -> http://localhost:8000          
+    Forwarding                    https://13d62ea100e6.ngrok-free.app (這個網址) -> http://localhost:8000          
                                                                                                         
     Connections                   ttl     opn     rt1     rt5     p50     p90                           
                                 0       0       0.00    0.00    0.00    0.00                          
                                                                                 
     ```
 5.  去[Line官方帳號](https://developers.line.biz/console/channel/2007892068/messaging-api)更改Webhook URL  
-   `https://81f3d5915d67.ngrok-free.app/callback`（記得加）callback
+   `https://81f3d5915d67.ngrok-free.app/callback`（記得加）/callback
 
 ## Line畫面
 ```
