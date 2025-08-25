@@ -25,7 +25,7 @@
     Region                        Japan (jp)                                                            
     Latency                       40ms                                                                  
     Web Interface                 http://127.0.0.1:4040                                                 
-    Forwarding                    ***https://13d62ea100e6.ngrok-free.app*** -> http://localhost:8000          
+    Forwarding                    **https://13d62ea100e6.ngrok-free.app** -> http://localhost:8000          
                                                                                                         
     Connections                   ttl     opn     rt1     rt5     p50     p90                           
                                 0       0       0.00    0.00    0.00    0.00                          
