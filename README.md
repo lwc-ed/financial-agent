@@ -33,7 +33,10 @@
     ```
 5.  去[Line官方帳號](https://developers.line.biz/console/channel/2007892068/messaging-api)更改Webhook URL  
    `https://81f3d5915d67.ngrok-free.app/callback`（記得加）/callback
-
+## setup_rich_menu 執行方式(only fot lwc)##
+```
+/opt/homebrew/bin/python3.10 setup_rich_menu.py
+```
 ## Line畫面
 ```
 ┌────────────┬────────────┬────────────┐
