@@ -20,7 +20,7 @@ channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiL
 
 
 # ✅ 圖片路徑
-image_path = "picture/dy.png"
+image_path = "picture/dynew.jpg"
 
 # ✅ 正確初始化方式（包含 host）
 configuration = Configuration(
@@ -69,36 +69,36 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
     # 🧩 建立 Rich Menu
     print("📦 Creating rich menu...")
     rich_menu = RichMenuRequest(
-        size=RichMenuSize(width=2500, height=843),
+        size=RichMenuSize(width=2500, height=1686),
         selected=True,
         name="FinanceHelperMenu",
         chat_bar_text="Open Menu",
-        areas=[
+        areas = [
             # 上三個區域
             RichMenuArea(
-                bounds=RichMenuBounds(x=0, y=0, width=833, height=421),
+                bounds=RichMenuBounds(x=0, y=0, width=833, height=843),
                 action=MessageAction(label="A", text="Function A")
             ),
             RichMenuArea(
-                bounds=RichMenuBounds(x=833, y=0, width=833, height=421),
+                bounds=RichMenuBounds(x=833, y=0, width=833, height=843),
                 action=MessageAction(label="B", text="Function B")
             ),
             RichMenuArea(
-                bounds=RichMenuBounds(x=1666, y=0, width=834, height=421),
+                bounds=RichMenuBounds(x=1666, y=0, width=834, height=843),
                 action=MessageAction(label="C", text="Function C")
             ),
             
             # 下三個區域
             RichMenuArea(
-                bounds=RichMenuBounds(x=0, y=421, width=833, height=422),
+                bounds=RichMenuBounds(x=0, y=843, width=833, height=843),
                 action=MessageAction(label="D", text="Function D")
             ),
             RichMenuArea(
-                bounds=RichMenuBounds(x=833, y=421, width=833, height=422),
+                bounds=RichMenuBounds(x=833, y=843, width=833, height=843),
                 action=MessageAction(label="E", text="Function E")
             ),
             RichMenuArea(
-                bounds=RichMenuBounds(x=1666, y=421, width=834, height=422),
+                bounds=RichMenuBounds(x=1666, y=843, width=834, height=843),
                 action=MessageAction(label="F", text="Function F")
             ),
         ]
