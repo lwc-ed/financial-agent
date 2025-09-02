@@ -1,36 +1,42 @@
 # financial-agent
 
 ## 事前作業
-1.  git pull -> 更新repo
-2.  cd financial-agent
-3.  **打開兩個終端機**  
-    **終端機A:**  
-    ```bash
-    python3 app.py
-    ```  
-    **終端機B:**  
-    ```bash
-    ngrok http 8000
-    ```  
-4.  複製 `https://13d62ea100e6.ngrok-free.app` (在終端機B裡，要找一下)  
-    範例：
-    ```
-    ngrok                                                                               (Ctrl+C to quit)
-                                                                                                        
-    🧱 Block threats before they reach your services with new WAF actions →  https://ngrok.com/r/waf    
-                                                                                                        
-    Session Status                online                                                                
-    Account                       supergreatfinancialagent@gmail.com (Plan: Free)                       
-    Version                       3.26.0                                                                
-    Region                        Japan (jp)                                                            
-    Latency                       40ms                                                                  
-    Web Interface                 http://127.0.0.1:4040                                                 
-    Forwarding                    https://13d62ea100e6.ngrok-free.app (這個網址) -> http://localhost:8000          
-                                                                                                        
-    Connections                   ttl     opn     rt1     rt5     p50     p90                           
+1. 更新repo
+   ```
+   git pull
+   ```
+2. 進入repo
+   ```
+   cd financial-agent
+   ```
+3. **打開兩個終端機**  
+   **終端機A:**  
+   ```bash
+   python3 app.py
+   ```  
+   **終端機B:**  
+   ```bash
+   ngrok http 8000
+   ```  
+4. 複製 `https://13d62ea100e6.ngrok-free.app` (在終端機B裡，要找一下)  
+   範例：
+   ```
+   ngrok                                                                               (Ctrl+C to quit)
+                                                                                                      
+   🧱 Block threats before they reach your services with new WAF actions →  https://ngrok.com/r/waf    
+                                                                                                      
+   Session Status                online                                                                
+   Account                       supergreatfinancialagent@gmail.com (Plan: Free)                       
+   Version                       3.26.0                                                                
+   Region                        Japan (jp)                                                            
+   Latency                       40ms                                                                  
+   Web Interface                 http://127.0.0.1:4040                                                 
+   Forwarding                    https://13d62ea100e6.ngrok-free.app (這個網址) -> http://localhost:8000          
+                                                                                                      
+   Connections                   ttl     opn     rt1     rt5     p50     p90                           
                                 0       0       0.00    0.00    0.00    0.00                          
-                                                                                
-    ```
+                                                                              
+   ```
 5.  去[Line官方帳號](https://developers.line.biz/console/channel/2007892068/messaging-api)更改Webhook URL  
    `https://81f3d5915d67.ngrok-free.app/callback`（記得加）/callback
 ## setup_rich_menu 執行方式(only fot lwc)
@@ -74,4 +80,20 @@
 
 4. **LIFF / 外部網站**  
    - 適合表單（資料填寫）和進度視覺化（圖表、清單、進度條）  
-   - 讓使用者「感覺還在 LINE 內操作」，體驗無縫  
+   - 讓使用者「感覺還在 LINE 內操作」，體驗無縫 
+
+## 事後作業
+1. 分批新增檔案上來
+   ```
+   git add (檔案名稱)
+   git commit -m"備注內容"
+   ```
+   或一次上傳
+   ```
+   git add .
+   git commit -m"一次備注所有內容"
+   ```
+2. 上傳資料夾
+   ```
+   git push
+   ```
