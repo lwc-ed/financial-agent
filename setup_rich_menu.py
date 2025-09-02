@@ -20,7 +20,8 @@ channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiL
 
 
 # ✅ 圖片路徑
-image_path = "picture/mainfunction.png"
+image_path = "/root/financial-agent/picture/mainfunction.png"
+
 
 # ✅ 正確初始化方式（包含 host）
 configuration = Configuration(
