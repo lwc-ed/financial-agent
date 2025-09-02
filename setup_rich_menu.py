@@ -20,7 +20,7 @@ channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiL
 
 
 # ✅ 圖片路徑
-image_path = "picture/dynew.jpg"
+image_path = "picture/mainfunction.png"
 
 # ✅ 正確初始化方式（包含 host）
 configuration = Configuration(
@@ -72,34 +72,30 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
         size=RichMenuSize(width=2500, height=1686),
         selected=True,
         name="FinanceHelperMenu",
-        chat_bar_text="Open Menu",
+        chat_bar_text="Menu",
         areas = [
             # 上三個區域
             RichMenuArea(
                 bounds=RichMenuBounds(x=0, y=0, width=833, height=843),
-                action=MessageAction(label="A", text="Function A")
+                action=MessageAction(label="A", text="個人資料填寫")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=0, width=833, height=843),
-                action=MessageAction(label="B", text="Function B")
+                action=MessageAction(label="B", text="慾望清單")
             ),
             RichMenuArea(
-                bounds=RichMenuBounds(x=1666, y=0, width=834, height=843),
-                action=MessageAction(label="C", text="Function C")
+                bounds=RichMenuBounds(x=1666, y=0, width=834, height=1686),
+                action=MessageAction(label="C", text="記錄消費")
             ),
             
-            # 下三個區域
+            # 下兩個區域
             RichMenuArea(
                 bounds=RichMenuBounds(x=0, y=843, width=833, height=843),
-                action=MessageAction(label="D", text="Function D")
+                action=MessageAction(label="D", text="消費紀錄")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=843, width=833, height=843),
-                action=MessageAction(label="E", text="Function E")
-            ),
-            RichMenuArea(
-                bounds=RichMenuBounds(x=1666, y=843, width=834, height=843),
-                action=MessageAction(label="F", text="Function F")
+                action=MessageAction(label="E", text="儲蓄挑戰")
             ),
         ]
     )
