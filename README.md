@@ -108,7 +108,7 @@ financial-agent/
 │   ├── routes/                # 使用 Blueprint 模組管理 API 路由，依功能分離（如 expense_record、wishlist 等），各模組皆暴露一個 _bp 方便註冊與維護
 │   ├── models/                # 資料模型定義（ORM 或 schema），負責資料庫資料結構與操作
 │   ├── setup_rich_menu.py     # 設定 LINE Rich Menu 的腳本
-└── frontend/
+├─── frontend/
 │   ├── public/                # React 公開資源
 │   ├── src/                   # React 程式碼
 │   ├── .env                   # 前端環境變數設定（API 端點等）
