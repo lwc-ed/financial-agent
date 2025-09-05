@@ -1,0 +1,32 @@
+from flask import Flask
+from flask_cors import CORS
+
+# 初始化 Flask
+app = Flask(__name__)
+CORS(app)
+
+# --- 載入 LINE Bot Handler ---
+import linebot_handler
+
+# --- 載入各功能路由 (API) ---
+from routes.expense_record import expense_record_bp
+from routes.expense_history import expense_history_bp
+from routes.wishlist import wishlist_bp
+from routes.challenge import challenge_bp
+from routes.profile import profile_bp
+
+
+
+app.register_blueprint(expense_record_bp, url_prefix="/api/expense_record")
+app.register_blueprint(expense_history_bp, url_prefix="/api/expense_history")
+app.register_blueprint(wishlist_bp, url_prefix="/api/wishlist")
+app.register_blueprint(challenge_bp, url_prefix="/api/challenge")
+app.register_blueprint(profile_bp, url_prefix="/api/profile")
+
+# 測試用 API
+@app.route("/api/hello")
+def hello():
+    return {"message": "Hello from Flask!"}
+
+if __name__ == "__main__":
+    app.run(debug=True, port=8000, host="0.0.0.0")

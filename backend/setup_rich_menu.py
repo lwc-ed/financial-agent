@@ -8,7 +8,8 @@ from linebot.v3.messaging.models import (
     RichMenuSize,
     RichMenuArea,
     RichMenuBounds,
-    MessageAction
+    MessageAction,
+    URIAction
 )
 import os
 from mimetypes import guess_type
@@ -20,7 +21,7 @@ channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiL
 
 
 # ✅ 圖片路徑
-image_path = "/root/financial-agent/picture/mainfunction.png"
+image_path = "/Users/liweichen/financial-agent/picture/mainfunction.png"
 
 
 # ✅ 正確初始化方式（包含 host）
@@ -86,7 +87,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=1666, y=0, width=834, height=1686),
-                action=MessageAction(label="C", text="記錄消費")
+                action=URIAction(label="C", uri="line://app/2008065321-vlAGLNjW")
             ),
             
             # 下兩個區域
