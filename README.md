@@ -109,10 +109,10 @@ financial-agent/
 │   ├── models/                # 資料模型定義（ORM 或 schema），負責資料庫資料結構與操作
 │   ├── setup_rich_menu.py     # 設定 LINE Rich Menu 的腳本
 └── frontend/
-    ├── public/                # React 公開資源
-    ├── src/                   # React 程式碼
-    ├── .env                   # 前端環境變數設定（API 端點等）
-    └── package.json
+│   ├── public/                # React 公開資源
+│   ├── src/                   # React 程式碼
+│   ├── .env                   # 前端環境變數設定（API 端點等）
+│   └── package.json
 ├── picture/
 │   └── rich_menu/             # 儲存 LINE Rich Menu 使用的圖片
 ├── README.md
