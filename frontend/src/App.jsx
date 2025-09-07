@@ -5,15 +5,18 @@ import { useEffect, useState } from "react";
 function App() {
   const [msg, setMsg] = useState("Loading...");
 
-  useEffect(() => {
-    const url = `${API_BASE}/api/hello`;
-    console.log("要呼叫的 API URL:", url); // 🟢 debug 用
+useEffect(() => {
+  const url = `${import.meta.env.VITE_API_BASE}/api/hello`;
+  console.log("要呼叫的 API URL:", url, "長度:", url.length);
+  for (let i = 0; i < url.length; i++) {
+    console.log(i, url.charCodeAt(i), url[i]);
+  }
 
-    fetch(url)
-      .then(res => res.json())
-      .then(data => setMsg(data.message))
-      .catch(err => setMsg("API 錯誤：" + err));
-  }, []);
+  fetch(url)
+    .then(res => res.json())
+    .then(data => setMsg(data.message))
+    .catch(err => setMsg("API 錯誤：" + err));
+}, []);
 
   return (
     <div>
@@ -22,5 +25,5 @@ function App() {
     </div>
   );
 }
-
+console.log("ENV VITE_API_BASE =", import.meta.env.VITE_API_BASE);
 export default App;

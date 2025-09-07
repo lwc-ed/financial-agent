@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     allowedHosts: [
-      '9a66ccb60e44.ngrok-free.app'  // ✅ 換成你現在 ngrok 的 domain
+      '44597ad8a092.ngrok-free.app'  // ✅ 換成你現在 ngrok 的 domain
     ]
   }
 })
