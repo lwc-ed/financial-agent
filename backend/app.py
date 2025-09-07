@@ -6,7 +6,7 @@ app = Flask(__name__)
 CORS(app)
 
 # --- 載入 LINE Bot Handler ---
-import linebot_handler
+from linebot_handler import linebot_bp
 
 # --- 載入各功能路由 (API) ---
 from routes.expense_record import expense_record_bp
@@ -16,6 +16,9 @@ from routes.challenge import challenge_bp
 from routes.profile import profile_bp
 
 
+# 註冊 LINE webhook
+app.register_blueprint(linebot_bp, url_prefix="")
+#
 
 app.register_blueprint(expense_record_bp, url_prefix="/api/expense_record")
 app.register_blueprint(expense_history_bp, url_prefix="/api/expense_history")

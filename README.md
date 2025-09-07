@@ -1,56 +1,104 @@
 # financial-agent
 
-## 事前作業
-1. 更新repo
-   ```
+# 📦 必要安裝套件與工具
+
+本專案開發與執行需要安裝以下套件與工具，以下為 macOS / Linux 平台的安裝範例。
+
+### Python (後端)
+
+- 主要依賴套件：
+  - Flask：輕量級 Web 框架
+  - flask-cors：處理跨來源資源共享
+  - line-bot-sdk：LINE Messaging API SDK
+- 安裝方式：
+  ```bash
+  pip3 install Flask flask-cors line-bot-sdk
+  ```
+  或
+  ```bash
+  pip3 install -r requirements.txt
+  ```
+- `requirements.txt` 範例內容：
+  ```
+  Flask
+  flask-cors
+  line-bot-sdk
+  ```
+
+### Node.js / npm (前端)
+
+- 使用 React 與 Vite 建構前端
+- 主要套件包括：
+  - react
+  - react-dom
+  - vite
+- 可選套件（視專案需求）：
+  - liff（LINE Front-end Framework）
+  - axios（HTTP 請求）
+  - openai（OpenAI API 客戶端）
+- 安裝方式：
+  ```bash
+  cd frontend
+  npm install
+  ```
+  會根據 `package.json` 自動安裝所有依賴套件。
+
+### ngrok (本地端口轉發)
+
+- 用於將本地端口映射至公開網路，方便測試與 Webhook 設定
+- 安裝方式（macOS Homebrew）：
+  ```bash
+  brew install ngrok/ngrok/ngrok
+  ```
+- 官方網站下載：
+  https://ngrok.com/download
+
+---
+
+# 🚀 啟動方式
+
+1. **更新並進入專案目錄**
+   ```bash
    git pull
-   ```
-2. 進入repo
-   ```
    cd financial-agent
    ```
-3. **打開兩個終端機**  
-   **終端機A:**  
+
+2. **啟動後端伺服器（於 `backend/` 目錄）**
    ```bash
+   cd backend
    python3 app.py
-   ```  
-   **終端機B:**  
+   ```
+
+3. **啟動前端開發伺服器（於 `frontend/` 目錄）**
    ```bash
-   ngrok http 8000
-   ```  
-4. 複製 `https://13d62ea100e6.ngrok-free.app` (在終端機B裡，要找一下)  
-   範例：
+   cd ../frontend
+   npm run dev
    ```
-   ngrok                                                                               (Ctrl+C to quit)
-                                                                                                      
-   🧱 Block threats before they reach your services with new WAF actions →  https://ngrok.com/r/waf    
-                                                                                                      
-   Session Status                online                                                                
-   Account                       supergreatfinancialagent@gmail.com (Plan: Free)                       
-   Version                       3.26.0                                                                
-   Region                        Japan (jp)                                                            
-   Latency                       40ms                                                                  
-   Web Interface                 http://127.0.0.1:4040                                                 
-   Forwarding                    https://13d62ea100e6.ngrok-free.app (這個網址) -> http://localhost:8000          
-                                                                                                      
-   Connections                   ttl     opn     rt1     rt5     p50     p90                           
-                                0       0       0.00    0.00    0.00    0.00                          
-                                                                              
-   ```
-5.  去[Line官方帳號](https://developers.line.biz/console/channel/2007892068/messaging-api)更改Webhook URL  
-   `https://81f3d5915d67.ngrok-free.app/callback`（記得加）/callback
-## setup_rich_menu 執行方式(only fot lwc)
-```
-/opt/homebrew/bin/python3.10 setup_rich_menu.py
-```
-## Line畫面
-```
-┌────────────┬────────────┬────────────┐
-│   Area A   │   Area B   │            │  ← 上半部 (y=0 ~ 421)
-├────────────┼────────────│   Area C   │
-│   Area D   │   Area E   │            │  ← 下半部 (y=421 ~ 843)
-└────────────┴────────────┴────────────┘
-```
+
+4. **使用 ngrok 開啟本地端口轉發**
+
+   - 若要轉發後端（預設 8000 port）：
+     ```bash
+     ngrok http 8000
+     ```
+   - 若要轉發前端開發伺服器（預設 5173 port）：
+     ```bash
+     ngrok http 5173
+     ```
+
+5. **複製 ngrok 提供的公開網址（例如 `https://xxxxxx.ngrok-free.app`）**
+
+6. **設定 LINE 官方帳號 Webhook URL**
+
+   - 進入 [Line官方帳號管理後台](https://developers.line.biz/console/channel/2007892068/messaging-api)
+   - 將 Webhook URL 設為：
+     ```
+     https://xxxxxx.ngrok-free.app/callback
+     ```
+     （記得加上 `/callback`）
+
+---
+
 # 📌 功能統整表
 
 | 功能 | 目的 | 實作方式 | 資料處理位置 | 展示方式 |
@@ -82,21 +130,7 @@
    - 適合表單（資料填寫）和進度視覺化（圖表、清單、進度條）  
    - 讓使用者「感覺還在 LINE 內操作」，體驗無縫 
 
-## 事後作業
-1. 分批新增檔案上來
-   ```
-   git add (檔案名稱)
-   git commit -m"備注內容"
-   ```
-   或一次上傳
-   ```
-   git add .
-   git commit -m"一次備注所有內容"
-   ```
-2. 上傳資料夾
-   ```
-   git push
-   ```
+---
 
 # 📂 專案結構與檔案說明
 
@@ -142,4 +176,25 @@ financial-agent/
   - 確認 `.env` 設定正確，避免啟動錯誤。
 
 請依此專案結構與規範進行開發與維護，確保團隊合作順暢。
+
+---
+
+# 補充說明
+
+## setup_rich_menu 執行方式 (only for lwc)
+```bash
+/opt/homebrew/bin/python3.10 setup_rich_menu.py
+```
+
+## Line畫面區域配置示意
+```
+┌────────────┬────────────┬────────────┐
+│   Area A   │   Area B   │            │  ← 上半部 (y=0 ~ 421)
+├────────────┼────────────│   Area C   │
+│   Area D   │   Area E   │            │  ← 下半部 (y=421 ~ 843)
+└────────────┴────────────┴────────────┘
+```
+
+---
+
 # 遇到問題可以先問GPT大神或Claude，把error貼給他們看

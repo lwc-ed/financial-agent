@@ -1,67 +1,290 @@
-from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+# financial-agent
 
-# 替換成你自己的 LINE Channel Access Token 與 Secret
-channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU="
-channel_secret = "bde6ff24868fe4edeef87393ea9db525"
+## 事前作業
+1. 更新repo
+   ```
+   git pull
+   ```
+2. 進入repo
+   ```
+   cd financial-agent
+   ```
+3. **打開兩個終端機**  
+   **終端機A:**  
+   ```bash
+   python3 app.py
+   ```  
+   **終端機B:**  
+   ```bash
+   ngrok http 8000
+   ```  
+4. 複製 `https://13d62ea100e6.ngrok-free.app` (在終端機B裡，要找一下)  
+   範例：
+   ```
+   ngrok                                                                               (Ctrl+C to quit)
+                                                                                                      
+   🧱 Block threats before they reach your services with new WAF actions →  https://ngrok.com/r/waf    
+                                                                                                      
+   Session Status                online                                                                
+   Account                       supergreatfinancialagent@gmail.com (Plan: Free)                       
+   Version                       3.26.0                                                                
+   Region                        Japan (jp)                                                            
+   Latency                       40ms                                                                  
+   Web Interface                 http://127.0.0.1:4040                                                 
+   Forwarding                    https://13d62ea100e6.ngrok-free.app (這個網址) -> http://localhost:8000          
+                                                                                                      
+   Connections                   ttl     opn     rt1     rt5     p50     p90                           
+                                0       0       0.00    0.00    0.00    0.00                          
+                                                                              
+   ```
+5.  去[Line官方帳號](https://developers.line.biz/console/channel/2007892068/messaging-api)更改Webhook URL  
+   `https://81f3d5915d67.ngrok-free.app/callback`（記得加）/callback
+## setup_rich_menu 執行方式(only fot lwc)
+```
+/opt/homebrew/bin/python3.10 setup_rich_menu.py
+```
+## Line畫面
+```
+┌────────────┬────────────┬────────────┐
+│   Area A   │   Area B   │            │  ← 上半部 (y=0 ~ 421)
+├────────────┼────────────│   Area C   │
+│   Area D   │   Area E   │            │  ← 下半部 (y=421 ~ 843)
+└────────────┴────────────┴────────────┘
+```
+# 📌 功能統整表
 
-app = Flask(__name__)
+| 功能 | 目的 | 實作方式 | 資料處理位置 | 展示方式 |
+|------|------|----------|--------------|----------|
+| **1. 個人資料填寫** | 讓使用者建立個人檔案（姓名、收入、目標等） | 提供表單（LIFF 小網頁 / 外部網站） | 存在伺服器的資料庫（DB） | LINE Bot 回覆「填寫完成」，或在 LIFF 直接看到 |
+| **2. 紀錄消費（記帳）** | 讓使用者輸入日常消費 | 使用 LINE Bot 指令（ex:「午餐 120」）或 LIFF 表單 | 後端伺服器接收 → 存入 DB | LINE Bot 即時回覆「已紀錄：午餐 120 元」 |
+| **3. 消費紀錄（查看狀況）** | 查看消費分類、剩餘可用金額 | 後端讀取 DB，計算統計 | DB 運算 + 伺服器整理成報表 | LINE Bot 傳回清單 / 圖表圖片（或開 LIFF 網頁看完整表格） |
+| **4. 慾望清單** | 使用者輸入想買的東西＋金額 | LINE Bot 輸入「想買 Switch 10000」或 LIFF 表單 | 存在 DB，標記是否已達成 | LINE Bot 回傳目前清單；或在 LIFF 展示更漂亮的清單 |
+| **5. 儲蓄挑戰** | 幫使用者依照清單規劃存錢 | 後端演算法計算最佳分配 + OpenAI API 生成自然語言建議 | 演算法（DB → 儲蓄計畫表），AI（生成對話） | LINE Bot 文字 / 圖表呈現；或 LIFF 展示「進度條 + 成就系統」 |
 
-line_bot_api = LineBotApi(channel_access_token)
-handler = WebhookHandler(channel_secret)
+---
 
-@app.route("/callback", methods=['POST'])
-def callback():
-    # 取得 LINE 發送的簽名頭部
-    signature = request.headers.get('X-Line-Signature', '')
-    body = request.get_data(as_text=True)
+# 🔹 整體架構運作
 
-    try:
-        handler.handle(body, signature)
-    except InvalidSignatureError:
-        print("❌ LINE 簽章驗證失敗")
-        abort(400)
+1. **LINE Bot**  
+   - 基本互動（輸入消費、查詢紀錄、呼叫功能）  
+   - 傳文字 / 按鈕 / Quick Reply  
 
-    return 'OK'
+2. **伺服器 + 資料庫（核心大腦）**  
+   - Flask / FastAPI / Node.js  
+   - MySQL / PostgreSQL / MongoDB  
+   - 演算法處理（消費統計、儲蓄規劃）  
 
-@handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
-    user_message = event.message.text
-    reply_token = event.reply_token
+3. **AI API（選配）**  
+   - 把演算法結果轉成自然語言建議  
+   - 例如「依照你的清單，我建議先完成耳機，再挑戰 Switch！」  
 
-    # Rich Menu 六個功能對應文字（你可以改掉）
-    function_map = {
-        "功能 A": "📊 這是您的消費分析：\n（之後可以接後端查資料）",
-        "功能 B": "📉 支出統計：\n食物 40%、交通 30%、娛樂 30%",
-        "功能 C": "🧾 記帳紀錄如下：\n1. 早餐 $60\n2. 捷運 $25",
-        "功能 D": "💰 儲蓄進度：\n已完成 72%，還差 NT$8,000",
-        "功能 E": "⚠️ 預算提醒：\n本月已用 90%，建議減少娛樂支出",
-        "功能 F": "📝 功能說明：\nA：消費分析\nB：支出統計\nC：記帳紀錄\n…"
-    }
+4. **LIFF / 外部網站**  
+   - 適合表單（資料填寫）和進度視覺化（圖表、清單、進度條）  
+   - 讓使用者「感覺還在 LINE 內操作」，體驗無縫 
 
-    # 根據功能文字回覆
-    if user_message in function_map:
-        reply_text = function_map[user_message]
-    else:
-        reply_text = f"你說的是：「{user_message}」"
+## 事後作業
+1. 分批新增檔案上來
+   ```
+   git add (檔案名稱)
+   git commit -m"備注內容"
+   ```
+   或一次上傳
+   ```
+   git add .
+   git commit -m"一次備注所有內容"
+   ```
+2. 上傳資料夾
+   ```
+   git push
+   ```
 
-    # 回傳訊息
-    line_bot_api.reply_message(
-        reply_token,
-        TextSendMessage(text=reply_text)
-    )
+# 📦 必要安裝套件與工具
 
-from flask import Flask, jsonify
-from flask_cors import CORS
+本專案開發與執行需要安裝以下套件與工具，以下為 macOS / Linux 平台的安裝範例。
 
-app = Flask(__name__)
-CORS(app)  # 加這行避免 CORS 問題
+### Python (後端)
 
-@app.route("/api/hello")
-def hello():
-    return jsonify({"message": "Hello from Flask!"})
+- 主要依賴套件：
+  - Flask：輕量級 Web 框架
+  - flask-cors：處理跨來源資源共享
+  - line-bot-sdk：LINE Messaging API SDK
+- 安裝方式：
+  ```bash
+  pip3 install Flask flask-cors line-bot-sdk
+  ```
+  或
+  ```bash
+  pip3 install -r requirements.txt
+  ```
+- `requirements.txt` 範例內容：
+  ```
+  Flask
+  flask-cors
+  line-bot-sdk
+  ```
 
-if __name__ == "__main__":
-    app.run(debug=True, port=8000, host="0.0.0.0")
+### Node.js / npm (前端)
+
+- 使用 React 與 Vite 建構前端
+- 主要套件包括：
+  - react
+  - react-dom
+  - vite
+- 可選套件（視專案需求）：
+  - liff（LINE Front-end Framework）
+  - axios（HTTP 請求）
+  - openai（OpenAI API 客戶端）
+- 安裝方式：
+  ```bash
+  cd frontend
+  npm install
+  ```
+  會根據 `package.json` 自動安裝所有依賴套件。
+
+### ngrok (本地端口轉發)
+
+- 用於將本地端口映射至公開網路，方便測試與 Webhook 設定
+- 安裝方式（macOS Homebrew）：
+  ```bash
+  brew install ngrok/ngrok/ngrok
+  ```
+- 官方網站下載：
+  https://ngrok.com/download
+
+---
+
+# 📂 專案結構與檔案說明
+
+```
+financial-agent/
+├── backend/
+│   ├── app.py                 # Flask 主程式，啟動後端伺服器
+│   ├── linebot_handler.py     # 處理 LINE Bot 事件的邏輯
+│   ├── routes/                # 使用 Blueprint 模組管理 API 路由，依功能分離（如 expense_record、wishlist 等），各模組皆暴露一個 _bp 方便註冊與維護
+│   ├── models/                # 資料模型定義（ORM 或 schema），負責資料庫資料結構與操作
+│   ├── setup_rich_menu.py     # 設定 LINE Rich Menu 的腳本
+├─── frontend/
+│   ├── public/                # React 公開資源
+│   ├── src/                   # React 程式碼
+│   ├── .env                   # 前端環境變數設定（API 端點等）
+│   └── package.json
+├── picture/
+│   └── rich_menu/             # 儲存 LINE Rich Menu 使用的圖片
+├── README.md
+└── .gitignore
+```
+
+- **backend/**：後端使用 Flask 框架，`app.py` 是主入口，`linebot_handler.py` 負責處理 LINE Bot 事件，`routes/` 用於分模組管理 API 路由，依功能分離（如 expense_record、wishlist 等），每個 Blueprint 模組皆暴露 `_bp` 方便註冊與維護。`models/` 則定義資料模型（ORM 或 schema），處理資料庫的資料結構與操作。`setup_rich_menu.py` 用於部署 Rich Menu。環境變數可透過專案根目錄或系統環境設定管理。
+
+- **frontend/**：React 應用程式，包含前端頁面與互動邏輯，`.env` 用來設定前端環境變數（如 API 伺服器 URL），確保前後端分離。
+
+- **picture/**：存放圖片資源，尤其是 LINE Rich Menu 使用的圖片素材。
+
+- **命名規範與提交規則**：
+  - Blueprint 命名皆以 `_bp` 結尾，例如 `user_bp`、`expense_bp`，以利識別。
+  - Git commit 訊息請清楚描述改動內容，避免使用模糊字眼，方便多人協作與版本追蹤。
+
+- **啟動提醒**：
+  - 後端啟動請在 `backend/` 目錄下執行：
+    ```
+    python3 app.py
+    ```
+  - 前端啟動請在 `frontend/` 目錄下執行：
+    ```
+    npm install
+    npm start
+    ```
+  - 確認 `.env` 設定正確，避免啟動錯誤。
+
+請依此專案結構與規範進行開發與維護，確保團隊合作順暢。
+# 遇到問題可以先問GPT大神或Claude，把error貼給他們看
+
+---
+
+# 🚀 啟動順序與模式
+
+## 開發模式
+
+1. 啟動後端伺服器（於 `backend/` 目錄）：
+   ```bash
+   python3 app.py
+   ```
+2. 啟動前端開發伺服器（於 `frontend/` 目錄）：
+   ```bash
+   npm run dev
+   ```
+3. 使用 ngrok 開啟本地端口轉發（可選擇轉發後端或前端）：
+
+   - 若要轉發後端（預設 8000 port）：
+     ```bash
+     ngrok http 8000
+     ```
+   - 若要轉發前端開發伺服器（預設 5173 port）：
+     ```bash
+     ngrok http 5173
+     ```
+
+4. 複製 ngrok 提供的公開網址（例如 `https://xxxxxx.ngrok-free.app`）用於外部測試或設定 Webhook。
+
+---
+
+## 部署模式（目前先不用）
+
+1. 於 `frontend/` 目錄執行前端打包：
+   ```bash
+   npm run build
+   ```
+   會產生靜態檔案於 `frontend/dist/`。
+
+2. 將前端靜態檔案由後端 Flask 伺服器提供服務（`app.py` 需配置靜態路由指向 `dist/`）。
+
+3. 啟動後端伺服器（於 `backend/` 目錄）：
+   ```bash
+   python3 app.py
+   ```
+
+4. 使用 ngrok 只轉發後端端口（8000）：
+   ```bash
+   ngrok http 8000
+   ```
+
+5. 複製 ngrok 公開網址（例如 `https://xxxxxx.ngrok-free.app`）用於外部存取與 Webhook 設定。
+
+---
+
+## ngrok 使用限制說明
+
+- **免費方案**：僅允許同時開啟一個 tunnel，無法同時轉發多個本地端口。
+- **付費方案**：可同時開啟多個 tunnel，方便同時轉發前後端。
+
+---
+
+## 範例指令與網址
+
+```bash
+# 開發模式
+cd backend
+python3 app.py
+
+cd ../frontend
+npm run dev
+
+# 另一個終端機開啟 ngrok
+ngrok http 8000  # 或 ngrok http 5173
+
+# ngrok 會顯示類似：
+# Forwarding                    https://13d62ea100e6.ngrok-free.app -> http://localhost:8000
+```
+
+```bash
+# 部署模式
+cd frontend
+npm run build
+
+cd ../backend
+python3 app.py
+
+ngrok http 8000
+
+# 使用公開網址 https://13d62ea100e6.ngrok-free.app 作為 Webhook URL
+```

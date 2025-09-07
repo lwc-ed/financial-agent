@@ -1,18 +1,19 @@
-from flask import request, abort
+# linebot_handler.py
+from flask import Blueprint, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 
-from app import app
+linebot_bp = Blueprint("linebot", __name__)
 
 # 替換成你自己的 LINE Channel Access Token 與 Secret
-channel_access_token = "YOUR_CHANNEL_ACCESS_TOKEN"
-channel_secret = "YOUR_CHANNEL_SECRET"
+channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU="
+channel_secret = "bde6ff24868fe4edeef87393ea9db525"
 
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
 
-@app.route("/callback", methods=['POST'])
+@linebot_bp.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers.get('X-Line-Signature', '')
     body = request.get_data(as_text=True)
@@ -30,7 +31,6 @@ def handle_message(event):
     user_message = event.message.text
     reply_token = event.reply_token
 
-    # TODO: 這裡之後可以改成呼叫 Flask API 查資料
     function_map = {
         "功能 A": "📊 消費分析（待接後端）",
         "功能 B": "📉 支出統計（待接 DB）",
