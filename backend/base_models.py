@@ -6,6 +6,7 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True)
+    password = Column(String(100), nullable=False)
 
 class Post(Base):
     __tablename__='posts'
