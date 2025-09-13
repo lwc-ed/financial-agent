@@ -15,7 +15,7 @@ class PostBase(BaseModel):
 
 class UserBase(BaseModel):
     username: str
-
+    password: str
 
 def get_db():
     db = SessionLocal()
@@ -40,7 +40,7 @@ async def create_post(post:PostBase, db: db_dependency):
 async def read_post(post_id: int, db:db_dependency):
     post =db.query(base_models.Post).filter(base_models.Post.id == post_id).first()
     if post is None:
-        HTTPException(status_code=404, detail='Page was not found')
+        raise HTTPException(status_code=404, detail='Page was not found')
     return post
     
 @app.delete("/posts/{post_id}", status_code=status.HTTP_200_OK)
@@ -57,10 +57,13 @@ async def create_user(user:UserBase, db: db_dependency):
     db_user = base_models.User(**user.dict())
     db.add(db_user)
     db.commit()
+    db.refresh(db_user)
+    # 別回傳密碼到前端
+    return {"id": db_user.id, "username": db_user.username}
 
 @app.get("/users/{user_id}", status_code=status.HTTP_200_OK)
 async def read_user(user_id: int, db: db_dependency):
     user = db.query(base_models.User).filter(base_models.User.id == user_id).first()
     if user is None:
         raise HTTPException(status_code=404, detail='User not found')
-    return user
+    return {"id": user.id, "username": user.username}

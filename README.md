@@ -198,3 +198,67 @@ financial-agent/
 ---
 
 # 遇到問題可以先問GPT大神或Claude，把error貼給他們看
+
+# Fast API + MySQL 說明
+
+## 安裝必要套件
+請先安裝依賴套件：
+```bash
+pip install fastapi uvicorn sqlalchemy pymysql python-dotenv
+```
+啟動後端伺服器
+
+進入 backend/ 資料夾，執行：
+```bash
+uvicorn main:app --reload
+```
+啟動後開啟瀏覽器連到：
+👉 http://127.0.0.1:8000/docs#/
+
+這裡可以直接測試 API 功能。
+
+API 功能
+
+POST /posts/ : 新增一篇貼文
+
+GET /posts/{post_id} : 讀取貼文
+
+DELETE /posts/{post_id} : 刪除貼文
+
+POST /users/ : 新增使用者
+
+GET /users/{user_id} : 讀取使用者
+
+#建立使用者
+```bash
+POST /users/
+{
+  "username": "alice"
+}
+```
+
+#查詢使用者
+```bash
+GET /users/{user_id}
+```
+
+#建立文章
+```bash
+POST /posts/
+{
+  "title": "First Post",
+  "content": "Hello FastAPI!",
+  "user_id": 1
+}
+```
+
+#查詢文章
+```bash
+GET /posts/{post_id}
+```
+
+#刪除文章
+```bash
+DELETE /posts/{post_id}
+```
+
