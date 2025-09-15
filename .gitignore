@@ -1,20 +1,33 @@
 # ---- Python ----
 __pycache__/
+*.py[cod]
 *.pyc
 *.pyo
 *.pyd
 *.pdb
 *.egg-info/
 .env
+.env.*
+!.env.example
 .venv/
 venv/
 ENV/
 env/
+*.so
 
 # ---- Flask / FastAPI ----
 instance/
 *.db
 *.sqlite3
+
+# ---- Test / Coverage ----
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
 
 # ---- Node.js / Frontend ----
 node_modules/
@@ -27,8 +40,12 @@ yarn-error.log*
 # ---- OS / Editor ----
 .DS_Store
 Thumbs.db
-.vscode/
+.vscode/*
 .idea/
+.AppleDouble
+.LSOverride
+ehthumbs.db
+Desktop.ini
 
 # ---- Logs ----
 *.log
