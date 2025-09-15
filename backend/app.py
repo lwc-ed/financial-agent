@@ -31,5 +31,12 @@ app.register_blueprint(profile_bp, url_prefix="/api/profile")
 def hello():
     return {"message": "Hello from Flask!"}
 
+# Webhook 用
+@app.route("/callback", methods=["POST"])
+def callback():
+    body = request.get_data(as_text=True)  # 讀取 LINE 傳來的 raw body
+    print("Request body:", body)  # 可以先印出來測試
+    return "OK"
+
 if __name__ == "__main__":
     app.run(debug=True, port=8000, host="0.0.0.0")
