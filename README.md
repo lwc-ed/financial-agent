@@ -206,16 +206,70 @@ financial-agent/
 ```bash
 pip install fastapi uvicorn sqlalchemy pymysql python-dotenv
 ```
-啟動後端伺服器
 
-進入 backend/ 資料夾，執行：
+# WSL 連接 AWS RDS (MySQL) 教學
+## 1. 檢查 DNS 是否能解析
 ```bash
-uvicorn main:app --reload
+nslookup financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com
 ```
-啟動後開啟瀏覽器連到：
-👉 http://127.0.0.1:8000/docs#/
+若正確，會解析出一個 Public IP (例如 3.129.xx.xx)。
 
-這裡可以直接測試 API 功能。
+## 2. 測試能否連到 RDS
+安裝 MySQL client：
+```bash
+sudo apt update
+sudo apt install mysql-client -y
+```
+測試連線：
+```bash
+mysql -h financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com -P 3306 -u nycuiemagent -p
+```
+輸入密碼後，若成功會進到 MySQL prompt (mysql>)，表示網路跟帳號都 OK。
+
+## 3. 設定 DNS (避免 WSL DNS 問題)
+有時候 WSL 會用錯 DNS，需要手動設定。
+```bash
+sudo nano /etc/wsl.conf
+```
+內容加上：
+```ini
+[network]
+generateResolvConf = false
+```
+然後修改 DNS：
+```bash
+sudo rm /etc/resolv.conf
+echo -e "nameserver 8.8.8.8\nnameserver 1.1.1.1" | sudo tee /etc/resolv.conf
+```
+重啟 WSL：
+```powershell
+wsl --shutdown
+```
+## 4.常見錯誤排查
+Unknown MySQL server host
+
+代表 DNS 無法解析 → 檢查 /etc/resolv.conf，確認有 8.8.8.8 或 1.1.1.1。
+
+❌ Access denied for user
+
+帳號或密碼錯誤。
+
+或者 RDS user 沒有對外權限，檢查 IAM / MySQL user 權限。
+
+❌ Timeout
+
+RDS 安全群組沒有開放你的 IP。
+
+在 AWS console → Security group → Inbound rules，加上：
+
+Type: MySQL/Aurora
+
+Port: 3306
+
+Source: 你的 IP (或測試用 0.0.0.0/0)
+
+
+##以下先不用看
 
 API 功能
 
@@ -262,3 +316,13 @@ GET /posts/{post_id}
 DELETE /posts/{post_id}
 ```
 
+啟動後端伺服器
+
+進入 backend/ 資料夾，執行：
+```bash
+uvicorn main:app --reload
+```
+啟動後開啟瀏覽器連到：
+👉 http://127.0.0.1:8000/docs#/
+
+這裡可以直接測試 API 功能。
