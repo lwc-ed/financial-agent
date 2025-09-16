@@ -3,27 +3,18 @@
 # 📦 必要安裝套件與工具
 
 本專案開發與執行需要安裝以下套件與工具，以下為 macOS / Linux 平台的安裝範例。
+[Line官方帳號管理後台](https://developers.line.biz/console/channel/2007892068/messaging-api)
 
 ### Python (後端)
-
-- 主要依賴套件：
-  - Flask：輕量級 Web 框架
-  - flask-cors：處理跨來源資源共享
-  - line-bot-sdk：LINE Messaging API SDK
-- 安裝方式：
-  ```bash
-  pip3 install Flask flask-cors line-bot-sdk
-  ```
-  或
-  ```bash
-  pip3 install -r requirements.txt
-  ```
-- `requirements.txt` 範例內容：
-  ```
-  Flask
-  flask-cors
-  line-bot-sdk
-  ```
+安裝依賴套件
+```
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+檢查是否安裝成功
+```
+pip list
+```
 
 ### Node.js / npm (前端)
 
@@ -43,24 +34,14 @@
   ```
   會根據 `package.json` 自動安裝所有依賴套件。
 
-### ngrok (本地端口轉發)
 
-- 用於將本地端口映射至公開網路，方便測試與 Webhook 設定
-- 安裝方式（macOS Homebrew）：
-  ```bash
-  brew install ngrok/ngrok/ngrok
-  ```
-- 官方網站下載：
-  https://ngrok.com/download
-
----
 
 # 🚀 啟動方式
 
 1. **更新並進入專案目錄**
    ```bash
-   git pull
    cd financial-agent
+   git pull
    ```
 
 2. **啟動後端伺服器（於 `backend/` 目錄）**
@@ -68,36 +49,6 @@
    cd backend
    python3 app.py
    ```
-
-3. **啟動前端開發伺服器（於 `frontend/` 目錄）**
-   ```bash
-   cd ../frontend
-   npm run dev
-   ```
-
-4. **使用 ngrok 開啟本地端口轉發**
-
-   - 若要轉發後端（預設 8000 port）：
-     ```bash
-     ngrok http 8000
-     ```
-   - 若要轉發前端開發伺服器（預設 5173 port）：
-     ```bash
-     ngrok http 5173
-     ```
-
-5. **複製 ngrok 提供的公開網址（例如 `https://xxxxxx.ngrok-free.app`）**
-
-6. **設定 LINE 官方帳號 Webhook URL**
-
-   - 進入 [Line官方帳號管理後台](https://developers.line.biz/console/channel/2007892068/messaging-api)
-   - 將 Webhook URL 設為：
-     ```
-     https://xxxxxx.ngrok-free.app/callback
-     ```
-     （記得加上 `/callback`）
-
----
 
 # 📌 功能統整表
 
@@ -316,7 +267,8 @@ GET /posts/{post_id}
 DELETE /posts/{post_id}
 ```
 
-啟動後端伺服器
+
+#啟動後端伺服器
 
 進入 backend/ 資料夾，執行：
 ```bash
@@ -326,3 +278,29 @@ uvicorn main:app --reload
 👉 http://127.0.0.1:8000/docs#/
 
 這裡可以直接測試 API 功能。
+
+## financial_agent 資料庫
+```
+mysql> SELECT * FROM users;
++----+----------+-------------+--------+------------------+---------+---------------------+
+| id | provider | provider_id | name   | email            | picture | created_at          |
++----+----------+-------------+--------+------------------+---------+---------------------+
+|  1 | line     | U1234567890 | 小明   | test@example.com  | NULL    | 2025-09-16 01:45:11 |
++----+----------+-------------+--------+------------------+---------+---------------------+
+1 row in set (0.203 sec)
+
+mysql> INSERT INTO messages (user_id, content, reply)
+    -> VALUES (1, '哈囉', '你好呀！'); -- 測試內容
+Query OK, 1 row affected (0.206 sec)
+
+mysql> SELECT * FROM messages;
++----+---------+---------------------+-----------------+---------------------+
+| id | user_id | content(使用者輸入的) | reply(我們回覆的) | created_at          |
++----+---------+---------------------+-----------------+---------------------+
+|  1 |       1 | 哈囉                 | 你好呀！         | 2025-09-16 01:45:34 |
++----+---------+---------------------+-----------------+---------------------+
+```
+跑EC2(lwc)
+```
+ssh -i ~/desktop/劉建良專題/financial-agent-key.pem ubuntu@3.21.167.93
+```
