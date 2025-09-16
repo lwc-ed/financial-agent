@@ -90,25 +90,30 @@ def callback_google():
         headers={"Authorization": f"Bearer {access_token}"}
     ).json()
 
-    # 3. 存 DB
+    # 3. 取出需要的欄位
+    provider = "google"
+    provider_id = user_info.get("id")
+    name = user_info.get("name")
+    email = user_info.get("email")
+    picture = user_info.get("picture")
+
+    # 4. 存 DB
     with db.cursor() as cursor:
-        # 檢查是否已存在
-        cursor.execute("SELECT * FROM users WHERE provider=%s AND provider_id=%s", ("google", provider_id))
+        cursor.execute("SELECT * FROM users WHERE provider=%s AND provider_id=%s", (provider, provider_id))
         existing_user = cursor.fetchone()
 
         if not existing_user:
             cursor.execute(
                 "INSERT INTO users (provider, provider_id, name, email, picture) VALUES (%s, %s, %s, %s, %s)",
-                ("google", provider_id, name, email, picture)
+                (provider, provider_id, name, email, picture)
             )
             db.commit()
             user_id = cursor.lastrowid
         else:
             user_id = existing_user["id"]
-    # TODO: 這裡接上 MySQL，把 user_info["id"], ["email"], ["name"] 存進 users 表
 
-    # 4. 發 JWT token
-    token = jwt.encode({"user_id": user_info["id"]}, SECRET_KEY, algorithm="HS256")
+    # 5. 發 JWT token（建議用資料庫 user_id 而不是 Google id）
+    token = jwt.encode({"user_id": user_id}, SECRET_KEY, algorithm="HS256")
 
     return jsonify({
         "access_token": token,
