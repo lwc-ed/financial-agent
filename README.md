@@ -316,7 +316,8 @@ GET /posts/{post_id}
 DELETE /posts/{post_id}
 ```
 
-啟動後端伺服器
+
+#啟動後端伺服器
 
 進入 backend/ 資料夾，執行：
 ```bash
@@ -338,7 +339,7 @@ mysql> SELECT * FROM users;
 1 row in set (0.203 sec)
 
 mysql> INSERT INTO messages (user_id, content, reply)
-    -> VALUES (1, '哈囉', '你好呀！');--->測試內容
+    -> VALUES (1, '哈囉', '你好呀！'); -- 測試內容
 Query OK, 1 row affected (0.206 sec)
 
 mysql> SELECT * FROM messages;
