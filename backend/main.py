@@ -35,6 +35,7 @@ async def create_post(post:PostBase, db: db_dependency):
     db_post = base_models.Post(**post.dict())
     db.add(db_post)
     db.commit()
+    db.refresh(db_post)
 
 @app.get("/posts/{post_id}", status_code=status.HTTP_200_OK)
 async def read_post(post_id: int, db:db_dependency):
