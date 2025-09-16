@@ -5,25 +5,15 @@
 本專案開發與執行需要安裝以下套件與工具，以下為 macOS / Linux 平台的安裝範例。
 
 ### Python (後端)
-
-- 主要依賴套件：
-  - Flask：輕量級 Web 框架
-  - flask-cors：處理跨來源資源共享
-  - line-bot-sdk：LINE Messaging API SDK
-- 安裝方式：
-  ```bash
-  pip3 install Flask flask-cors line-bot-sdk
-  ```
-  或
-  ```bash
-  pip3 install -r requirements.txt
-  ```
-- `requirements.txt` 範例內容：
-  ```
-  Flask
-  flask-cors
-  line-bot-sdk
-  ```
+安裝依賴套件
+```
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+檢查是否安裝成功
+```
+pip list
+```
 
 ### Node.js / npm (前端)
 
