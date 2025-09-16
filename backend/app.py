@@ -1,5 +1,6 @@
 from flask_cors import CORS
 from flask import Flask, request, redirect, jsonify
+from flask import render_template
 import requests
 import jwt
 import pymysql
@@ -56,6 +57,12 @@ def callback():
     body = request.get_data(as_text=True)  # 讀取 LINE 傳來的 raw body
     print("Request body:", body)  # 可以先印出來測試
     return "OK"
+
+
+#登入介面
+@app.route("/login_page")
+def login_page():
+    return render_template("login.html")
 
 #加登入路由 /login_google
 @app.route("/login_google")

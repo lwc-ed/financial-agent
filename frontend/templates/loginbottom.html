@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>理財小幫手 - Google 登入</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h2>登入系統</h2>
+  <button id="google-login-btn">👉 用 Google 登入（外部瀏覽器）</button>
+
+  <script>
+    async function main() {
+      // 初始化 LIFF
+      await liff.init({ liffId: "你的-LIFF-ID" });
+
+      document.getElementById("google-login-btn").addEventListener("click", () => {
+        liff.openWindow({
+          url: "https://financial-agent.it.com/login_google", // Google OAuth 後端入口
+          external: true // 🔑 強制跳系統瀏覽器
+        });
+      });
+    }
+
+    main();
+  </script>
+</body>
+</html>
