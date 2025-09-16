@@ -49,8 +49,8 @@ pip list
 
 1. **更新並進入專案目錄**
    ```bash
-   git pull
    cd financial-agent
+   git pull
    ```
 
 2. **啟動後端伺服器（於 `backend/` 目錄）**
