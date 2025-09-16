@@ -304,4 +304,15 @@ mysql> SELECT * FROM messages;
 ```
 ssh -i ~/desktop/劉建良專題/financial-agent-key.pem ubuntu@3.21.167.93
 ```
-test
+
+```
+-- 選擇你要用的資料庫
+USE financial_agent;
+
+-- 確認有哪些資料表
+SHOW TABLES;
+
+-- 查使用者資料
+SELECT * FROM users;
+```
+
