@@ -1,21 +1,13 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <title>登入頁面</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-</head>
-<body>
-  <h2>理財小幫手</h2>
-  <button onclick="loginGoogle()">用 Google 登入（外部瀏覽器）</button>
-
-  <script>
-    function loginGoogle() {
-      liff.openWindow({
-        url: "https://financial-agent.it.com/login_google",
-        external: true
-      });
-    }
-  </script>
-</body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
