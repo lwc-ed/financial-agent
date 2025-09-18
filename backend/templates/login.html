@@ -4,11 +4,45 @@
   <meta charset="UTF-8">
   <title>理財小幫手 - Google 登入</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      border: 2px solid #000;
+      padding: 40px;
+      text-align: center;
+      width: 300px;
+    }
+    h2 {
+      margin-bottom: 30px;
+    }
+    #google-login-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: 1px solid #000;
+      background-color: white;
+      cursor: pointer;
+    }
+    #google-login-btn:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
 </head>
 <body>
-  <h2>登入系統</h2>
-  <button id="google-login-btn">👉 用 Google 登入（外部瀏覽器）</button>
-
+  <div class="container">
+    <h2>早安</h2>
+    <button id="google-login-btn" type="button">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+           alt="Google" style="width:20px; height:20px; vertical-align:middle; margin-right:8px;">
+      使用 Google 登入
+    </button>
+  </div>
   <script>
     async function main() {
       // 初始化 LIFF
