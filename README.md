@@ -268,8 +268,16 @@ Port: 3306
 
 Source: 你的 IP (或測試用 0.0.0.0/0)
 
+## 連接fastapi
 
-##以下先不用看
+進入 backend/ 資料夾，執行：
+```bash
+uvicorn main:app --reload
+```
+啟動後開啟瀏覽器連到：
+👉 http://127.0.0.1:8000/docs#/
+
+這裡可以直接測試 API 功能。
 
 API 功能
 
@@ -314,6 +322,7 @@ GET /posts/{post_id}
 #刪除文章
 ```bash
 DELETE /posts/{post_id}
+<<<<<<< HEAD
 ```
 
 
