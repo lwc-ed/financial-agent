@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>理財小幫手 - Google 登入</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      border: 2px solid #000;
+      padding: 40px;
+      text-align: center;
+      width: 300px;
+    }
+    h2 {
+      margin-bottom: 30px;
+    }
+    #google-login-btn {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: 1px solid #000;
+      background-color: white;
+      cursor: pointer;
+    }
+    #google-login-btn:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>早安</h2>
+    <button id="google-login-btn" type="button">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
+           alt="Google" style="width:20px; height:20px; vertical-align:middle; margin-right:8px;">
+      使用 Google 登入
+    </button>
+  </div>
+  <script>
+    async function main() {
+      // 初始化 LIFF
+      await liff.init({ liffId: "2008065321-vlAGLNjW" });
+
+      document.getElementById("google-login-btn").addEventListener("click", () => {
+        liff.openWindow({
+          url: "https://financial-agent.it.com/login_google", // Google OAuth 後端入口
+          external: true // 🔑 強制跳系統瀏覽器
+        });
+      });
+    }
+
+    main();
+  </script>
+</body>
+</html>

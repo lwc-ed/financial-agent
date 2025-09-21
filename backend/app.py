@@ -1,5 +1,6 @@
 from flask_cors import CORS
 from flask import Flask, request, redirect, jsonify
+from flask import render_template
 import requests
 import jwt
 import pymysql
@@ -57,6 +58,12 @@ def callback():
     print("Request body:", body)  # 可以先印出來測試
     return "OK"
 
+
+#登入介面
+@app.route("/login_page")
+def login_page():
+    return render_template("login.html")
+
 #加登入路由 /login_google
 @app.route("/login_google")
 def login_google():
@@ -90,25 +97,30 @@ def callback_google():
         headers={"Authorization": f"Bearer {access_token}"}
     ).json()
 
-    # 3. 存 DB
+    # 3. 取出需要的欄位
+    provider = "google"
+    provider_id = user_info.get("id")
+    name = user_info.get("name")
+    email = user_info.get("email")
+    picture = user_info.get("picture")
+
+    # 4. 存 DB
     with db.cursor() as cursor:
-        # 檢查是否已存在
-        cursor.execute("SELECT * FROM users WHERE provider=%s AND provider_id=%s", ("google", provider_id))
+        cursor.execute("SELECT * FROM users WHERE provider=%s AND provider_id=%s", (provider, provider_id))
         existing_user = cursor.fetchone()
 
         if not existing_user:
             cursor.execute(
                 "INSERT INTO users (provider, provider_id, name, email, picture) VALUES (%s, %s, %s, %s, %s)",
-                ("google", provider_id, name, email, picture)
+                (provider, provider_id, name, email, picture)
             )
             db.commit()
             user_id = cursor.lastrowid
         else:
             user_id = existing_user["id"]
-    # TODO: 這裡接上 MySQL，把 user_info["id"], ["email"], ["name"] 存進 users 表
 
-    # 4. 發 JWT token
-    token = jwt.encode({"user_id": user_info["id"]}, SECRET_KEY, algorithm="HS256")
+    # 5. 發 JWT token（建議用資料庫 user_id 而不是 Google id）
+    token = jwt.encode({"user_id": user_id}, SECRET_KEY, algorithm="HS256")
 
     return jsonify({
         "access_token": token,

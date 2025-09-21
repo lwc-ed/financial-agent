@@ -1,24 +1,9 @@
-'''# 紀錄消費 API
-from flask import Blueprint, request, jsonify
-
-# ✅ 名字一定要對
-expense_record_bp = Blueprint("expense_record", __name__)
-
-@expense_record_bp.route("/save", methods=["POST"])
-def save_expense():
-    data = request.json
-    # TODO: 之後存進 DB
-    return jsonify({"status": "ok", "message": "已新增消費", "data": data}), 200'''
-
-
-
 # routes/expense_record.py
 # 紀錄消費 API
 from flask import Blueprint, request, jsonify
 from app import db  # 從 app.py 匯入既有的 MySQL 連線物件
 import re
 
-# ✅ Blueprint 名稱要和 app.register_blueprint 時一致
 expense_record_bp = Blueprint("expense_record", __name__)
 
 def normalize_amount(val):
@@ -36,16 +21,6 @@ def save_expense():
     """
     POST /api/expense_record/save
     Content-Type: application/json
-
-    範例 body：
-    {
-      "user_id": "Uxxxxxxxx",     # 可選，預設 'anonymous'
-      "type": "支出",              # 可選，'支出' 或 '收入'，預設 '支出'
-      "category": "午餐",         # 必填
-      "amount": "$120元",         # 必填（可含 $、逗號、元/圓）
-      "note": "公司附近便當"       # 可選
-      // timestamp 交給 MySQL 用 NOW() 產生
-    }
     """
     data = request.get_json(silent=True)
     if not data:
@@ -76,7 +51,6 @@ def save_expense():
             db.commit()
             new_id = cursor.lastrowid
     except Exception as e:
-        # 若要更乾淨可以改成統一訊息，並把 e 寫入 log
         return jsonify({"status": "error", "message": f"資料庫錯誤：{e}"}), 500
 
     # --- 成功回傳 ---

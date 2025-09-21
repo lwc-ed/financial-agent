@@ -46,3 +46,17 @@ def handle_message(event):
         reply_token,
         TextSendMessage(text=reply_text)
     )
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_message(event):
+    user_msg = event.message.text
+
+    if user_msg == "紀錄消費":
+        # 呼叫 expense_record 裡的功能
+        from routes import expense_record
+        reply_text = expense_record.get_expense_summary(user_id=event.source.user_id)
+
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextMessage(text=reply_text)
+        )
