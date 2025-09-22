@@ -22,33 +22,47 @@
 </head>
 <body>
   <h2>🎉 歡迎使用我們的 AI Agent 🎉</h2>
+  <h3 id="countdown">5 秒後自動回到 LINE...</h3>
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <script>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
     async function main() {
-      await liff.init({ liffId: "2008065321-vlAGLNjW" });
+        await liff.init({ liffId: "2008065321-vlAGLNjW" });
 
-      // 取得 LINE 使用者 ID
-      const profile = await liff.getProfile();
-      const lineUserId = profile.userId;
+        // 如果沒登入，先要求登入
+        if (!liff.isLoggedIn()) {
+        liff.login();
+        return; // login 完會自動 reload 頁面
+        }
 
-      // 從模板變數拿 Google ID
-      const googleId = "{{ google_id }}";
+        // 已登入才能拿 profile
+        const profile = await liff.getProfile();
+        const lineUserId = profile.userId;
+        const googleId = "{{ google_id }}";
 
-      // 綁定 Google 與 LINE
-      await fetch("https://financial-agent.it.com/bind", {
+        console.log("準備綁定:", { lineUserId, googleId });
+
+        const res = await fetch("https://financial-agent.it.com/bind", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lineUserId, googleId })
-      });
+        });
 
-      // 5 秒後自動關閉回到 LINE
-      setTimeout(() => {
-        liff.closeWindow();
-      }, 5000);
+        console.log("綁定 API 回應:", await res.json());
+
+        let counter = 5;
+        const countdownEl = document.getElementById("countdown");
+        const interval = setInterval(() => {
+            counter--;
+            countdownEl.textContent = `${counter} 秒後自動回到 LINE...`;
+            if (counter <= 0) {
+            clearInterval(interval);
+            liff.closeWindow();
+            }
+        }, 1000);
     }
 
     main();
-  </script>
+    </script>
 </body>
 </html>
