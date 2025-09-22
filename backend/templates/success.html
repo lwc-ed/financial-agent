@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登入成功</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    h2 {
+      font-size: 1.8rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎉 歡迎使用我們的 AI Agent 🎉</h2>
+
+  <script>
+    // 5秒後回到 LINE
+    setTimeout(() => {
+      liff.init({ liffId: "2008065321-vlAGLNjW" }).then(() => {
+        liff.closeWindow(); // 回到 LINE
+      });
+    }, 5000);
+  </script>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</body>
+</html>
