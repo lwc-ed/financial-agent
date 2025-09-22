@@ -4,6 +4,9 @@ from flask import render_template
 import requests
 import jwt
 import pymysql
+from database import engine, Base
+from models.record import Record   # 確保 Record 被載入
+Base.metadata.create_all(bind=engine)
 
 # 建立 MySQL 連線（改成你的 RDS 資訊）
 password = "SUPERidol$" # 自動 escape 特殊字元
