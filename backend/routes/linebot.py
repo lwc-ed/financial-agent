@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 linebot_bp = Blueprint("linebot", __name__)
 
+<<<<<<< HEAD
 # 這裡填入你的 LINE Secret 與 Access Token
 handler = WebhookHandler("bde6ff24868fe4edeef87393ea9db525")
 configuration = Configuration(
@@ -16,6 +17,10 @@ configuration = Configuration(
 api_client = ApiClient(configuration)
 line_bot_api = MessagingApi(api_client)
 
+=======
+handler = WebhookHandler("bde6ff24868fe4edeef87393ea9db525")
+line_bot_api = MessagingApi("4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU=")
+>>>>>>> 49fd979 (same)
 
 @linebot_bp.route("/callback", methods=["POST"])
 def callback():
