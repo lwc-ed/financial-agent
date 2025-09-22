@@ -7,8 +7,8 @@ from models.user import User
 
 linebot_bp = Blueprint("linebot", __name__)
 
-handler = WebhookHandler("你的 channel secret")
-line_bot_api = MessagingApi("你的 channel access token")
+handler = WebhookHandler("bde6ff24868fe4edeef87393ea9db525")
+line_bot_api = MessagingApi("4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU=")
 
 @linebot_bp.route("/callback", methods=["POST"])
 def callback():
