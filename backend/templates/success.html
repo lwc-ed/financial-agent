@@ -24,45 +24,51 @@
   <h2>🎉 歡迎使用我們的 AI Agent 🎉</h2>
   <h3 id="countdown">5 秒後自動回到 LINE...</h3>
 
-    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-    <script>
+  <!-- Debug 顯示 -->
+  <p>GoogleId: <span id="gid">{{ google_id }}</span></p>
+  <p>LineUserId: <span id="lid">等待 LIFF...</span></p>
+  <p id="bind-result"></p>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
     async function main() {
-        await liff.init({ liffId: "2008065321-vlAGLNjW" });
+      await liff.init({ liffId: "2008065321-vlAGLNjW" });
 
-        // 如果沒登入，先要求登入
-        if (!liff.isLoggedIn()) {
+      if (!liff.isLoggedIn()) {
         liff.login();
-        return; // login 完會自動 reload 頁面
-        }
+        return;
+      }
 
-        // 已登入才能拿 profile
-        const profile = await liff.getProfile();
-        const lineUserId = profile.userId;
-        const googleId = "{{ google_id }}";
+      const profile = await liff.getProfile();
+      const lineUserId = profile.userId;
+      const googleId = "{{ google_id }}";
 
-        console.log("準備綁定:", { lineUserId, googleId });
+      document.getElementById("gid").textContent = googleId;
+      document.getElementById("lid").textContent = lineUserId;
 
-        const res = await fetch("https://financial-agent.it.com/bind", {
+      const res = await fetch("https://financial-agent.it.com/bind", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lineUserId, googleId })
-        });
+      });
 
-        console.log("綁定 API 回應:", await res.json());
+      const result = await res.json();
+      document.getElementById("bind-result").textContent = JSON.stringify(result);
 
-        let counter = 5;
-        const countdownEl = document.getElementById("countdown");
-        const interval = setInterval(() => {
-            counter--;
-            countdownEl.textContent = `${counter} 秒後自動回到 LINE...`;
-            if (counter <= 0) {
-            clearInterval(interval);
-            liff.closeWindow();
-            }
-        }, 1000);
+      // 倒數 + 回 LINE
+      let counter = 5;
+      const countdownEl = document.getElementById("countdown");
+      const interval = setInterval(() => {
+        counter--;
+        countdownEl.textContent = `${counter} 秒後自動回到 LINE...`;
+        if (counter <= 0) {
+          clearInterval(interval);
+          liff.closeWindow();
+        }
+      }, 1000);
     }
 
     main();
-    </script>
+  </script>
 </body>
 </html>
