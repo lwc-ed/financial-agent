@@ -317,8 +317,15 @@ mysql> SELECT * FROM messages;
 ssh -i ~/desktop/劉建良專題/financial-agent-key.pem ubuntu@3.21.167.93
 ```
 <<<<<<< HEAD
+<<<<<<< HEAD
 test
 =======
+=======
+所有人
+```
+ssh ubuntu@3.21.167.93
+```
+>>>>>>> 44b2c02 (更改rm)
 ```
 -- 選擇你要用的資料庫
 USE financial_agent;
