@@ -336,4 +336,29 @@ SHOW TABLES;
 -- 查使用者資料
 SELECT * FROM users;
 ```
+<<<<<<< HEAD
 >>>>>>> 2910413 (hi)
+=======
+
+# 讓branch跟main同步
+# 先確保 main 的遠端更新有拉到本地
+```
+git fetch origin
+```
+# 切換到 main
+```
+git checkout main
+```
+# 把遠端 main 的更新合併到本地 main
+```
+git pull origin main
+```
+# 再切回 feature-login
+```
+git checkout feature-login
+```
+# 如果要把 main 的最新更新合併進來
+```
+git merge main
+```
+>>>>>>> 66cd7d3 (更改網頁)

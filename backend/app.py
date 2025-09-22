@@ -105,7 +105,6 @@ def callback_google():
     provider_id = user_info.get("id")
     name = user_info.get("name")
     email = user_info.get("email")
-    picture = user_info.get("picture")
 
     # 4. 存 DB
     with db.cursor() as cursor:
