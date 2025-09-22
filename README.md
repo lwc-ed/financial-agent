@@ -219,8 +219,16 @@ Port: 3306
 
 Source: 你的 IP (或測試用 0.0.0.0/0)
 
+## 連接fastapi
 
-##以下先不用看
+進入 backend/ 資料夾，執行：
+```bash
+uvicorn main:app --reload
+```
+啟動後開啟瀏覽器連到：
+👉 http://127.0.0.1:8000/docs#/
+
+這裡可以直接測試 API 功能。
 
 API 功能
 
@@ -265,6 +273,7 @@ GET /posts/{post_id}
 #刪除文章
 ```bash
 DELETE /posts/{post_id}
+<<<<<<< HEAD
 ```
 
 
@@ -304,7 +313,10 @@ mysql> SELECT * FROM messages;
 ```
 ssh -i ~/desktop/劉建良專題/financial-agent-key.pem ubuntu@3.21.167.93
 ```
-
+所有人
+```
+ssh ubuntu@3.21.167.93
+```
 ```
 -- 選擇你要用的資料庫
 USE financial_agent;
