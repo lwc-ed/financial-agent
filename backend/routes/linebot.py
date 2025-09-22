@@ -2,8 +2,8 @@ from flask import Blueprint, request
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.messaging import MessagingApi, ReplyMessageRequest, TextMessage, Configuration, ApiClient
-from database import SessionLocal
-from models.user import User
+from backend.database import SessionLocal
+from backend.models.user import User
 from datetime import datetime, timedelta
 
 linebot_bp = Blueprint("linebot", __name__)
@@ -111,7 +111,7 @@ def handle_message(event):
             # ✅ 新增完成後重置 current_function
             user.current_function = None
             db.commit()
-            
+
         except Exception as e:
             reply_text = f"格式錯誤，請重新輸入：品項,價格\n錯誤：{e}"
     else:
@@ -128,3 +128,4 @@ def handle_message(event):
             messages=[TextMessage(text=reply_text)]
         )
     )
+
