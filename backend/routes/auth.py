@@ -5,8 +5,8 @@ from models.user import User
 
 auth_bp = Blueprint("auth", __name__)
 
-GOOGLE_CLIENT_ID = "你的ID"
-GOOGLE_CLIENT_SECRET = "你的SECRET"
+GOOGLE_CLIENT_ID = "143127007053-vb0fqvjalcq31bff87j6cuh66fqd9amb.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET = "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"
 REDIRECT_URI = "https://financial-agent.it.com/callback_google"
 SECRET_KEY = "super_secret_random_key"
 
