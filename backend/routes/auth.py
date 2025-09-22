@@ -76,6 +76,7 @@ def callback_google():
 @auth_bp.route("/bind", methods=["POST"])
 def bind_user():
     data = request.json
+    print("收到綁定請求:", data) 
     line_user_id = data.get("lineUserId")
     google_id = data.get("googleId")
 
