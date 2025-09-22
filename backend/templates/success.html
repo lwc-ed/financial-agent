@@ -13,6 +13,7 @@
       margin: 0;
       font-family: Arial, sans-serif;
       text-align: center;
+      flex-direction: column;
     }
     h2 {
       font-size: 1.8rem;
@@ -22,12 +23,6 @@
 </head>
 <body>
   <h2>🎉 歡迎使用我們的 AI Agent 🎉</h2>
-  <h3 id="countdown">5 秒後自動回到 LINE...</h3>
-
-  <!-- Debug 顯示 -->
-  <p>GoogleId: <span id="gid">{{ google_id }}</span></p>
-  <p>LineUserId: <span id="lid">等待 LIFF...</span></p>
-  <p id="bind-result"></p>
 
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <script>
@@ -43,29 +38,13 @@
       const lineUserId = profile.userId;
       const googleId = "{{ google_id }}";
 
-      document.getElementById("gid").textContent = googleId;
-      document.getElementById("lid").textContent = lineUserId;
-
-      const res = await fetch("https://financial-agent.it.com/bind", {
+      await fetch("https://financial-agent.it.com/bind", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lineUserId, googleId })
       });
 
-      const result = await res.json();
-      document.getElementById("bind-result").textContent = JSON.stringify(result);
-
-      // 倒數 + 回 LINE
-      let counter = 5;
-      const countdownEl = document.getElementById("countdown");
-      const interval = setInterval(() => {
-        counter--;
-        countdownEl.textContent = `${counter} 秒後自動回到 LINE...`;
-        if (counter <= 0) {
-          clearInterval(interval);
-          liff.closeWindow();
-        }
-      }, 1000);
+      document.body.insertAdjacentHTML("beforeend", "<h3>✅ 登入完成，請回到 LINE 聊天室繼續使用！</h3>");
     }
 
     main();
