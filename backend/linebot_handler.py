@@ -3,6 +3,10 @@ from flask import Blueprint, request, abort
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from datetime import datetime, timedelta
+from database import SessionLocal
+from models.user import User  # 假設你有 User model
+
 
 linebot_bp = Blueprint("linebot", __name__)
 
@@ -28,7 +32,8 @@ def callback():
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    user_message = event.message.text
+    user_id = event.source.user_id
+    user_msg = event.message.text
     reply_token = event.reply_token
 
     function_map = {
@@ -40,23 +45,46 @@ def handle_message(event):
         "功能 F": "📝 功能說明：A=分析 B=統計 C=紀錄 D=挑戰 E=提醒"
     }
 
-    reply_text = function_map.get(user_message, f"你說的是：「{user_message}」")
+    db = SessionLocal()
+    user = db.query(User).filter_by(user_id=user_id).first()
 
-    line_bot_api.reply_message(
-        reply_token,
-        TextSendMessage(text=reply_text)
-    )
+    # 如果使用者不存在，就建立
+    if not user:
+        user = User(user_id=user_id, current_function=None, last_activity_time=datetime.utcnow())
+        db.add(user)
+        db.commit()
 
-@handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
-    user_msg = event.message.text
+    # 檢查是否超過 10 分鐘沒互動
+    if user.last_activity_time and datetime.utcnow() - user.last_activity_time > timedelta(minutes=10):
+        user.current_function = None
+        db.commit()
 
-    if user_msg == "紀錄消費":
-        # 呼叫 expense_record 裡的功能
-        from routes import expense_record
-        reply_text = expense_record.get_expense_summary(user_id=event.source.user_id)
-
+    # 如果還沒選功能，阻擋文字輸入
+    if not user.current_function and user_msg not in ["功能 A", "功能 B", "功能 C", "功能 D", "功能 E", "功能 F"]:
         line_bot_api.reply_message(
-            event.reply_token,
-            TextMessage(text=reply_text)
+            reply_token,
+            TextSendMessage(text="請先點選功能")
         )
+        return
+
+    # 如果使用者選了功能 A~E，就更新 current_function
+    if user_msg in ["功能 A", "功能 B", "功能 C", "功能 D", "功能 E"]:
+        user.current_function = user_msg
+        user.last_activity_time = datetime.utcnow()
+        db.commit()
+        reply_text = f"✅ 你選擇了 {user_msg}"
+        line_bot_api.reply_message(reply_token, TextSendMessage(text=reply_text))
+        return
+
+    # 更新最後互動時間
+    user.last_activity_time = datetime.utcnow()
+    db.commit()
+
+    # 其他功能回覆
+    if user_msg == "紀錄消費":
+        from routes import expense_record
+        reply_text = expense_record.get_expense_summary(user_id=user_id)
+    else:
+        reply_text = function_map.get(user_msg, f"你說的是：「{user_msg}」")
+
+    line_bot_api.reply_message(reply_token, TextSendMessage(text=reply_text))
