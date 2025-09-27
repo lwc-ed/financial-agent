@@ -46,13 +46,21 @@ def handle_message(event):
     }
 
     db = SessionLocal()
-    user = db.query(User).filter_by(user_id=user_id).first()
+    user = db.query(User).filter_by(line_user_id=user_id).first()
 
     # 如果使用者不存在，就建立
     if not user:
-        user = User(user_id=user_id, current_function=None, last_activity_time=datetime.utcnow())
-        db.add(user)
-        db.commit()
+        user = User(
+            line_user_id=user_id,
+            current_function=None,
+            last_activity_time=datetime.utcnow(),
+            provider="line",
+            provider_id=user_id,
+            name="",
+            email=""
+        )
+    db.add(user)
+    db.commit()
 
     # 檢查是否超過 10 分鐘沒互動
     if user.last_activity_time and datetime.utcnow() - user.last_activity_time > timedelta(minutes=10):
