@@ -51,6 +51,19 @@ def handle_message(event):
         user.current_function = None
         db.commit()
 
+    # 功能別名對應表
+    function_alias = {
+        "紀錄消費": "功能 A",
+        "慾望清單": "功能 B",
+        "儲蓄挑戰": "功能 D",
+        "消費記錄": "功能 C",
+        "預算提醒": "功能 E"
+    }
+
+    # 如果 user_msg 在 function_alias，則轉換為對應功能
+    if user_msg in function_alias:
+        user_msg = function_alias[user_msg]
+
     # 功能對應表
     function_map = {
         "功能 A": "📊 消費分析（待接後端）",
