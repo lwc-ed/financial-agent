@@ -346,7 +346,7 @@ python3 app.py #跑主程式
 
 #---重複動作，直到測試沒問題後----
 #step4:回到自己github上 merge到main
-
+```
 
 
 # 讓branch跟main同步
