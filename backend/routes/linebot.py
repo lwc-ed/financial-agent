@@ -81,7 +81,7 @@ def handle_message(event):
         user.current_function = user_msg
         user.last_activity_time = datetime.utcnow()
         db.commit()
-        reply_text = f"✅ 你選擇了 {user_msg}"
+        reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
     elif user_msg == "紀錄消費":
         from routes import expense_record
         reply_text = expense_record.get_expense_summary(user_id=line_user_id)
