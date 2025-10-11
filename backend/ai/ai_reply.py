@@ -4,24 +4,22 @@ import os
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_reply(user_input: str, query_results: list):
-    """
-    將查詢結果轉成自然語言回覆
-    """
     if not query_results:
-        return f"找不到與「{user_input}」相關的信用卡回饋資訊 😢"
+        return f"找不到與「{user_input}」相關的信用卡回饋資訊 💳"
 
-    # 將查詢結果轉為文字
-    result_text = "\n".join([
-        f"{r['display_name']} - {r['group_name']}（{r['brand']}）：{r['reward_rate']}"
-        for r in query_results
-    ])
+    lines = []
+    for r in query_results:
+        brand_list = ', '.join(r.get('brands', []))
+        lines.append(f"🏷️ {r.get('display_name', '未知活動')}｜分類：{r.get('group_name', '未分類')}｜品牌：{brand_list}")
+
+    result_text = "\n".join(lines)
 
     prompt = f"""
     使用者問：「{user_input}」
     查詢結果如下：
     {result_text}
 
-    請用自然、親切的語氣回答使用者，清楚說明信用卡回饋。
+    請用自然、親切的語氣回答使用者，清楚說明相關信用卡回饋資訊。
     """
 
     try:
