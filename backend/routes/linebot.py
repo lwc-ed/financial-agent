@@ -2,42 +2,21 @@ from flask import Blueprint, request
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.messaging import MessagingApi, ReplyMessageRequest, TextMessage, Configuration, ApiClient
-<<<<<<< HEAD
-from backend.database import SessionLocal
-from backend.models.user import User
-from datetime import datetime, timedelta
-=======
 from database import SessionLocal
 from models.user import User
-<<<<<<< Updated upstream
->>>>>>> 26ce9af (same)
-=======
 from datetime import datetime, timedelta
 from routes.wishlist import wishlist_table
 from sqlalchemy import insert
->>>>>>> Stashed changes
 
 linebot_bp = Blueprint("linebot", __name__)
 
-<<<<<<< HEAD
-# 這裡填入你的 LINE Secret 與 Access Token
+# LINE Secret 與 Access Token
 handler = WebhookHandler("bde6ff24868fe4edeef87393ea9db525")
 configuration = Configuration(
     access_token="4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU="
 )
 api_client = ApiClient(configuration)
 line_bot_api = MessagingApi(api_client)
-
-=======
-handler = WebhookHandler("bde6ff24868fe4edeef87393ea9db525")
-<<<<<<< HEAD
-line_bot_api = MessagingApi("4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU=")
->>>>>>> 49fd979 (same)
-=======
-configuration = Configuration(access_token="4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU=")
-api_client = ApiClient(configuration)
-line_bot_api = MessagingApi(api_client)
->>>>>>> 26ce9af (same)
 
 @linebot_bp.route("/callback", methods=["POST"])
 def callback():
@@ -107,50 +86,32 @@ def handle_message(event):
     elif user_msg == "紀錄消費":
         from routes import expense_record
         reply_text = expense_record.get_expense_summary(user_id=line_user_id)
-    
-<<<<<<< Updated upstream
-    elif user_msg == "功能 B": 
-=======
     elif user_msg == "慾望清單": 
->>>>>>> Stashed changes
         user.current_function = "wishlist"
         user.last_activity_time = datetime.utcnow()
         db.commit()
         reply_text = "✍️ 請輸入欲望清單項目，格式：品項,價格\n例如：iPhone,35000"
-    
+
     elif user.current_function == "wishlist":
         try:
             item_name, price = user_msg.split(",")
-<<<<<<< Updated upstream
-            from routes.wishlist import wishlist_table
-            from sqlalchemy import insert
-            session = SessionLocal()
-            session.execute(
-=======
             db.execute(
->>>>>>> Stashed changes
                 insert(wishlist_table).values(
                     user_id=user.id,
                     item_name=item_name.strip(),
                     price=int(price.strip())
                 )
             )
-<<<<<<< Updated upstream
-            session.commit()
-            session.close()
-=======
             db.commit()
->>>>>>> Stashed changes
             reply_text = f"✅ 已新增「{item_name.strip()}」價格 {price.strip()} 元到清單！"
-            # ✅ 新增完成後重置 current_function
             user.current_function = None
             db.commit()
-
         except Exception as e:
             reply_text = f"格式錯誤，請重新輸入：品項,價格\n錯誤：{e}"
+
     else:
         reply_text = function_map.get(user_msg, f"你說的是：「{user_msg}」")
-    
+        
 
     # 更新最後互動時間
     user.last_activity_time = datetime.utcnow()
