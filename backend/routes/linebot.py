@@ -56,7 +56,7 @@ def handle_message(event):
         "紀錄消費": "功能 A",
         "慾望清單": "功能 B",
         "儲蓄挑戰": "功能 D",
-        "消費記錄": "功能 C",
+        "信用卡回饋查詢": "功能 C",
         "預算提醒": "功能 E"
     }
 
@@ -69,9 +69,8 @@ def handle_message(event):
         "功能 A": "📊 消費分析（待接後端）",
         "功能 B": "📉 支出統計（待接 DB）",
         "功能 C": "🧾 記帳紀錄（待接 DB）",
-        "功能 D": "💰 儲蓄進度（待接挑戰功能）",
+        "功能 D": "💳 信用卡回饋查詢（待接挑戰功能）",
         "功能 E": "⚠️ 預算提醒（待接分析功能）",
-        "功能 F": "📝 功能說明：A=分析 B=統計 C=紀錄 D=挑戰 E=提醒"
     }
 
     # 回覆文字
@@ -82,6 +81,16 @@ def handle_message(event):
         user.last_activity_time = datetime.utcnow()
         db.commit()
         reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
+    elif user.current_function == "功能 D":
+        from backend.ai.ai_parser import normalize_input
+        from backend.ai.benefit_query import query_benefits
+        from backend.ai.ai_reply import generate_reply
+
+        parsed = normalize_input(user_msg)
+        brand = parsed.get("brand_name")
+        category = parsed.get("category")
+        results = query_benefits(brand_name=brand, category=category)
+        reply_text = generate_reply(user_msg, results)
     elif user_msg == "紀錄消費":
         from routes import expense_record
         reply_text = expense_record.get_expense_summary(user_id=line_user_id)

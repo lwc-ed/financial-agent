@@ -349,3 +349,17 @@ git checkout feature-login
 ```
 git merge main
 ```
+
+# 使用虛擬環境
+## 建立虛擬環境
+```
+python3 -m venv venv
+```
+## 開啟虛擬環境
+```
+source venv/bin/activate
+```
+## 下載套件
+```
+pip install -r requirements.txt
+```

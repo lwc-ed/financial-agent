@@ -8,6 +8,8 @@ from routes.expense_history import expense_history_bp
 from routes.wishlist import wishlist_bp
 from routes.challenge import challenge_bp
 from routes.profile import profile_bp
+from dotenv import load_dotenv
+load_dotenv()
 
 # 建立資料表
 Base.metadata.create_all(bind=engine)
