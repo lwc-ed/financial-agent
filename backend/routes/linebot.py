@@ -81,7 +81,10 @@ def handle_message(event):
         user.current_function = user_msg
         user.last_activity_time = datetime.utcnow()
         db.commit()
-        reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
+        if user_msg == "功能 D":
+            reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
+        else:
+            reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
     elif user.current_function == "功能 D":
 
         # 測試用：功能 D 被觸發時立即回覆測試訊息
