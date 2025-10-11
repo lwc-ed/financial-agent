@@ -42,10 +42,23 @@ def query_benefits(brand_name: str = None, category: str = None):
             rows = cursor.fetchall()
             for row in rows:
                 try:
-                    brands_list = json.loads(row['brands'])
+                    raw = row['brands']
+                    # 有時候資料不是正確的 JSON 陣列格式
+                    if isinstance(raw, str):
+                        raw = raw.strip()
+                        if raw.startswith('[') and raw.endswith(']'):
+                            brands_list = json.loads(raw)
+                        else:
+                            # 若不是 JSON，就用逗號或頓號拆開
+                            brands_list = [x.strip() for x in re.split('[,、，]', raw) if x.strip()]
+                    elif isinstance(raw, list):
+                        brands_list = raw
+                    else:
+                        brands_list = []
                 except Exception as e:
                     print(f"⚠️ JSON parse error for brands in {row['display_name']}: {e}")
                     continue
+                print(f"🧩 檢查品牌：{row['display_name']} → {brands_list}")
 
                 matched_brand = False
                 matched_category = False
