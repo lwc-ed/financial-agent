@@ -2,8 +2,8 @@ from flask import Blueprint, request
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
 from linebot.v3.messaging import MessagingApi, ReplyMessageRequest, TextMessage, Configuration, ApiClient
-from database import SessionLocal
-from models.user import User
+from backend.database import SessionLocal
+from backend.models.user import User
 from datetime import datetime, timedelta
 
 linebot_bp = Blueprint("linebot", __name__)
@@ -95,7 +95,7 @@ def handle_message(event):
         category = parsed.get("category")
         results = query_benefits(brand_name=brand, category=category)
         reply_text = generate_reply(user_msg, results)
-        
+
     elif user_msg == "紀錄消費":
         from routes import expense_record
         reply_text = expense_record.get_expense_summary(user_id=line_user_id)
