@@ -1,7 +1,7 @@
-import openai
-import os, json
+from openai import OpenAI
+import os, json, re
 
-openai.api_key = os.getenv("OPENAI_API_KEY")
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def normalize_input(user_input: str):
     """
@@ -15,7 +15,8 @@ def normalize_input(user_input: str):
     """
     prompt = f"""
     使用者輸入：「{user_input}」
-    請幫我判斷並輸出 JSON 格式：
+    請幫我判斷並輸出「純 JSON 格式」，不要加任何說明文字：
+    若無法確定意圖，請預設 intent 為 "查詢回饋"。
     {{
       "brand_name": <如果是品牌或商場請填正式名稱，否則 null>,
       "category": <如果是通路類別請填，如"餐飲通路"、"百貨通路"、"加油通路"，否則 null>,
@@ -24,13 +25,25 @@ def normalize_input(user_input: str):
     """
 
     try:
-        response = openai.ChatCompletion.create(
+        response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2
         )
         text = response.choices[0].message.content.strip()
-        return json.loads(text)
+
+        # 🧹 用正則擷取出 { ... } 的 JSON 內容
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            text = match.group(0)
+        else:
+            print("⚠️ GPT 回傳非 JSON 格式:", text)
+
+        result = json.loads(text)
+        print("✅ 解析成功：", result)
+        return result
+
     except Exception as e:
         print("normalize_input error:", e)
+        print("原始文字回傳：", locals().get("text", "無內容"))
         return {"brand_name": None, "category": None, "intent": "查詢回饋"}
