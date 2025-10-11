@@ -3,6 +3,7 @@ from flask_cors import CORS
 from backend.database import engine, Base
 from backend.routes.auth import auth_bp
 from backend.routes.linebot import linebot_bp
+# from backend.linebot_handler import linebot_bp  # 舊版 handler 已註解
 from backend.routes.expense_record import expense_record_bp
 from backend.routes.expense_history import expense_history_bp
 from backend.routes.wishlist import wishlist_bp
@@ -17,6 +18,7 @@ Base.metadata.create_all(bind=engine)
 app = Flask(__name__)
 CORS(app)
 
+# ✅ 使用新版 LINE Bot (linebot.v3) Blueprint
 # 註冊 Blueprint
 app.register_blueprint(auth_bp)
 app.register_blueprint(linebot_bp)

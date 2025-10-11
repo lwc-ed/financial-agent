@@ -1,3 +1,4 @@
+"""
 # linebot_handler.py
 from flask import Blueprint, request, abort
 from linebot import LineBotApi, WebhookHandler
@@ -96,3 +97,4 @@ def handle_message(event):
         reply_text = function_map.get(user_msg, f"你說的是：「{user_msg}」")
 
     line_bot_api.reply_message(reply_token, TextSendMessage(text=reply_text))
+"""
