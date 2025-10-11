@@ -1,13 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
 from backend.database import engine, Base
-from routes.auth import auth_bp
-from routes.linebot import linebot_bp
-from routes.expense_record import expense_record_bp
-from routes.expense_history import expense_history_bp
-from routes.wishlist import wishlist_bp
-from routes.challenge import challenge_bp
-from routes.profile import profile_bp
+from backend.routes.auth import auth_bp
+from backend.routes.linebot import linebot_bp
+from backend.routes.expense_record import expense_record_bp
+from backend.routes.expense_history import expense_history_bp
+from backend.routes.wishlist import wishlist_bp
+from backend.routes.challenge import challenge_bp
+from backend.routes.profile import profile_bp
 from dotenv import load_dotenv
 load_dotenv()
 
