@@ -1,6 +1,6 @@
 from flask import Blueprint, request, redirect, render_template, jsonify, session
 import requests, jwt
-from database import SessionLocal
+from backend.database import SessionLocal
 from models.user import User
 
 auth_bp = Blueprint("auth", __name__)
