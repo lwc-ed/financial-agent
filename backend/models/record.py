@@ -1,7 +1,7 @@
 # backend/models/record.py
 from sqlalchemy import Column, Integer, String, DateTime
 from sqlalchemy.sql import func
-from database import Base   # 從 database.py 匯入 Base
+from backend.database import Base   # 從 database.py 匯入 Base
 
 class Record(Base):
     __tablename__ = "records"

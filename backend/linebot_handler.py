@@ -4,7 +4,7 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from datetime import datetime, timedelta
-from database import SessionLocal
+from backend.database import SessionLocal
 from models.user import User  # 假設你有 User model
 
 
@@ -90,7 +90,7 @@ def handle_message(event):
 
     # 其他功能回覆
     if user_msg == "紀錄消費":
-        from routes import expense_record
+        from backend.routes import expense_record
         reply_text = expense_record.get_expense_summary(user_id=user_id)
     else:
         reply_text = function_map.get(user_msg, f"你說的是：「{user_msg}」")

@@ -97,7 +97,7 @@ def handle_message(event):
         reply_text = generate_reply(user_msg, results)
 
     elif user_msg == "紀錄消費":
-        from routes import expense_record
+        from backend.routes import expense_record
         reply_text = expense_record.get_expense_summary(user_id=line_user_id)
     else:
         reply_text = function_map.get(user_msg, f"你說的是：「{user_msg}」")
