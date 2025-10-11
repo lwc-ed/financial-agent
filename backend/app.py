@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-from database import engine, Base
+from backend.database import engine, Base
 from routes.auth import auth_bp
 from routes.linebot import linebot_bp
 from routes.expense_record import expense_record_bp
