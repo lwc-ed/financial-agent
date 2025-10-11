@@ -9,7 +9,13 @@ from datetime import datetime, timedelta
 =======
 from database import SessionLocal
 from models.user import User
+<<<<<<< Updated upstream
 >>>>>>> 26ce9af (same)
+=======
+from datetime import datetime, timedelta
+from routes.wishlist import wishlist_table
+from sqlalchemy import insert
+>>>>>>> Stashed changes
 
 linebot_bp = Blueprint("linebot", __name__)
 
@@ -102,7 +108,11 @@ def handle_message(event):
         from routes import expense_record
         reply_text = expense_record.get_expense_summary(user_id=line_user_id)
     
+<<<<<<< Updated upstream
     elif user_msg == "功能 B": 
+=======
+    elif user_msg == "慾望清單": 
+>>>>>>> Stashed changes
         user.current_function = "wishlist"
         user.last_activity_time = datetime.utcnow()
         db.commit()
@@ -111,18 +121,26 @@ def handle_message(event):
     elif user.current_function == "wishlist":
         try:
             item_name, price = user_msg.split(",")
+<<<<<<< Updated upstream
             from routes.wishlist import wishlist_table
             from sqlalchemy import insert
             session = SessionLocal()
             session.execute(
+=======
+            db.execute(
+>>>>>>> Stashed changes
                 insert(wishlist_table).values(
                     user_id=user.id,
                     item_name=item_name.strip(),
                     price=int(price.strip())
                 )
             )
+<<<<<<< Updated upstream
             session.commit()
             session.close()
+=======
+            db.commit()
+>>>>>>> Stashed changes
             reply_text = f"✅ 已新增「{item_name.strip()}」價格 {price.strip()} 元到清單！"
             # ✅ 新增完成後重置 current_function
             user.current_function = None

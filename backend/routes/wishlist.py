@@ -29,7 +29,11 @@ def add_wishlist():
     data = request.json
     line_user_id = data.get("line_user_id")
     item_name = data.get("item_name")
+<<<<<<< Updated upstream
     price = data.get("price")
+=======
+    price = int(data.get("price"))
+>>>>>>> Stashed changes
 
     if not line_user_id or not item_name or not price:
         return jsonify({"status": "error", "message": "缺少必要欄位"}), 400
@@ -91,4 +95,8 @@ def list_wishlist():
         for r in rows
     ]
     session.close()
+<<<<<<< Updated upstream
     return jsonify({"status": "ok", "data": result}), 200
+=======
+    return jsonify({"status": "ok", "data": result}), 200
+>>>>>>> Stashed changes
