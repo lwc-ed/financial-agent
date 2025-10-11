@@ -358,6 +358,7 @@ python3 -m venv venv
 ## 開啟虛擬環境
 ```
 source venv/bin/activate
+python3 -m backend.app
 ```
 ## 下載套件
 ```
