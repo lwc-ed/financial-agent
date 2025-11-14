@@ -364,3 +364,6 @@ python3 -m backend.app
 ```
 pip install -r requirements.txt
 ```
+
+## 還要修改內容
+ai資料夾裡的ai_query尋找邏輯還要再改，ai_parser也還要再改
