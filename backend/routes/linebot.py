@@ -25,6 +25,44 @@ def callback():
     return "OK"
 
 
+def process_credit_card_query(user_msg):
+    """
+    信用卡回饋查詢主流程：
+    1. GPT 解析意圖與正規化品牌
+    2. DB Fulltext Search 查回饋
+    3. 整理 summary
+    4. AI Reply 模組生成回應
+    """
+    from backend.ai.ai_parser import normalize_input
+    from backend.ai.benefit_query import query_benefits
+    from backend.ai.format_benefit_summary import build_summary
+    from backend.ai.ai_reply import generate_reply
+
+
+
+
+    # Step 1：解析輸入
+    parsed = normalize_input(user_msg)
+    brand = parsed.get("brand_name")
+    category = parsed.get("category")
+    candidates = parsed.get("candidates", [])
+
+    # Step 2：查 DB
+    results = query_benefits(
+        brand_name=brand,
+        category=category,
+        candidates=candidates
+    )
+
+    # Step 3：生成 summary
+    summary = build_summary(parsed, results)
+    reply_text = generate_reply(user_msg, results, summary)
+
+    # Step 4：AI 最終回覆
+    reply_text = generate_reply(user_msg, results, summary)
+
+    return reply_text
+
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     line_user_id = event.source.user_id
@@ -89,16 +127,8 @@ def handle_message(event):
 
         # 測試用：功能 D 被觸發時立即回覆測試訊息
         print("👉 功能 D 已啟動，收到使用者輸入 =", user_msg)
-        
-        from backend.ai.ai_parser import normalize_input
-        from backend.ai.benefit_query import query_benefits
-        from backend.ai.ai_reply import generate_reply
 
-        parsed = normalize_input(user_msg)
-        brand = parsed.get("brand_name")
-        category = parsed.get("category")
-        results = query_benefits(brand_name=brand, category=category)
-        reply_text = generate_reply(user_msg, results)
+        reply_text = process_credit_card_query(user_msg)
 
     elif user_msg == "紀錄消費":
         from backend.routes import expense_record

@@ -146,7 +146,7 @@ def main():
     db = SessionLocal() # 先建立資料庫 Session 連線
 
     # 先清空資料表
-    db.execute(text("TRUNCATE TABLE cube_benefits;"))
+    db.execute(text("TRUNCATE TABLE credit_card_benefits.cube_benefits;"))
     db.commit()
     print("⚠️ 已清空舊資料（開始重新寫入）")
 
