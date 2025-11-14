@@ -56,7 +56,6 @@ def process_credit_card_query(user_msg):
 
     # Step 3：生成 summary
     summary = build_summary(parsed, results)
-    reply_text = generate_reply(user_msg, results, summary)
 
     # Step 4：AI 最終回覆
     reply_text = generate_reply(user_msg, results, summary)
@@ -125,10 +124,26 @@ def handle_message(event):
             reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
     elif user.current_function == "功能 D":
 
-        # 測試用：功能 D 被觸發時立即回覆測試訊息
         print("👉 功能 D 已啟動，收到使用者輸入 =", user_msg)
 
-        reply_text = process_credit_card_query(user_msg)
+        # ⭐ 第 1 段：立即回覆避免 LINE Timeout
+        line_bot_api.reply_message(
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[TextMessage(text="🔍 正在為您查詢中，請稍候…")]
+            )
+        )
+
+        # ⭐ 第 2 段：後台執行真正查詢
+        final_reply = process_credit_card_query(user_msg)
+
+        # ⭐ 第 3 段：push 第二段訊息（查詢結果）
+        line_bot_api.push_message(
+            to=line_user_id,
+            messages=[TextMessage(text=final_reply)]
+        )
+
+        return   # ⚠️ 不要再往下執行
 
     elif user_msg == "紀錄消費":
         from backend.routes import expense_record
