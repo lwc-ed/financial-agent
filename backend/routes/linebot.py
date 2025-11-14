@@ -138,9 +138,13 @@ def handle_message(event):
         final_reply = process_credit_card_query(user_msg)
 
         # ⭐ 第 3 段：push 第二段訊息（查詢結果）
+        from linebot.v3.messaging import PushMessageRequest
+
         line_bot_api.push_message(
-            to=line_user_id,
-            messages=[TextMessage(text=final_reply)]
+            PushMessageRequest(
+                to=line_user_id,
+                messages=[TextMessage(text=final_reply)]
+            )
         )
 
         return   # ⚠️ 不要再往下執行
