@@ -139,12 +139,11 @@ def main():
     print("✅ 已將結果寫入 cube_benefits_list.json")
 
     # === 寫入 MySQL 資料庫 ===
-    from backend.database import SessionLocal
+    from backend.database import SessionBenefit
     from backend.models.cube_benefits_model import CubeBenefit
     from sqlalchemy import text
 
-    db = SessionLocal() # 先建立資料庫 Session 連線
-
+    db = SessionBenefit()
     # 先清空資料表
     db.execute(text("TRUNCATE TABLE credit_card_benefits.cube_benefits;"))
     db.commit()
