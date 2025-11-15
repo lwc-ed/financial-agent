@@ -34,7 +34,7 @@ def generate_reply(user_input: str, query_results: list, summary: str):
         card = r.get("card_name", "未知卡片")
         rate = r.get("reward_rate") or "（尚未提供）"
         display = r.get("display_name") or "（無項目名稱）"
-        return f"{bank} {card}：{display}（{rate}）"
+        return f"{display} — {bank} {card}：{rate}"
 
     best_text = format_item(best)
     others_text = "\n".join(format_item(r) for r in others) if others else "無"

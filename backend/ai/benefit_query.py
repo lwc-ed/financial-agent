@@ -11,51 +11,22 @@ print("BENEFIT_DB_URL =", os.getenv("BENEFIT_DB_URL"))
 
 BANK_CARD_MAP = {
     "cube_benefits": ("國泰世華", "CUBE 卡"),
-    # 之後如果有其他表，例如 "esun_ubear_benefits": ("玉山銀行", "Ubear 卡")
 }
 
-# ===========================
-# 共用：解析 MySQL URL
-# ===========================
+# ---------------------------
+# 解析 MySQL URL
+# ---------------------------
 def parse_mysql_url(url):
     pattern = r"mysql\+?pymysql?:\/\/(.*?):(.*?)@(.*?):(\d+)\/(.*)"
     match = re.match(pattern, url)
     if not match:
-        print("❌ 解析失敗：URL 格式錯誤 →", url)
+        print("❌ URL 格式錯誤 →", url)
         return None
     return match.groups()
 
-# ===========================
-# 連線 MAIN_DB（目前可能暫時沒用到，先保留）
-# ===========================
-def get_main_db_connection():
-    url = os.getenv("MAIN_DB_URL")
-    if not url:
-        print("❌ MAIN_DB_URL 未設定")
-        return None
-
-    parsed = parse_mysql_url(url)
-    if not parsed:
-        return None
-
-    user, password, host, port, db = parsed
-    try:
-        return pymysql.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db,
-            port=int(port),
-            charset='utf8mb4',
-            cursorclass=pymysql.cursors.DictCursor
-        )
-    except Exception as e:
-        print("❌ 無法連線 MAIN DB:", e)
-        return None
-
-# ===========================
-# 連線 credit_card_benefits DB
-# ===========================
+# ---------------------------
+# 連 Benefit DB
+# ---------------------------
 def get_benefit_db_connection():
     url = os.getenv("BENEFIT_DB_URL")
     if not url:
@@ -67,6 +38,7 @@ def get_benefit_db_connection():
         return None
 
     user, password, host, port, db = parsed
+
     try:
         return pymysql.connect(
             host=host,
@@ -74,109 +46,135 @@ def get_benefit_db_connection():
             password=password,
             database=db,
             port=int(port),
-            charset='utf8mb4',
+            charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor
         )
     except Exception as e:
         print("❌ 無法連線 BENEFIT DB:", e)
         return None
 
-# ===========================
-# 建 FTS 查詢字串
-# ===========================
-def build_fts_query(brand_name, category, candidates):
-    keywords = []
-
-    if brand_name:
-        keywords.append(brand_name)
-
-    if category:
-        keywords.append(category)
-
-    if candidates:
-        for c in candidates:
-            bn = c.get("brand_name")
-            if bn:
-                keywords.append(bn)
-
-    # 轉成 FTS boolean 模式："關鍵詞*"
-    return " ".join([f'"{k}*"' for k in keywords if k])
-
-# ===========================
-# 核心：查詢信用卡回饋（目前先只查 cube_benefits）
-# ===========================
+# ---------------------------
+# 主搜尋：FTS → fallback LIKE
+# ---------------------------
 def query_benefits(brand_name=None, category=None, candidates=None):
     conn = get_benefit_db_connection()
     if not conn:
         return []
 
-    fts_query = build_fts_query(brand_name, category, candidates)
-    if not fts_query:
-        return []
+    # ---- 先組 keyword 搜尋列表（依 AI parser 排序） ----
+    search_keys = []
 
-    # 目前只有 cube_benefits，一張卡一個 table 的第一版
-    # 使用你在 cube_benefits 上建好的 FULLTEXT(display_name, group_name, brands_text, reward_rate)
-    sql = """
-        SELECT
-            display_name,
-            group_name,
-            brands_text AS brands,
-            reward_rate,
-            'cube_benefits' AS source_table,
-            MATCH(display_name, group_name, brands_text, reward_rate)
-                AGAINST (%s IN BOOLEAN MODE) AS score
-        FROM cube_benefits
-        WHERE MATCH(display_name, group_name, brands_text, reward_rate)
-                AGAINST (%s IN BOOLEAN MODE)
-        ORDER BY score DESC
-        LIMIT 50;
-    """
+    if candidates:
+        for c in candidates:
+            bn = c.get("brand_name")
+            if bn:
+                search_keys.append(bn)
 
-    results = []
-    try:
+    if brand_name and brand_name not in search_keys:
+        search_keys.insert(0, brand_name)
+
+    # ---------------------------
+    # FTS 搜尋
+    # ---------------------------
+    def fts_search(keyword):
+        sql = """
+            SELECT
+                display_name,
+                group_name,
+                brands_text AS brands,
+                reward_rate,
+                'cube_benefits' AS source_table,
+                MATCH(display_name, group_name, brands_text)
+                    AGAINST (%s IN BOOLEAN MODE) AS score
+            FROM cube_benefits
+            WHERE MATCH(display_name, group_name, brands_text)
+                    AGAINST (%s IN BOOLEAN MODE)
+            ORDER BY score DESC
+            LIMIT 50;
+        """
+
+        key = f"\"{keyword}*\""
+
         with conn.cursor() as cursor:
-            cursor.execute(sql, (fts_query, fts_query))
-            rows = cursor.fetchall()
+            cursor.execute(sql, (key, key))
+            return cursor.fetchall()
 
-            for row in rows:
-                raw = row["brands"]
-                # brands_text 裡通常長得像 ["國內餐飲(不含餐券)", "連鎖速食－麥當勞"]
-                try:
-                    if isinstance(raw, str) and raw.startswith("[") and raw.endswith("]"):
-                        brands_list = json.loads(raw)
-                    else:
-                        brands_list = [b.strip() for b in re.split("[,、，]", raw)] if isinstance(raw, str) else []
-                except Exception:
-                    brands_list = []
+    # ---------------------------
+    # LIKE fallback
+    # ---------------------------
+    def like_search(keyword):
+        sql = """
+            SELECT
+                display_name,
+                group_name,
+                brands_text AS brands,
+                reward_rate,
+                'cube_benefits' AS source_table,
+                0 AS score
+            FROM cube_benefits
+            WHERE brands_text LIKE %s
+            LIMIT 50;
+        """
 
-                bank, card = BANK_CARD_MAP.get(row.get("source_table"), ("未知銀行", "未知卡片"))
+        pat = f"%{keyword}%"
 
-                results.append({
-                    "display_name": row["display_name"],
-                    "group_name": row["group_name"],
-                    "brands": brands_list,
-                    "reward_rate": row["reward_rate"],
-                    "bank": bank,
-                    "card_name": card,
-                    "source_table": row.get("source_table"),
-                    "score": row["score"],
-                })
-        return results
+        with conn.cursor() as cursor:
+            cursor.execute(sql, (pat,))
+            return cursor.fetchall()
 
-    except Exception as e:
-        print("❌ FTS 查詢錯誤:", e)
-        return []
+    # ---------------------------
+    # 主搜尋流程
+    # ---------------------------
+    final_results = []
 
-    finally:
-        conn.close()
+    for kw in search_keys:
+        # 1️⃣ 先試 FTS
+        fts_rows = fts_search(kw)
+        if fts_rows:
+            final_results.extend(fts_rows)
+            continue
 
-# ===========================
-# 從 DB 反查品牌 → 做 parser fallback 用
-# ===========================
+        # 2️⃣ 若找不到 → LIKE fallback
+        like_rows = like_search(kw)
+        if like_rows:
+            final_results.extend(like_rows)
+
+    conn.close()
+
+    # ---------------------------
+    # 後處理：轉成統一格式
+    # ---------------------------
+    results = []
+    for row in final_results:
+        raw = row["brands"]
+        try:
+            brands_list = json.loads(raw) if raw.startswith("[") else [raw]
+        except:
+            brands_list = [raw]
+
+        bank, card = BANK_CARD_MAP.get("cube_benefits", ("未知銀行", "未知卡片"))
+
+        results.append({
+            "display_name": row["display_name"],
+            "group_name": row["group_name"],
+            "brands": brands_list,
+            "reward_rate": row["reward_rate"],
+            "bank": bank,
+            "card_name": card,
+            "source_table": "cube_benefits",
+            "score": row["score"],
+        })
+
+    return results
+
+# ---------------------------
+# parser fallback 查詢品牌
+# ---------------------------
 def find_brand_in_db(keyword):
     conn = get_benefit_db_connection()
     if not conn:
         return None
+
     try:
         with conn.cursor() as cursor:
             sql = "SELECT display_name, group_name, brands FROM cube_benefits"
@@ -185,11 +183,11 @@ def find_brand_in_db(keyword):
 
             for row in rows:
                 try:
-                    brands_list = json.loads(row["brands"])
-                except Exception:
+                    bl = json.loads(row["brands"])
+                except:
                     continue
 
-                for b in brands_list:
+                for b in bl:
                     if keyword.lower() in b.lower():
                         return {
                             "brand_name": b,
