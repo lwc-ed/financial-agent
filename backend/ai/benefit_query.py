@@ -11,6 +11,9 @@ print("BENEFIT_DB_URL =", os.getenv("BENEFIT_DB_URL"))
 
 BANK_CARD_MAP = {
     "cube_benefits": ("國泰世華", "CUBE 卡"),
+    "ctbc_linepay_benefits": ("中國信託", "LinePay 信用卡"),
+    "ctbc_linepay_debit_benefits": ("中國信託", "LinePay 簽帳卡"),
+    # ---【新增資料表時必改：在此加入新 table 對應的銀行/卡名】---
 }
 
 # ---------------------------
@@ -77,50 +80,84 @@ def query_benefits(brand_name=None, category=None, candidates=None):
     # FTS 搜尋
     # ---------------------------
     def fts_search(keyword):
-        sql = """
-            SELECT
-                display_name,
-                group_name,
-                brands_text AS brands,
-                reward_rate,
-                'cube_benefits' AS source_table,
-                MATCH(display_name, group_name, brands_text)
-                    AGAINST (%s IN BOOLEAN MODE) AS score
-            FROM cube_benefits
-            WHERE MATCH(display_name, group_name, brands_text)
-                    AGAINST (%s IN BOOLEAN MODE)
-            ORDER BY score DESC
-            LIMIT 50;
-        """
-
         key = f"\"{keyword}*\""
-
+        # ---【新增資料表時必改：在此新增 FTS 查詢 SQL】---
+        sql_list = [
+            ("cube_benefits",
+             """
+             SELECT display_name, group_name, brands_text AS brands,
+                    reward_rate, 'cube_benefits' AS source_table,
+                    MATCH(display_name, group_name, brands_text)
+                        AGAINST (%s IN BOOLEAN MODE) AS score
+             FROM cube_benefits
+             WHERE MATCH(display_name, group_name, brands_text)
+                        AGAINST (%s IN BOOLEAN MODE)
+             """),
+            ("ctbc_linepay_benefits",
+             """
+             SELECT display_name, group_name, brands AS brands,
+                    reward_rate, 'ctbc_linepay_benefits' AS source_table,
+                    0 AS score
+             FROM ctbc_linepay_benefits
+             WHERE group_name LIKE %s
+             """),
+            ("ctbc_linepay_debit_benefits",
+             """
+             SELECT display_name, group_name, brands AS brands,
+                    reward_rate, 'ctbc_linepay_debit_benefits' AS source_table,
+                    0 AS score
+             FROM ctbc_linepay_debit_benefits
+             WHERE group_name LIKE %s
+             """)
+        ]
+        results = []
         with conn.cursor() as cursor:
-            cursor.execute(sql, (key, key))
-            return cursor.fetchall()
+            for tbl, sql in sql_list:
+                if tbl == "cube_benefits":
+                    cursor.execute(sql, (key, key))
+                else:
+                    cursor.execute(sql, (f"%{keyword}%",))
+                results.extend(cursor.fetchall())
+        return results
 
     # ---------------------------
     # LIKE fallback
     # ---------------------------
     def like_search(keyword):
-        sql = """
-            SELECT
-                display_name,
-                group_name,
-                brands_text AS brands,
-                reward_rate,
-                'cube_benefits' AS source_table,
-                0 AS score
-            FROM cube_benefits
-            WHERE brands_text LIKE %s
-            LIMIT 50;
-        """
-
         pat = f"%{keyword}%"
-
+        # ---【新增資料表時必改：在此新增 LIKE fallback 查詢 SQL】---
+        sql_list = [
+            ("cube_benefits",
+             """
+             SELECT display_name, group_name, brands_text AS brands,
+                    reward_rate, 'cube_benefits' AS source_table,
+                    0 AS score
+             FROM cube_benefits
+             WHERE brands_text LIKE %s
+             """),
+            ("ctbc_linepay_benefits",
+             """
+             SELECT display_name, group_name, brands AS brands,
+                    reward_rate, 'ctbc_linepay_benefits' AS source_table,
+                    0 AS score
+             FROM ctbc_linepay_benefits
+             WHERE group_name LIKE %s
+             """),
+            ("ctbc_linepay_debit_benefits",
+             """
+             SELECT display_name, group_name, brands AS brands,
+                    reward_rate, 'ctbc_linepay_debit_benefits' AS source_table,
+                    0 AS score
+             FROM ctbc_linepay_debit_benefits
+             WHERE group_name LIKE %s
+             """)
+        ]
+        results = []
         with conn.cursor() as cursor:
-            cursor.execute(sql, (pat,))
-            return cursor.fetchall()
+            for tbl, sql in sql_list:
+                cursor.execute(sql, (pat,))
+                results.extend(cursor.fetchall())
+        return results
 
     # ---------------------------
     # 主搜尋流程
@@ -148,11 +185,12 @@ def query_benefits(brand_name=None, category=None, candidates=None):
     for row in final_results:
         raw = row["brands"]
         try:
-            brands_list = json.loads(raw) if raw.startswith("[") else [raw]
+            brands_list = json.loads(raw) if raw and isinstance(raw, str) and raw.startswith("[") else [raw]
         except:
             brands_list = [raw]
 
-        bank, card = BANK_CARD_MAP.get("cube_benefits", ("未知銀行", "未知卡片"))
+        # ---【新增資料表時必改：必須在 BANK_CARD_MAP 補上新表】---
+        bank, card = BANK_CARD_MAP.get(row["source_table"], ("未知銀行", "未知卡片"))
 
         results.append({
             "display_name": row["display_name"],
@@ -161,7 +199,7 @@ def query_benefits(brand_name=None, category=None, candidates=None):
             "reward_rate": row["reward_rate"],
             "bank": bank,
             "card_name": card,
-            "source_table": "cube_benefits",
+            "source_table": row["source_table"],
             "score": row["score"],
         })
 
@@ -177,6 +215,7 @@ def find_brand_in_db(keyword):
 
     try:
         with conn.cursor() as cursor:
+            # ---【如需支援新資料表搜尋，需在此加入新表 SELECT】---
             sql = "SELECT display_name, group_name, brands FROM cube_benefits"
             cursor.execute(sql)
             rows = cursor.fetchall()

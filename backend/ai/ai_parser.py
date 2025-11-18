@@ -26,12 +26,18 @@ def normalize_input(user_input: str):
     # ---- 只固定不可改的詞（如 ChatGPT / GPT） ----
     if lower in NORMALIZE_MAP:
         normalized = NORMALIZE_MAP[lower]
-        return {
+        result = {
             "brand_name": normalized,
             "candidates": [
                 {"brand_name": normalized, "score": 1.0}
             ]
         }
+
+        # ---- 強制加入 fallback ----
+        fallback = {"brand_name": "國內外一般消費", "score": 0.5}
+        result["candidates"].append(fallback)
+
+        return result
 
     # ===========================================================
     # 🔥 GPT 多候選解析 Prompt（強化版）
@@ -51,13 +57,15 @@ def normalize_input(user_input: str):
 1. 這一鍋（score 1.0）
 2. 這一鍋餐飲（score 0.85）
 3. 國內餐飲（score 0.6）
+4. 國內外一般消費（score 0.5）
 
 使用者：「巨城」
 候選：
 1. BIG CITY 遠東巨城購物中心（score 1.0）
 2. 遠東巨城百貨（score 0.85）
 3. 遠東百貨（score 0.7）
-4. 百貨通路（score 0.4）
+4. 百貨通路（score 0.6）
+5. 國內外一般消費（score 0.5）
 
 【使用者輸入】
 "{text}"
@@ -93,6 +101,11 @@ def normalize_input(user_input: str):
 
         if result["candidates"] and not result.get("brand_name"):
             result["brand_name"] = result["candidates"][0].get("brand_name")
+        
+        # ---- 強制加入 fallback "國內外一般消費" ----
+        fallback = {"brand_name": "國內外一般消費", "score": 0.5}
+        if not any(c.get("brand_name") == "國內外一般消費" for c in result["candidates"]):
+            result["candidates"].append(fallback)
 
         print("✅ Parser 結果：", result)
         return result

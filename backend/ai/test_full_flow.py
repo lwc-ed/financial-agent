@@ -39,10 +39,14 @@ def run_test(user_input):
 
 # ======== 測試案例 ========
 
+
 run_test("ChatGPT")
 run_test("GPT")
 run_test("西提")
 run_test("巨城")
 run_test("kkbox")
-run_test("這一鍋")
 run_test("好樂迪")
+"""
+run_test("這一鍋")
+
+"""

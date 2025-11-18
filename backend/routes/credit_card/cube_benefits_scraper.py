@@ -90,6 +90,21 @@ def list_benefits(node):
     return benefits
     # 回傳 { 方案名稱: 對應 anchor } 的字典
 
+def split_group_and_rate(group_name: str):
+    """
+    從 group_name 拆出純群組名稱與 reward_rate。
+    如果沒有回饋％，則 reward_rate = "2%".
+    """
+    # 找結尾是「數字 + %」的情況，像：10%, 5%
+    match = re.match(r"(.+?)\s*([0-9]+%?)$", group_name)
+    if match:
+        pure_group = match.group(1).strip()
+        rate = match.group(2).strip()
+        return pure_group, rate
+    
+    # 找不到回饋 -> 給預設 2%
+    return group_name.strip(), "2%"
+
 def main():
     data = fetch_json(MODEL_URL)
     # 抓下整份 JSON（頁面模型）
@@ -153,11 +168,13 @@ def main():
 
     for display_name, group_data in all_outputs.items():
         for group_name, brands in group_data.items():
+            pure_group, reward_rate = split_group_and_rate(group_name)
+
             record = CubeBenefit(
                 display_name=display_name,
-                group_name=group_name,
+                group_name=pure_group,
                 brands=brands,
-                reward_rate=None  # 目前還沒爬回饋％數，先留空
+                reward_rate=reward_rate
             )
             records.append(record)
 
