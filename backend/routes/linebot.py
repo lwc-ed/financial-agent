@@ -93,7 +93,7 @@ def handle_message(event):
     # 功能別名對應表
     function_alias = {
         "個人資料填寫": "功能 A",
-        "欲望清單": "功能 B",
+        "慾望清單": "功能 B",
         "紀錄消費": "功能 C",
         "信用卡回饋查詢": "功能 D",
         "儲蓄挑戰": "功能 E"
@@ -106,7 +106,7 @@ def handle_message(event):
     # 功能對應表
     function_map = {
         "功能 A": "📊 個人資料填寫（待接後端）",
-        "功能 B": "📉 欲望清單（待接 DB）",
+        "功能 B": "📉 慾望清單（待接 DB）",
         "功能 C": "🧾 記帳紀錄（待接 DB）",
         "功能 D": "💳 信用卡回饋查詢（AI+DB搜尋回饋）",
         "功能 E": "⚠️ 儲蓄挑戰（待接分析功能）",
@@ -122,10 +122,10 @@ def handle_message(event):
         if user_msg == "功能 D":
             reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
         elif user_msg == "功能 B":
-            print("進入欲望清單模式")
+            print("進入慾望清單模式")
             user.current_function = "wishlist"  # 強制轉為 wishlist 狀態
             db.commit()
-            reply_text = "✍️ 請輸入欲望清單項目，格式：品項,價格\n例如：iPhone,35000"
+            reply_text = "✍️ 請輸入慾望清單項目，格式：品項,價格\n例如：iPhone,35000"
         else:
             reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
     elif user.current_function == "功能 D":
@@ -155,7 +155,7 @@ def handle_message(event):
         return   # ⚠️ 不要再往下執行
 
     elif user.current_function == "wishlist":
-        print(f"處理欲望清單輸入: {user_msg}")
+        print(f"處理慾望清單輸入: {user_msg}")
         try:
             # 處理中英文逗號
             separator = "," if "," in user_msg else "，"

@@ -83,7 +83,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=0, width=833, height=843),
-                action=MessageAction(label="B", text="你媽")
+                action=MessageAction(label="B", text="欲望清單")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=1666, y=0, width=834, height=1686),
@@ -93,7 +93,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             # 下兩個區域
             RichMenuArea(
                 bounds=RichMenuBounds(x=0, y=843, width=833, height=843),
-                action=MessageAction(label="D", text="信用卡回饋查")
+                action=MessageAction(label="D", text="信用卡回饋查詢")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=843, width=833, height=843),
