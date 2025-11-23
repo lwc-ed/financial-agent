@@ -273,7 +273,6 @@ GET /posts/{post_id}
 #刪除文章
 ```bash
 DELETE /posts/{post_id}
-<<<<<<< HEAD
 ```
 
 
@@ -327,4 +326,70 @@ SHOW TABLES;
 -- 查使用者資料
 SELECT * FROM users;
 ```
+在EC2在自己的branch上測試自己的branch置否寫對（測試完再merge到main）
+```
+#step1:先在本地寫完程式
+git push
 
+#step2:進EC2
+ssh ubuntu@3.21.167.93
+cd financial-agent
+git checkout 自己的branch
+
+#範例： git checkout feature-login
+
+#step3: 更新repo
+git pull
+cd backend
+python3 app.py #跑主程式
+
+#---重複動作，直到測試沒問題後----
+#step4:回到自己github上 merge到main
+```
+
+
+# 讓branch跟main同步
+# 先確保 main 的遠端更新有拉到本地
+```
+git fetch origin
+```
+# 切換到 main
+```
+git checkout main
+```
+# 把遠端 main 的更新合併到本地 main
+```
+git pull origin main
+```
+# 再切回 feature-login
+```
+git checkout feature-login
+```
+# 如果要把 main 的最新更新合併進來
+```
+git merge main
+```
+
+# 使用虛擬環境
+## 建立虛擬環境
+```
+python3 -m venv venv
+```
+## 開啟虛擬環境
+```
+source venv/bin/activate
+python3 -m backend.app
+```
+## 下載套件
+```
+pip install -r requirements.txt
+```
+
+## 還要修改內容
+ai資料夾裡的ai_query尋找邏輯還要再改，ai_parser也還要再改
+
+## 進虛擬環境
+```
+python3 -m backend.routes.credit_card.cube_benefits_scraper ##爬蟲
+python3 backend/ai/test_full_flow.py ##測試檔
+```

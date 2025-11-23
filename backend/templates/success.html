@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登入成功</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      flex-direction: column;
+    }
+    h2 {
+      font-size: 1.8rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎉 歡迎使用我們的 AI Agent 🎉</h2>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script>
+    async function main() {
+      await liff.init({ liffId: "2008065321-vlAGLNjW" });
+
+      if (!liff.isLoggedIn()) {
+        liff.login();
+        return;
+      }
+
+      const profile = await liff.getProfile();
+      const lineUserId = profile.userId;
+      const googleId = "{{ google_id }}";
+
+      await fetch("https://financial-agent.it.com/bind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lineUserId, googleId })
+      });
+
+      document.body.insertAdjacentHTML("beforeend", "<h3>✅ 登入完成，請回到 LINE 聊天室繼續使用！</h3>");
+    }
+
+    main();
+  </script>
+</body>
+</html>

@@ -18,8 +18,8 @@ def save_expense():
 from flask import Blueprint, request, jsonify
 import re
 
-from database import SessionLocal
-from models.record import Record
+from backend.database import SessionLocal
+from backend.models.record import Record
 
 expense_record_bp = Blueprint("expense_record", __name__)
 

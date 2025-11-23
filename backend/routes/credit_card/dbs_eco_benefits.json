@@ -1,0 +1,146 @@
+[
+  {
+    "display_name": "level1-星展eco永續極簡卡",
+    "group_name": "%利率",
+    "brands": [],
+    "reward_rate": "NA",
+    "source": "level-block",
+    "raw_text": "%利率",
+    "level": 1
+  },
+  {
+    "display_name": "level1-星展eco永續極簡卡",
+    "group_name": "線上購物 最高 10% ⏩",
+    "brands": [],
+    "reward_rate": "10%",
+    "source": "level-block",
+    "raw_text": "● 線上購物 最高 10% 回饋 ⏩",
+    "level": 1
+  },
+  {
+    "display_name": "level1-星展eco永續極簡卡",
+    "group_name": "Gogoro最高 NT$2,800 ⏩",
+    "brands": [],
+    "reward_rate": "NT$2,800",
+    "source": "level-block",
+    "raw_text": "● Gogoro最高 NT$2,800 回饋 ⏩",
+    "level": 1
+  },
+  {
+    "display_name": "level1-星展eco永續極簡卡",
+    "group_name": "旅行社最高享 NT$7,000 ⏩",
+    "brands": [],
+    "reward_rate": "NT$7,000",
+    "source": "level-block",
+    "raw_text": "● 旅行社最高享 NT$7,000 回饋 ⏩",
+    "level": 1
+  },
+  {
+    "display_name": "level2-星展eco永續極簡卡",
+    "group_name": "連續4個月總資產達NT$30萬",
+    "brands": [],
+    "reward_rate": "NT$30",
+    "source": "level-block",
+    "raw_text": "連續4個月總資產達NT$30萬",
+    "level": 2
+  },
+  {
+    "display_name": "level2-星展eco永續極簡卡",
+    "group_name": "行動支付額外加碼 1.8%",
+    "brands": [],
+    "reward_rate": "1.8%",
+    "source": "level-block",
+    "raw_text": "行動支付額外加碼 1.8% 回饋",
+    "level": 2
+  },
+  {
+    "display_name": "level2-星展eco永續極簡卡",
+    "group_name": "☑️持有星展eco永續卡／星展eco永續極簡卡／商務eco卡任一張正卡 ☑️持有星展活存帳戶且總資產達NT$30萬以上連續4個月",
+    "brands": [],
+    "reward_rate": "NT$30",
+    "source": "level-block",
+    "raw_text": "☑️持有星展eco永續卡／星展eco永續極簡卡／商務eco卡任一張正卡 ☑️持有星展活存帳戶且總資產達NT$30萬以上連續4個月",
+    "level": 2
+  },
+  {
+    "display_name": "level2-星展eco永續極簡卡",
+    "group_name": "1. 國內／國外消費 最高享 3%",
+    "brands": [],
+    "reward_rate": "3%",
+    "source": "level-block",
+    "raw_text": "1. 國內／國外消費 最高享回饋 3%",
+    "level": 2
+  },
+  {
+    "display_name": "level2-星展eco永續極簡卡",
+    "group_name": "2. 日韓泰星美 最高享 6.8%",
+    "brands": [],
+    "reward_rate": "6.8%",
+    "source": "level-block",
+    "raw_text": "2. 日韓泰星美 最高享回饋 6.8%",
+    "level": 2
+  },
+  {
+    "display_name": "level3-星展eco永續極簡卡",
+    "group_name": "行動支付額外加碼 4.8%",
+    "brands": [],
+    "reward_rate": "4.8%",
+    "source": "level-block",
+    "raw_text": "行動支付額外加碼 4.8% 回饋",
+    "level": 3
+  },
+  {
+    "display_name": "level3-星展eco永續極簡卡",
+    "group_name": "☑️持有星展eco永續卡／星展eco永續極簡卡／商務eco卡任一張正卡 ☑️持有星展活存帳戶且總資產達NT$300萬／NT$3,000萬以上連續4個月",
+    "brands": [],
+    "reward_rate": "NT$300",
+    "source": "level-block",
+    "raw_text": "☑️持有星展eco永續卡／星展eco永續極簡卡／商務eco卡任一張正卡 ☑️持有星展活存帳戶且總資產達NT$300萬／NT$3,000萬以上連續4個月",
+    "level": 3
+  },
+  {
+    "display_name": "level3-星展eco永續極簡卡",
+    "group_name": "1. 國內／國外消費 最高享 6%",
+    "brands": [],
+    "reward_rate": "6%",
+    "source": "level-block",
+    "raw_text": "1. 國內／國外消費 最高享回饋 6%",
+    "level": 3
+  },
+  {
+    "display_name": "level3-星展eco永續極簡卡",
+    "group_name": "2. 日韓泰星美 最高享 9.8%",
+    "brands": [],
+    "reward_rate": "9.8%",
+    "source": "level-block",
+    "raw_text": "2. 日韓泰星美 最高享回饋 9.8%",
+    "level": 3
+  },
+  {
+    "display_name": "星展eco永續極簡卡",
+    "group_name": "國內／國外一般消費",
+    "brands": [],
+    "reward_rate": "1.2%",
+    "source": "highlight",
+    "raw_text": "國內／國外一般消費回饋1.2%",
+    "level": null
+  },
+  {
+    "display_name": "星展eco永續極簡卡",
+    "group_name": "國外指定地區一般消費",
+    "brands": [],
+    "reward_rate": "5%",
+    "source": "highlight",
+    "raw_text": "國外指定地區一般消費加碼3.8%",
+    "level": null
+  },
+  {
+    "display_name": "星展eco永續極簡卡",
+    "group_name": "eco永續消費",
+    "brands": [],
+    "reward_rate": "10%",
+    "source": "highlight",
+    "raw_text": "eco消費加碼8.8%",
+    "level": null
+  }
+]
