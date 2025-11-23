@@ -273,7 +273,6 @@ GET /posts/{post_id}
 #刪除文章
 ```bash
 DELETE /posts/{post_id}
-<<<<<<< HEAD
 ```
 
 
@@ -327,6 +326,27 @@ SHOW TABLES;
 -- 查使用者資料
 SELECT * FROM users;
 ```
+在EC2在自己的branch上測試自己的branch置否寫對（測試完再merge到main）
+```
+#step1:先在本地寫完程式
+git push
+
+#step2:進EC2
+ssh ubuntu@3.21.167.93
+cd financial-agent
+git checkout 自己的branch
+
+#範例： git checkout feature-login
+
+#step3: 更新repo
+git pull
+cd backend
+python3 app.py #跑主程式
+
+#---重複動作，直到測試沒問題後----
+#step4:回到自己github上 merge到main
+```
+
 
 # 讓branch跟main同步
 # 先確保 main 的遠端更新有拉到本地
