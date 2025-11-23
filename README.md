@@ -316,16 +316,12 @@ mysql> SELECT * FROM messages;
 ```
 ssh -i ~/desktop/劉建良專題/financial-agent-key.pem ubuntu@3.21.167.93
 ```
-<<<<<<< HEAD
-<<<<<<< HEAD
-test
-=======
-=======
+
 所有人
 ```
 ssh ubuntu@3.21.167.93
 ```
->>>>>>> 44b2c02 (更改rm)
+
 ```
 -- 選擇你要用的資料庫
 USE financial_agent;
@@ -336,9 +332,7 @@ SHOW TABLES;
 -- 查使用者資料
 SELECT * FROM users;
 ```
-<<<<<<< HEAD
->>>>>>> 2910413 (hi)
-=======
+
 
 # 讓branch跟main同步
 # 先確保 main 的遠端更新有拉到本地
@@ -361,4 +355,28 @@ git checkout feature-login
 ```
 git merge main
 ```
->>>>>>> 66cd7d3 (更改網頁)
+# 使用虛擬環境
+## 建立虛擬環境
+```
+python3 -m venv venv
+```
+## 開啟虛擬環境
+```
+source venv/bin/activate
+python3 -m backend.app
+```
+## 下載套件
+```
+pip install -r requirements.txt
+```
+
+## 還要修改內容
+ai資料夾裡的ai_query尋找邏輯還要再改，ai_parser也還要再改
+
+##
+```
+#進虛擬環境
+python3 -m backend.routes.credit_card.cube_benefits_scraper ##爬蟲
+python3 backend/ai/test_full_flow.py ##測試檔
+```
+
