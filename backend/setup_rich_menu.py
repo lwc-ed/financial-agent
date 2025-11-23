@@ -83,7 +83,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=0, width=833, height=843),
-                action=MessageAction(label="B", text="慾望清單")
+                action=MessageAction(label="B", text="欲望清單")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=1666, y=0, width=834, height=1686),
