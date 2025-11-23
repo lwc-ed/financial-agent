@@ -1,20 +1,58 @@
-# 慾望清單 API
 from flask import Blueprint, request, jsonify
+from sqlalchemy.orm import Session
+from backend.database import SessionLocal
+from backend.models.wishlist import Wishlist
+from backend.models.user import User
 
-# ✅ 名字一定要對：wishlist_bp
 wishlist_bp = Blueprint("wishlist", __name__)
 
 @wishlist_bp.route("/add", methods=["POST"])
 def add_wishlist():
-    """
-    TODO: 新增一個慾望清單項目
-    """
     data = request.json
-    return jsonify({"status": "ok", "message": "Add wishlist (待實作)", "data": data}), 200
+    
+    # 1. 先取得原始資料
+    line_user_id = data.get("line_user_id")
+    item_name = data.get("item_name")
+    price_raw = data.get("price")
 
-@wishlist_bp.route("/list", methods=["GET"])
-def list_wishlist():
-    """
-    TODO: 查詢所有慾望清單項目
-    """
-    return jsonify({"status": "ok", "data": []}), 200
+    # 2. 檢查必要欄位
+    if not line_user_id or not item_name or not price_raw:
+        return jsonify({"status": "error", "message": "缺少必要欄位"}), 400
+
+    db: Session = SessionLocal()
+    try:
+        # 3. 檢查使用者是否存在
+        user = db.query(User).filter_by(line_user_id=line_user_id).first()
+        if not user:
+            return jsonify({"status": "error", "message": "找不到使用者"}), 404
+
+        # 4. 新增慾望清單
+        wishlist_item = Wishlist(
+            user_id=user.id, 
+            item_name=item_name, 
+            price=int(price_raw)
+        )
+        db.add(wishlist_item)
+        db.commit()
+
+        # 5. 查詢目前清單回傳
+        items = db.query(Wishlist).filter_by(user_id=user.id).all()
+        result = [
+            {
+                "id": w.id, 
+                "item_name": w.item_name, 
+                "price": int(w.price), 
+                "achieved": w.achieved
+            } 
+            for w in items
+        ]
+        
+        return jsonify({"status": "ok", "data": result}), 200
+
+    except Exception as e:
+        db.rollback()
+        print(f"Error: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+    finally:
+        db.close()
