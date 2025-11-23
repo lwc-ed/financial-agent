@@ -95,13 +95,14 @@ def handle_message(event):
     elif user.current_function == "wishlist":
         try:
             item_name, price = user_msg.split(",")
-            db.execute(
-                insert(wishlist_table).values(
-                    user_id=user.id,
-                    item_name=item_name.strip(),
-                    price=int(price.strip())
-                )
+            # 使用 ORM class
+            from models.wishlist import Wishlist
+            wishlist_item = Wishlist(
+                user_id=user.id,
+                item_name=item_name.strip(),
+                price=int(price.strip())
             )
+            db.add(wishlist_item)
             db.commit()
             reply_text = f"✅ 已新增「{item_name.strip()}」價格 {price.strip()} 元到清單！"
             user.current_function = None
