@@ -57,7 +57,8 @@ def normalize_input(user_input: str):
 1. 這一鍋（score 1.0）
 2. 這一鍋餐飲（score 0.85）
 3. 國內餐飲（score 0.6）
-4. 國內外一般消費（score 0.5）
+4. 國內／國外消費（score 0.5）
+5. 國內外一般消費（score 049.）
 
 使用者：「巨城」
 候選：
@@ -66,6 +67,7 @@ def normalize_input(user_input: str):
 3. 遠東百貨（score 0.7）
 4. 百貨通路（score 0.6）
 5. 國內外一般消費（score 0.5）
+6. 國內／國外消費（score 0.5）
 
 【使用者輸入】
 "{text}"
@@ -106,7 +108,10 @@ def normalize_input(user_input: str):
         fallback = {"brand_name": "國內外一般消費", "score": 0.5}
         if not any(c.get("brand_name") == "國內外一般消費" for c in result["candidates"]):
             result["candidates"].append(fallback)
-
+        fallback2 = {"brand_name": "國內／國外消費", "score": 0.5}
+        if not any(c.get("brand_name") == "國內／國外消費" for c in result["candidates"]):
+            result["candidates"].append(fallback2)
+            
         print("✅ Parser 結果：", result)
         return result
 

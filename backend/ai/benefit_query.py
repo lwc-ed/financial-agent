@@ -13,6 +13,7 @@ BANK_CARD_MAP = {
     "cube_benefits": ("國泰世華", "CUBE 卡"),
     "ctbc_linepay_benefits": ("中國信託", "LinePay 信用卡"),
     "ctbc_linepay_debit_benefits": ("中國信託", "LinePay 簽帳卡"),
+    "dbs_eco_benefits": ("星展", "eco永續極簡卡")
     # ---【新增資料表時必改：在此加入新 table 對應的銀行/卡名】---
 }
 
@@ -108,6 +109,15 @@ def query_benefits(brand_name=None, category=None, candidates=None):
                     0 AS score
              FROM ctbc_linepay_debit_benefits
              WHERE group_name LIKE %s
+             """),
+            ("dbs_eco_benefits",
+             """
+             SELECT display_name, group_name, brands AS brands,
+                    reward_rate, 'dbs_eco_benefits' AS source_table,
+                    0 AS score
+             FROM dbs_eco_benefits
+             WHERE group_name LIKE %s
+                OR display_name LIKE %s
              """)
         ]
         results = []
@@ -115,6 +125,9 @@ def query_benefits(brand_name=None, category=None, candidates=None):
             for tbl, sql in sql_list:
                 if tbl == "cube_benefits":
                     cursor.execute(sql, (key, key))
+                elif tbl == "dbs_eco_benefits":
+                    pat = f"%{keyword}%"
+                    cursor.execute(sql, (pat, pat))
                 else:
                     cursor.execute(sql, (f"%{keyword}%",))
                 results.extend(cursor.fetchall())
@@ -150,12 +163,24 @@ def query_benefits(brand_name=None, category=None, candidates=None):
                     0 AS score
              FROM ctbc_linepay_debit_benefits
              WHERE group_name LIKE %s
+             """),
+            ("dbs_eco_benefits",
+             """
+             SELECT display_name, group_name, brands AS brands,
+                    reward_rate, 'dbs_eco_benefits' AS source_table,
+                    0 AS score
+             FROM dbs_eco_benefits
+             WHERE group_name LIKE %s
+                OR display_name LIKE %s
              """)
         ]
         results = []
         with conn.cursor() as cursor:
             for tbl, sql in sql_list:
-                cursor.execute(sql, (pat,))
+                if tbl == "dbs_eco_benefits":
+                    cursor.execute(sql, (pat, pat))
+                else:
+                    cursor.execute(sql, (pat,))
                 results.extend(cursor.fetchall())
         return results
 
@@ -216,23 +241,34 @@ def find_brand_in_db(keyword):
     try:
         with conn.cursor() as cursor:
             # ---【如需支援新資料表搜尋，需在此加入新表 SELECT】---
-            sql = "SELECT display_name, group_name, brands FROM cube_benefits"
-            cursor.execute(sql)
-            rows = cursor.fetchall()
+            sql_list = [
+                "SELECT display_name, group_name, brands FROM cube_benefits",
+                "SELECT display_name, group_name, brands FROM dbs_eco_benefits",
+            ]
 
-            for row in rows:
-                try:
-                    bl = json.loads(row["brands"])
-                except:
-                    continue
+            for sql in sql_list:
+                cursor.execute(sql)
+                rows = cursor.fetchall()
 
-                for b in bl:
-                    if keyword.lower() in b.lower():
-                        return {
-                            "brand_name": b,
-                            "category": row["group_name"],
-                            "intent": "查詢回饋",
-                        }
+                for row in rows:
+                    raw_brands = row.get("brands")
+                    if isinstance(raw_brands, list):
+                        bl = raw_brands
+                    elif isinstance(raw_brands, str):
+                        try:
+                            bl = json.loads(raw_brands)
+                        except:
+                            bl = [raw_brands]
+                    else:
+                        continue
+
+                    for b in bl:
+                        if keyword.lower() in str(b).lower():
+                            return {
+                                "brand_name": b,
+                                "category": row["group_name"],
+                                "intent": "查詢回饋",
+                            }
         return None
     finally:
         conn.close()

@@ -7,8 +7,8 @@ import requests
 from bs4 import BeautifulSoup
 
 from backend.database import SessionBenefit
-from backend.models.ctbc_linepay_benefits_model import CtbcLinePayBenefit
-from backend.models.ctbc_linepay_debit_benefits_model import CtbcLinePayDebitBenefit
+from backend.models.credit_card_benefit_model.ctbc_linepay_benefits_model import CtbcLinePayBenefit
+from backend.models.credit_card_benefit_model.ctbc_linepay_debit_benefits_model import CtbcLinePayDebitBenefit
 
 NOTICE_URL = "https://www.ctbcbank.com/content/dam/minisite/long/creditcard/LINEPay/notice.html"
 HEADERS = {"User-Agent": "Mozilla/5.0"}

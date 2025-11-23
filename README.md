@@ -371,5 +371,6 @@ ai資料夾裡的ai_query尋找邏輯還要再改，ai_parser也還要再改
 ##
 ```
 #進虛擬環境
-python3 -m backend.routes.credit_card.cube_benefits_scraper
+python3 -m backend.routes.credit_card.cube_benefits_scraper ##爬蟲
+python3 backend/ai/test_full_flow.py ##測試檔
 ```

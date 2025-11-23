@@ -1,5 +1,3 @@
-
-
 from sqlalchemy import Column, Integer, String, JSON
 from backend.database import Base
 

@@ -1,10 +1,8 @@
-
-
 from sqlalchemy import Column, Integer, String, JSON
 from backend.database import Base
 
-class CtbcLinePayDebitBenefit(Base):
-    __tablename__ = "ctbc_linepay_debit_benefits"
+class CtbcLinePayBenefit(Base):
+    __tablename__ = "ctbc_linepay_benefits"
 
     id = Column(Integer, primary_key=True, index=True)
     display_name = Column(String(100), nullable=False)     # 信用卡 or 簽帳金融卡

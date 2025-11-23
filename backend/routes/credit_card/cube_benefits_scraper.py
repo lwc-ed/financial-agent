@@ -155,7 +155,7 @@ def main():
 
     # === 寫入 MySQL 資料庫 ===
     from backend.database import SessionBenefit
-    from backend.models.cube_benefits_model import CubeBenefit
+    from backend.models.credit_card_benefit_model.cube_benefits_model import CubeBenefit
     from sqlalchemy import text
 
     db = SessionBenefit()
