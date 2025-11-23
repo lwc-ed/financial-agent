@@ -1,276 +1,372 @@
-以下整理為 可直接使用、排版完整、專業等級的最終版 README.md。
-你只需要 複製→貼進你的 README.md 即可。
+# financial-agent
 
-我已依照你的專案實際結構、部署流程、後端/前端架構、AWS RDS、EC2、FastAPI、LIFF、LINE Bot、爬蟲測試檔等全部內容整合成正式文件。
+# 📦 必要安裝套件與工具
 
-⸻
+本專案開發與執行需要安裝以下套件與工具，以下為 macOS / Linux 平台的安裝範例。
+[Line官方帳號管理後台](https://developers.line.biz/console/channel/2007892068/messaging-api)
 
-📘 financial-agent — 完整專案說明文件
-
-本專案將 LINE Bot、Flask/FastAPI、React、MySQL（AWS RDS）、EC2 與 AI 技術整合為一個金融助理（Financial Agent）。
-提供記帳、慾望清單、儲蓄規劃、個人化分析、Rich Menu 操作介面與 LIFF 視覺化頁面。
-
-⸻
-
-📑 目錄
-	•	📦 必要安裝套件與工具￼
-	•	🚀 專案啟動方式￼
-	•	📌 功能統整表￼
-	•	🔹 整體架構運作￼
-	•	📂 專案結構與檔案說明￼
-	•	🖼 Rich Menu 設定方式￼
-	•	⚙️ FastAPI 與 MySQL 使用方式￼
-	•	🌐 WSL 連接 AWS RDS 教學￼
-	•	🐥 EC2 Branch 測試流程￼
-	•	🔄 Branch 與 Main 同步教學￼
-	•	🧪 虛擬環境使用方式￼
-	•	📌 目前仍需修改的項目￼
-
-⸻
-
-📦 必要安裝套件與工具
-
-Python（後端）
-
+### Python (後端)
+安裝依賴套件
+```
 pip install --upgrade pip
 pip install -r requirements.txt
-
-檢查是否成功：
-
+```
+檢查是否安裝成功
+```
 pip list
+```
+
+### Node.js / npm (前端)
+
+- 使用 React 與 Vite 建構前端
+- 主要套件包括：
+  - react
+  - react-dom
+  - vite
+- 可選套件（視專案需求）：
+  - liff（LINE Front-end Framework）
+  - axios（HTTP 請求）
+  - openai（OpenAI API 客戶端）
+- 安裝方式：
+  ```bash
+  cd frontend
+  npm install
+  ```
+  會根據 `package.json` 自動安裝所有依賴套件。
 
 
-⸻
 
-Node.js / npm（前端）
+# 🚀 啟動方式
 
-使用 React + Vite。
+1. **更新並進入專案目錄**
+   ```bash
+   cd financial-agent
+   git pull
+   ```
 
-安裝方式：
+2. **啟動後端伺服器（於 `backend/` 目錄）**
+   ```bash
+   cd backend
+   python3 app.py
+   ```
 
-cd frontend
-npm install
+# 📌 功能統整表
 
-可選套件：
-	•	liff（LINE 前端）
-	•	axios（API）
-	•	openai（AI 功能）
+| 功能 | 目的 | 實作方式 | 資料處理位置 | 展示方式 |
+|------|------|----------|--------------|----------|
+| **1. 個人資料填寫** | 讓使用者建立個人檔案（姓名、收入、目標等） | 提供表單（LIFF 小網頁 / 外部網站） | 存在伺服器的資料庫（DB） | LINE Bot 回覆「填寫完成」，或在 LIFF 直接看到 |
+| **2. 紀錄消費（記帳）** | 讓使用者輸入日常消費 | 使用 LINE Bot 指令（ex:「午餐 120」）或 LIFF 表單 | 後端伺服器接收 → 存入 DB | LINE Bot 即時回覆「已紀錄：午餐 120 元」 |
+| **3. 消費紀錄（查看狀況）** | 查看消費分類、剩餘可用金額 | 後端讀取 DB，計算統計 | DB 運算 + 伺服器整理成報表 | LINE Bot 傳回清單 / 圖表圖片（或開 LIFF 網頁看完整表格） |
+| **4. 慾望清單** | 使用者輸入想買的東西＋金額 | LINE Bot 輸入「想買 Switch 10000」或 LIFF 表單 | 存在 DB，標記是否已達成 | LINE Bot 回傳目前清單；或在 LIFF 展示更漂亮的清單 |
+| **5. 儲蓄挑戰** | 幫使用者依照清單規劃存錢 | 後端演算法計算最佳分配 + OpenAI API 生成自然語言建議 | 演算法（DB → 儲蓄計畫表），AI（生成對話） | LINE Bot 文字 / 圖表呈現；或 LIFF 展示「進度條 + 成就系統」 |
 
-⸻
+---
 
-🚀 專案啟動方式
+# 🔹 整體架構運作
 
-1. 更新專案
+1. **LINE Bot**  
+   - 基本互動（輸入消費、查詢紀錄、呼叫功能）  
+   - 傳文字 / 按鈕 / Quick Reply  
 
-cd financial-agent
-git pull
+2. **伺服器 + 資料庫（核心大腦）**  
+   - Flask / FastAPI / Node.js  
+   - MySQL / PostgreSQL / MongoDB  
+   - 演算法處理（消費統計、儲蓄規劃）  
 
-2. 啟動後端（Flask）
+3. **AI API（選配）**  
+   - 把演算法結果轉成自然語言建議  
+   - 例如「依照你的清單，我建議先完成耳機，再挑戰 Switch！」  
 
-cd backend
-python3 app.py
+4. **LIFF / 外部網站**  
+   - 適合表單（資料填寫）和進度視覺化（圖表、清單、進度條）  
+   - 讓使用者「感覺還在 LINE 內操作」，體驗無縫 
 
-前端：
+---
 
-cd frontend
-npm start
+# 📂 專案結構與檔案說明
 
-
-⸻
-
-📌 功能統整表
-
-功能	用途	實作方式	資料處理位置	展示方式
-個人資料填寫	建立使用者資訊	LIFF 表單	DB	LINE 回覆 / LIFF
-紀錄消費	日常記帳	LINE 指令或 LIFF	DB	LINE 即時回覆
-消費紀錄分析	檢視分類與統計	後端分析	DB	LINE 圖表 / LIFF
-慾望清單	管理想買物品	LINE / LIFF	DB	列表 / 進度條
-儲蓄挑戰	自動產生儲蓄計畫	演算法 + AI	DB + 分析	LINE / LIFF
-
-
-⸻
-
-🔹 整體架構運作
-
-1. LINE Bot
-
-接收文字、按鈕、Quick Reply，呼叫後端 API。
-
-2. 伺服器（Flask / FastAPI）
-	•	處理邏輯
-	•	儲存數據
-	•	回傳分析結果
-
-3. AI 模組
-	•	整理消費
-	•	生成人性化建議
-
-4. LIFF / Web（React）
-	•	表單填寫
-	•	儀表板、進度條、視覺化圖表
-
-⸻
-
-📂 專案結構與檔案說明
-
+```
 financial-agent/
 ├── backend/
-│   ├── app.py                 # Flask 主程式
-│   ├── linebot_handler.py     # 處理 LINE Bot 事件
-│   ├── routes/                # API Blueprint 模組（記帳/願望清單等）
-│   ├── models/                # 資料庫 ORM 模型
-│   ├── setup_rich_menu.py     # Rich Menu 設定腳本
-├── frontend/
-│   ├── public/
+│   ├── app.py                 # Flask 主程式，啟動後端伺服器
+│   ├── linebot_handler.py     # 處理 LINE Bot 事件的邏輯
+│   ├── routes/                # 使用 Blueprint 模組管理 API 路由，依功能分離（如 expense_record、wishlist 等），各模組皆暴露一個 _bp 方便註冊與維護
+│   ├── models/                # 資料模型定義（ORM 或 schema），負責資料庫資料結構與操作
+│   ├── setup_rich_menu.py     # 設定 LINE Rich Menu 的腳本
+├─── frontend/
+│   ├── public/                # React 公開資源
 │   ├── src/                   # React 程式碼
-│   ├── .env                   # API 位置設定
+│   ├── .env                   # 前端環境變數設定（API 端點等）
 │   └── package.json
 ├── picture/
-│   └── rich_menu/             # Rich Menu 圖片
+│   └── rich_menu/             # 儲存 LINE Rich Menu 使用的圖片
 ├── README.md
 └── .gitignore
+```
 
-命名規範：
-	•	Blueprint 統一以 _bp 結尾（如 user_bp）
-	•	Commit message 需具體描述變更內容
+- **backend/**：後端使用 Flask 框架，`app.py` 是主入口，`linebot_handler.py` 負責處理 LINE Bot 事件，`routes/` 用於分模組管理 API 路由，依功能分離（如 expense_record、wishlist 等），每個 Blueprint 模組皆暴露 `_bp` 方便註冊與維護。`models/` 則定義資料模型（ORM 或 schema），處理資料庫的資料結構與操作。`setup_rich_menu.py` 用於部署 Rich Menu。環境變數可透過專案根目錄或系統環境設定管理。
 
-⸻
+- **frontend/**：React 應用程式，包含前端頁面與互動邏輯，`.env` 用來設定前端環境變數（如 API 伺服器 URL），確保前後端分離。
 
-🖼 Rich Menu 設定方式
+- **picture/**：存放圖片資源，尤其是 LINE Rich Menu 使用的圖片素材。
 
+- **命名規範與提交規則**：
+  - Blueprint 命名皆以 `_bp` 結尾，例如 `user_bp`、`expense_bp`，以利識別。
+  - Git commit 訊息請清楚描述改動內容，避免使用模糊字眼，方便多人協作與版本追蹤。
+
+- **啟動提醒**：
+  - 後端啟動請在 `backend/` 目錄下執行：
+    ```
+    python3 app.py
+    ```
+  - 前端啟動請在 `frontend/` 目錄下執行：
+    ```
+    npm install
+    npm start
+    ```
+  - 確認 `.env` 設定正確，避免啟動錯誤。
+
+請依此專案結構與規範進行開發與維護，確保團隊合作順暢。
+
+---
+
+# 補充說明
+
+## setup_rich_menu 執行方式 (only for lwc)
+```bash
 /opt/homebrew/bin/python3.10 setup_rich_menu.py
+```
 
-區域配置示意：
-
+## Line畫面區域配置示意
+```
 ┌────────────┬────────────┬────────────┐
-│   Area A   │   Area B   │            │  ← (y=0~421)
+│   Area A   │   Area B   │            │  ← 上半部 (y=0 ~ 421)
 ├────────────┼────────────│   Area C   │
-│   Area D   │   Area E   │            │  ← (y=421~843)
+│   Area D   │   Area E   │            │  ← 下半部 (y=421 ~ 843)
 └────────────┴────────────┴────────────┘
+```
 
+---
 
-⸻
+# 遇到問題可以先問GPT大神或Claude，把error貼給他們看
 
-⚙️ FastAPI 與 MySQL 使用方式
+# Fast API + MySQL 說明
 
-安裝：
-
+## 安裝必要套件
+請先安裝依賴套件：
+```bash
 pip install fastapi uvicorn sqlalchemy pymysql python-dotenv
+```
 
-啟動：
+# WSL 連接 AWS RDS (MySQL) 教學
+## 1. 檢查 DNS 是否能解析
+```bash
+nslookup financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com
+```
+若正確，會解析出一個 Public IP (例如 3.129.xx.xx)。
 
+## 2. 測試能否連到 RDS
+安裝 MySQL client：
+```bash
+sudo apt update
+sudo apt install mysql-client -y
+```
+測試連線：
+```bash
+mysql -h financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com -P 3306 -u nycuiemagent -p
+```
+輸入密碼後，若成功會進到 MySQL prompt (mysql>)，表示網路跟帳號都 OK。
+
+## 3. 設定 DNS (避免 WSL DNS 問題)
+有時候 WSL 會用錯 DNS，需要手動設定。
+```bash
+sudo nano /etc/wsl.conf
+```
+內容加上：
+```ini
+[network]
+generateResolvConf = false
+```
+然後修改 DNS：
+```bash
+sudo rm /etc/resolv.conf
+echo -e "nameserver 8.8.8.8\nnameserver 1.1.1.1" | sudo tee /etc/resolv.conf
+```
+重啟 WSL：
+```powershell
+wsl --shutdown
+```
+## 4.常見錯誤排查
+Unknown MySQL server host
+
+代表 DNS 無法解析 → 檢查 /etc/resolv.conf，確認有 8.8.8.8 或 1.1.1.1。
+
+❌ Access denied for user
+
+帳號或密碼錯誤。
+
+或者 RDS user 沒有對外權限，檢查 IAM / MySQL user 權限。
+
+❌ Timeout
+
+RDS 安全群組沒有開放你的 IP。
+
+在 AWS console → Security group → Inbound rules，加上：
+
+Type: MySQL/Aurora
+
+Port: 3306
+
+Source: 你的 IP (或測試用 0.0.0.0/0)
+
+## 連接fastapi
+
+進入 backend/ 資料夾，執行：
+```bash
 uvicorn main:app --reload
-
-測試介面：
+```
+啟動後開啟瀏覽器連到：
 👉 http://127.0.0.1:8000/docs#/
 
-常用 API（範例）：
+這裡可以直接測試 API 功能。
 
-建立使用者
+API 功能
 
+POST /posts/ : 新增一篇貼文
+
+GET /posts/{post_id} : 讀取貼文
+
+DELETE /posts/{post_id} : 刪除貼文
+
+POST /users/ : 新增使用者
+
+GET /users/{user_id} : 讀取使用者
+
+#建立使用者
+```bash
 POST /users/
 {
   "username": "alice"
 }
+```
 
-查詢文章
+#查詢使用者
+```bash
+GET /users/{user_id}
+```
 
+#建立文章
+```bash
+POST /posts/
+{
+  "title": "First Post",
+  "content": "Hello FastAPI!",
+  "user_id": 1
+}
+```
+
+#查詢文章
+```bash
 GET /posts/{post_id}
+```
+
+#刪除文章
+```bash
+DELETE /posts/{post_id}
+<<<<<<< HEAD
+```
 
 
-⸻
+#啟動後端伺服器
 
-🌐 WSL 連接 AWS RDS 教學
+進入 backend/ 資料夾，執行：
+```bash
+uvicorn main:app --reload
+```
+啟動後開啟瀏覽器連到：
+👉 http://127.0.0.1:8000/docs#/
 
-1. DNS 測試
+這裡可以直接測試 API 功能。
 
-nslookup financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com
+## financial_agent 資料庫
+```
+mysql> SELECT * FROM users;
++----+----------+-------------+--------+------------------+---------+---------------------+
+| id | provider | provider_id | name   | email            | picture | created_at          |
++----+----------+-------------+--------+------------------+---------+---------------------+
+|  1 | line     | U1234567890 | 小明   | test@example.com  | NULL    | 2025-09-16 01:45:11 |
++----+----------+-------------+--------+------------------+---------+---------------------+
+1 row in set (0.203 sec)
 
-2. 測試 MySQL 連線
+mysql> INSERT INTO messages (user_id, content, reply)
+    -> VALUES (1, '哈囉', '你好呀！'); -- 測試內容
+Query OK, 1 row affected (0.206 sec)
 
-mysql -h financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com -P 3306 -u nycuiemagent -p
+mysql> SELECT * FROM messages;
++----+---------+---------------------+-----------------+---------------------+
+| id | user_id | content(使用者輸入的) | reply(我們回覆的) | created_at          |
++----+---------+---------------------+-----------------+---------------------+
+|  1 |       1 | 哈囉                 | 你好呀！         | 2025-09-16 01:45:34 |
++----+---------+---------------------+-----------------+---------------------+
+```
+跑EC2(lwc)
+```
+ssh -i ~/desktop/劉建良專題/financial-agent-key.pem ubuntu@3.21.167.93
+```
+所有人
+```
+ssh ubuntu@3.21.167.93
+```
+```
+-- 選擇你要用的資料庫
+USE financial_agent;
 
-3. 修正 DNS 設定
+-- 確認有哪些資料表
+SHOW TABLES;
 
-編輯設定：
-
-[network]
-generateResolvConf = false
-
-
-⸻
-
-🐥 EC2 Branch 測試流程
-
-Step 1：本地完成程式
-
+-- 查使用者資料
+SELECT * FROM users;
+```
+在EC2在自己的branch上測試自己的branch置否寫對（測試完再merge到main）
+```
+#step1:先在本地寫完程式
 git push
 
-Step 2：登入 EC2
-
+#step2:進EC2
 ssh ubuntu@3.21.167.93
-
-Step 3：切換到自己的 branch
-
 cd financial-agent
-git checkout feature-login
+git checkout 自己的branch
+
+#範例： git checkout feature-login
+
+#step3: 更新repo
 git pull
-
-Step 4：啟動後端
-
 cd backend
-python3 app.py
+python3 app.py #跑主程式
 
-確認無誤後再在 GitHub merge 到 main。
+#---重複動作，直到測試沒問題後----
+#step4:回到自己github上 merge到main
+```
 
-⸻
 
-🔄 Branch 與 Main 同步教學
-
+# 讓branch跟main同步
+# 先確保 main 的遠端更新有拉到本地
+```
 git fetch origin
+```
+# 切換到 main
+```
 git checkout main
+```
+# 把遠端 main 的更新合併到本地 main
+```
 git pull origin main
+```
+# 再切回 feature-login
+```
 git checkout feature-login
+```
+# 如果要把 main 的最新更新合併進來
+```
 git merge main
-
-
-⸻
-
-🧪 虛擬環境使用方式
-
-建立
-
-python3 -m venv venv
-
-啟動
-
-source venv/bin/activate
-
-安裝套件
-
-pip install -r requirements.txt
-
-執行爬蟲與測試
-
-python3 -m backend.routes.credit_card.cube_benefits_scraper
-python3 backend/ai/test_full_flow.py
-
-
-⸻
-
-📌 目前仍需修改的項目
-	•	ai/ai_query：搜尋與匹配邏輯需重新調整
-	•	ai/ai_parser：品牌清洗、FTS 匹配、rewrite 還需調整
-	•	信用卡 datasets 更新後需重新整理 reward rate split
-	•	Blueprints 與 DB 結構可能需要重構以利擴充
-
-⸻
-
-如果你需要，我也可以幫你：
-
-✅ 自動產生 API 規格書（Swagger / OpenAPI）
-✅ 製作 ERD（資料庫架構圖）
-✅ 繪出系統架構圖（Architecture Diagram）
-✅ 幫 README 加上 badge、logo、架構流程圖
-
-只要告訴我即可。
+```
