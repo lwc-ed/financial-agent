@@ -125,7 +125,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
     # 有些節點需要一點時間才一致，等待片刻再上傳
     time.sleep(1.0)
 
-    # ✅ 上傳圖片
+    # ✅ 上傳圖
     if os.path.exists(image_path):
         print("🖼️  Uploading image...")
         try:
