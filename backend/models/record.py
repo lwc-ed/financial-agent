@@ -7,7 +7,7 @@ class Record(Base):
     __tablename__ = "records"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(64))
+    line_user_id = Column(String(64))
     type = Column(String(10), nullable=False)       # '支出' / '收入'
     category = Column(String(64), nullable=False)
     amount = Column(Integer, nullable=False)
