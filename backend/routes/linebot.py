@@ -122,7 +122,7 @@ def handle_message(event):
         if user_msg == "功能 D":
             reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
         elif user_msg == "功能 B":
-            print("進入慾望清單模式")
+            print("進入欲望清單模式")
             user.current_function = "wishlist"  # 強制轉為 wishlist 狀態
             db.commit()
             reply_text = "✍️ 請輸入欲望清單項目，格式：品項,價格\n例如：iPhone,35000"
@@ -152,11 +152,10 @@ def handle_message(event):
                 messages=[TextMessage(text=final_reply)]
             )
         )
-        db.close()
         return   # ⚠️ 不要再往下執行
 
     elif user.current_function == "wishlist":
-        print(f"處理慾望清單輸入: {user_msg}")
+        print(f"處理欲望清單輸入: {user_msg}")
         try:
             # 處理中英文逗號
             separator = "," if "," in user_msg else "，"
