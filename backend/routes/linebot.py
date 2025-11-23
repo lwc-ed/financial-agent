@@ -5,6 +5,7 @@ from linebot.v3.messaging import MessagingApi, ReplyMessageRequest, TextMessage,
 from backend.database import SessionLocal
 from backend.models.user import User
 from datetime import datetime, timedelta
+from backend.models.wishlist import Wishlist
 
 linebot_bp = Blueprint("linebot", __name__)
 
@@ -92,7 +93,7 @@ def handle_message(event):
     # 功能別名對應表
     function_alias = {
         "個人資料填寫": "功能 A",
-        "慾望清單": "功能 B",
+        "欲望清單": "功能 B",
         "紀錄消費": "功能 C",
         "信用卡回饋查詢": "功能 D",
         "儲蓄挑戰": "功能 E"
@@ -105,7 +106,7 @@ def handle_message(event):
     # 功能對應表
     function_map = {
         "功能 A": "📊 個人資料填寫（待接後端）",
-        "功能 B": "📉 慾望清單（待接 DB）",
+        "功能 B": "📉 欲望清單（待接 DB）",
         "功能 C": "🧾 記帳紀錄（待接 DB）",
         "功能 D": "💳 信用卡回饋查詢（AI+DB搜尋回饋）",
         "功能 E": "⚠️ 儲蓄挑戰（待接分析功能）",
@@ -120,6 +121,11 @@ def handle_message(event):
         db.commit()
         if user_msg == "功能 D":
             reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
+        elif user_msg == "功能 B":
+            print("進入慾望清單模式")
+            user.current_function = "wishlist"  # 強制轉為 wishlist 狀態
+            db.commit()
+            reply_text = "✍️ 請輸入欲望清單項目，格式：品項,價格\n例如：iPhone,35000"
         else:
             reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
     elif user.current_function == "功能 D":
@@ -146,8 +152,39 @@ def handle_message(event):
                 messages=[TextMessage(text=final_reply)]
             )
         )
-
+        db.close()
         return   # ⚠️ 不要再往下執行
+
+    elif user.current_function == "wishlist":
+        print(f"處理慾望清單輸入: {user_msg}")
+        try:
+            # 處理中英文逗號
+            separator = "," if "," in user_msg else "，"
+            if separator not in user_msg:
+                raise ValueError("缺少逗號")
+
+            item_name, price_str = user_msg.split(separator, 1)
+            
+            # ORM 寫入
+            new_item = Wishlist(
+                user_id=user.id,
+                item_name=item_name.strip(),
+                price=int(price_str.strip())
+            )
+            db.add(new_item)
+            db.commit()
+            
+            reply_text = f"✅ 已新增「{item_name.strip()}」價格 {price_str.strip()} 元到清單！"
+            
+            # 完成後重置
+            user.current_function = None
+            db.commit()
+            
+        except ValueError:
+            reply_text = "格式錯誤！請確認使用逗號分隔，且價格為數字。\n範例：Switch, 10000"
+        except Exception as e:
+            reply_text = f"發生錯誤：{str(e)}"
+            print(f"Error: {e}")
 
     elif user_msg == "紀錄消費":
         from backend.routes import expense_record
