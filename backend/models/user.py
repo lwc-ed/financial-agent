@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, DateTime
 from database import Base
 
 class User(Base):
@@ -10,3 +10,5 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), nullable=False)
     line_user_id = Column(String(64), unique=True, nullable=True)
+    current_function = Column(String(50), nullable=True)
+    last_activity_time = Column(DateTime, nullable=True)
