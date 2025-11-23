@@ -36,7 +36,7 @@ REDIRECT_URI = "https://financial-agent.it.com/callback_google"
 SECRET_KEY = "super_secret_random_key_123456789"
 
 # --- 註冊 blueprint ---
-app.register_blueprint(linebot_bp, url_prefix="/linebot")  # 加上前綴，避免衝突
+app.register_blueprint(linebot_bp, url_prefix="")  # 加上前綴，避免衝突
 app.register_blueprint(expense_record_bp, url_prefix="/api/expense_record")
 app.register_blueprint(expense_history_bp, url_prefix="/api/expense_history")
 app.register_blueprint(wishlist_bp, url_prefix="/api/wishlist")
