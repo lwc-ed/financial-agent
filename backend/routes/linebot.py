@@ -54,7 +54,7 @@ def handle_message(event):
         db.add(user)
         db.commit()
 
-    # 2. 超時重置狀態
+    # 2. 超時重置狀態 (10分鐘)
     if user.last_activity_time and datetime.utcnow() - user.last_activity_time > timedelta(minutes=10):
         user.current_function = None
         db.commit()
@@ -73,7 +73,7 @@ def handle_message(event):
     # 4. 功能說明對應表
     function_map = {
         "功能 A": " 📊  消費分析（待接後端）",
-        "功能 B": " 📉  支出統計（待接 DB）",
+        "功能 B": " 📉  慾望清單",
         "功能 C": " 🧾  記帳紀錄（待接 DB）",
         "功能 D": " 💰  儲蓄進度（待接挑戰功能）",
         "功能 E": " ⚠️  預算提醒（待接分析功能）",
@@ -83,22 +83,24 @@ def handle_message(event):
     reply_text = ""
 
     # 5. 邏輯判斷
+    
+    # 若無狀態且非指令
     if not user.current_function and user_msg not in function_map:
         reply_text = "請先點選功能"
 
+    # 一般功能 (排除功能 B，因為要獨立處理)
     elif user_msg in ["功能 A", "功能 C", "功能 D", "功能 E"]:
         user.current_function = user_msg
         db.commit()
         reply_text = f" ✅  你選擇了 {function_map[user_msg]}"
 
     elif user_msg == "紀錄消費":
-        # 這裡假設您有 expense_record 模組
         reply_text = "紀錄消費功能開發中..."
 
-    # --- 慾望清單入口 ---
+    # --- 慾望清單入口 (關鍵修正：強制設定狀態為 wishlist) ---
     elif user_msg == "功能 B":
         print("進入慾望清單模式")
-        user.current_function = "wishlist"
+        user.current_function = "wishlist"  # 這裡一定要設為 wishlist
         db.commit()
         reply_text = "✍️ 請輸入欲望清單項目，格式：品項,價格\n例如：iPhone,35000"
 
@@ -113,7 +115,7 @@ def handle_message(event):
 
             item_name, price_str = user_msg.split(separator, 1)
             
-            # 寫入資料庫
+            # ORM 寫入
             new_item = Wishlist(
                 user_id=user.id,
                 item_name=item_name.strip(),
@@ -124,6 +126,7 @@ def handle_message(event):
             
             reply_text = f"✅ 已新增「{item_name.strip()}」價格 {price_str.strip()} 元到清單！"
             
+            # 完成後重置
             user.current_function = None
             db.commit()
             
