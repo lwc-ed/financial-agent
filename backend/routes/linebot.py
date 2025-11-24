@@ -75,30 +75,31 @@ def handle_message(event):
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
 
-    # 查詢使用者
+    # 從 LINE 取得 user id
     user = db.query(User).filter_by(line_user_id=line_user_id).first()
 
+    # ---------- Google 綁定檢查（真正符合你需求的版本） ----------
     if not user:
-        # 檢查此 LINE 使用者是否有綁定 Google
+        # 查詢是否有任何 Google 使用者綁定過這個 LINE user_id
         google_user = db.query(User).filter(
             User.provider == "google",
             User.line_user_id == line_user_id
         ).first()
 
-        if not google_user:
-            # 沒綁定 → 完全不建立使用者、不進入系統
+        if google_user:
+            # 找到 → 使用該 Google 綁定帳號
+            user = google_user
+        else:
+            # 找不到 → 尚未綁定 → 禁止使用
             line_bot_api.reply_message(
                 ReplyMessageRequest(
                     reply_token=event.reply_token,
-                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊「個人資料填寫」使用 Google 登入並綁定 LINE")]
+                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊「個人資料填寫」進行 Google 登入並綁定 LINE")]
                 )
             )
             db.close()
             return
-    else:
-        # 如果 Google 帳號綁定過，就用那個 user
-        user = google_user
-# ----------👆 新增這段 👆----------
+    # ---------- 綁定檢查完成 ----------
 
     # 超過 10 分鐘沒互動 → 重置
     if user.last_activity_time:
