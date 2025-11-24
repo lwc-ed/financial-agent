@@ -91,9 +91,11 @@ def handle_message(event):
         db.commit()
 
     # 超過 10 分鐘沒互動 → 重置
-    if user.last_activity_time and datetime.now(taipei) - user.last_activity_time > timedelta(minutes=10):
-        user.current_function = None
-        db.commit()
+    if user.last_activity_time:
+        db_time = user.last_activity_time.replace(tzinfo=taipei)
+        if datetime.now(taipei) - db_time > timedelta(minutes=10):
+            user.current_function = None
+            db.commit()
 
     # 功能別名對應表
     function_alias = {
