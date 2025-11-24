@@ -128,7 +128,7 @@ def handle_message(event):
             reply_text = "✍️ 請輸入慾望清單項目，格式：品項,價格\n例如：iPhone,35000"
         else:
             reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
-    elif user.current_function == "功能 D":
+    elif user.current_function == "信用卡回饋查詢":
 
         print("👉 功能 D 已啟動，收到使用者輸入 =", user_msg)
 
