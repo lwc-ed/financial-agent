@@ -6,6 +6,11 @@ from backend.database import SessionLocal
 from backend.models.user import User
 from datetime import datetime, timedelta
 from backend.models.wishlist import Wishlist
+from datetime import datetime
+import pytz
+taipei = pytz.timezone("Asia/Taipei")
+datetime.now(taipei)
+
 
 linebot_bp = Blueprint("linebot", __name__)
 
@@ -76,7 +81,7 @@ def handle_message(event):
         user = User(
             line_user_id=line_user_id,
             current_function=None,
-            last_activity_time=datetime.utcnow(),
+            last_activity_time=datetime.now(taipei),
             provider="line",
             provider_id=line_user_id,
             name="",
@@ -86,7 +91,7 @@ def handle_message(event):
         db.commit()
 
     # 超過 10 分鐘沒互動 → 重置
-    if user.last_activity_time and datetime.utcnow() - user.last_activity_time > timedelta(minutes=10):
+    if user.last_activity_time and datetime.now(taipei) - user.last_activity_time > timedelta(minutes=10):
         user.current_function = None
         db.commit()
 
@@ -117,7 +122,7 @@ def handle_message(event):
         reply_text = "請先點選功能"
     elif user_msg in ["功能 A", "功能 B", "功能 C", "功能 D", "功能 E"]:
         user.current_function = user_msg
-        user.last_activity_time = datetime.utcnow()
+        user.last_activity_time = datetime.now(taipei)
         db.commit()
         if user_msg == "功能 D":
             user.current_function = "信用卡回饋查詢"  # 強制轉為 信用卡回饋查詢 狀態
@@ -193,7 +198,7 @@ def handle_message(event):
         reply_text = function_map.get(user_msg, f"你說的是：「{user_msg}」")
 
     # 更新最後互動時間
-    user.last_activity_time = datetime.utcnow()
+    user.last_activity_time = datetime.now(taipei)
     db.commit()
 
     line_bot_api.reply_message(
