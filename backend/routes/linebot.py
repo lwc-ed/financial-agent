@@ -120,6 +120,7 @@ def handle_message(event):
         user.last_activity_time = datetime.utcnow()
         db.commit()
         if user_msg == "功能 D":
+            user.current_function = "信用卡回饋查詢"  # 強制轉為 信用卡回饋查詢 狀態
             reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
         elif user_msg == "功能 B":
             print("進入慾望清單模式")
@@ -130,7 +131,7 @@ def handle_message(event):
             reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
     elif user.current_function == "信用卡回饋查詢":
 
-        print("👉 功能 D 已啟動，收到使用者輸入 =", user_msg)
+        print("👉 信用卡回饋查詢已啟動，收到使用者輸入 =", user_msg)
 
         # ⭐ 第 1 段：立即回覆避免 LINE Timeout
         line_bot_api.reply_message(
