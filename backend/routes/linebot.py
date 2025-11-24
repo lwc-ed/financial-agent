@@ -94,7 +94,8 @@ def handle_message(event):
             line_bot_api.reply_message(
                 ReplyMessageRequest(
                     reply_token=event.reply_token,
-                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊「個人資料填寫」進行 Google 登入並綁定 LINE")]
+                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊「個人資料填寫」進行 Google 登入並綁定 LINE\n若綁定失敗可以參照以下步驟⬇️\n" \
+                    "IPhone使用者：主頁➡️設定(右上角)➡️LINE Labs➡️關閉「使用預設瀏覽器開啟連結」")]
                 )
             )
             db.close()
