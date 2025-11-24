@@ -227,7 +227,7 @@ def handle_message(event):
         if text == "離開":
             user.current_function = None
             db.commit()
-            reply_text = "已離開記帳模式，之後可以再點「功能 C」回來記帳～"
+            reply_text = "已離開記帳模式，之後可以再點「紀錄消費」回來記帳～"
 
         elif text == "查紀錄":
             try:
