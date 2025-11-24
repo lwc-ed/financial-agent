@@ -1,8 +1,8 @@
 # backend/routes/expense_history.py
 from flask import Blueprint, request, jsonify
 from sqlalchemy import desc
-from database import SessionLocal
 from models.record import Record
+from backend.database import SessionLocal
 
 # 給 app.py 用的 Blueprint 名稱
 expense_history_bp = Blueprint("expense_history", __name__)
