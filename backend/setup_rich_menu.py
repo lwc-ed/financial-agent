@@ -21,7 +21,7 @@ channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiL
 
 
 # ✅ 圖片路徑
-image_path = "/Users/liweichen/financial-agent/picture/mainfunction.png"
+image_path = "/Users/liweichen/financial-agent/picture/menu.png"
 
 
 # ✅ 正確初始化方式（包含 host）
