@@ -6,9 +6,16 @@ from backend.database import SessionLocal
 from backend.models.user import User
 from datetime import datetime, timedelta
 from backend.models.wishlist import Wishlist
+
 from backend.models.record import Record   #  記帳資料表
 from sqlalchemy import desc                #  查紀錄排序用
 import re                                  #  解析「午餐 150」用
+
+from datetime import datetime
+import pytz
+taipei = pytz.timezone("Asia/Taipei")
+datetime.now(taipei)
+
 
 linebot_bp = Blueprint("linebot", __name__)
 
@@ -96,25 +103,39 @@ def handle_message(event):
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
 
-    # 查詢使用者
+    # 從 LINE 取得 user id
     user = db.query(User).filter_by(line_user_id=line_user_id).first()
+
+    # ---------- Google 綁定檢查（真正符合你需求的版本） ----------
     if not user:
-        user = User(
-            line_user_id=line_user_id,
-            current_function=None,
-            last_activity_time=datetime.utcnow(),
-            provider="line",
-            provider_id=line_user_id,
-            name="",
-            email=""
-        )
-        db.add(user)
-        db.commit()
+        # 查詢是否有任何 Google 使用者綁定過這個 LINE user_id
+        google_user = db.query(User).filter(
+            User.provider == "google",
+            User.line_user_id == line_user_id
+        ).first()
+
+        if google_user:
+            # 找到 → 使用該 Google 綁定帳號
+            user = google_user
+        else:
+            # 找不到 → 尚未綁定 → 禁止使用
+            line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊「個人資料填寫」進行 Google 登入並綁定 LINE\n若綁定失敗可以參照以下步驟⬇️\n" \
+                    "IPhone使用者：主頁➡️設定(右上角)➡️LINE Labs➡️關閉「使用預設瀏覽器開啟連結」")]
+                )
+            )
+            db.close()
+            return
+    # ---------- 綁定檢查完成 ----------
 
     # 超過 10 分鐘沒互動 → 重置
-    if user.last_activity_time and datetime.utcnow() - user.last_activity_time > timedelta(minutes=10):
-        user.current_function = None
-        db.commit()
+    if user.last_activity_time:
+        db_time = user.last_activity_time.replace(tzinfo=taipei)
+        if datetime.now(taipei) - db_time > timedelta(minutes=10):
+            user.current_function = None
+            db.commit()
 
     # 功能別名對應表
     function_alias = {
@@ -132,8 +153,11 @@ def handle_message(event):
     # 功能對應表
     function_map = {
         "功能 A": "📊 個人資料填寫（待接後端）",
+
         "功能 B": "📉 慾望清單（待接 DB）",
         "功能 C": "🧾 記帳功能：可輸入「午餐 150」或「查紀錄」",
+
+
         "功能 D": "💳 信用卡回饋查詢（AI+DB搜尋回饋）",
         "功能 E": "⚠️ 儲蓄挑戰（待接分析功能）",
     }
@@ -143,9 +167,10 @@ def handle_message(event):
         reply_text = "請先點選功能"
     elif user_msg in ["功能 A", "功能 B", "功能 C", "功能 D", "功能 E"]:
         user.current_function = user_msg
-        user.last_activity_time = datetime.utcnow()
+        user.last_activity_time = datetime.now(taipei)
         db.commit()
         if user_msg == "功能 D":
+            user.current_function = "信用卡回饋查詢"  # 強制轉為 信用卡回饋查詢 狀態
             reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
         elif user_msg == "功能 B":
             print("進入慾望清單模式")
@@ -164,9 +189,9 @@ def handle_message(event):
             )
         else:
             reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
-    elif user.current_function == "功能 D":
+    elif user.current_function == "信用卡回饋查詢":
 
-        print("👉 功能 D 已啟動，收到使用者輸入 =", user_msg)
+        print("👉 信用卡回饋查詢已啟動，收到使用者輸入 =", user_msg)
 
         # ⭐ 第 1 段：立即回覆避免 LINE Timeout
         line_bot_api.reply_message(
@@ -288,7 +313,7 @@ def handle_message(event):
         )
 
     # 更新最後互動時間
-    user.last_activity_time = datetime.utcnow()
+    user.last_activity_time = datetime.now(taipei)
     db.commit()
 
     line_bot_api.reply_message(
