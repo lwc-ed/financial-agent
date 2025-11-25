@@ -30,7 +30,7 @@ B --> C[Flask Backend - app.py]
 
 C --> C1[Routes Module]
 C --> C2[AI Module]
-C --> C3[Database Layer (SQLAlchemy)]
+C --> C3[Database Layer - SQLAlchemy]
 C --> C4[Credit Card Benefit Scrapers]
 
 C1 --> D1[Expense Record]
@@ -44,10 +44,10 @@ C2 --> E1[ai_parser.py]
 C2 --> E2[benefit_query.py]
 C2 --> E3[ai_reply.py]
 
-C3 --> F[(MySQL RDS)]
+C3 --> F[MySQL RDS]
 C4 --> G[CTBC / CUBE / DBS Benefit JSON]
 
-User2[User via Browser] --> LIFF[LIFF Frontend (React + Vite)]
+User2[User via Browser] --> LIFF[LIFF Frontend - React + Vite]
 LIFF --> C
 ```
 
