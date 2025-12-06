@@ -278,3 +278,4 @@ sudo timedatectl set-timezone Asia/Taipei
 
 # ✅ 完成
 此 README 已為你整合成完整技術導向 + 雙語版本，可直接使用於 GitHub。  
+ 

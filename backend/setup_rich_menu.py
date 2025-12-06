@@ -21,7 +21,7 @@ channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiL
 
 
 # ✅ 圖片路徑
-image_path = "/Users/liweichen/financial-agent/picture/menu.png"
+image_path = "/Users/liweichen/financial-agent/picture/menu1.jpg"
 
 
 # ✅ 正確初始化方式（包含 host）
@@ -79,7 +79,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             # 上三個區域
             RichMenuArea(
                 bounds=RichMenuBounds(x=0, y=0, width=833, height=843),
-                action=URIAction(label="A", uri="line://app/2008065321-vlAGLNjW")
+                action=MessageAction(label="A", text="信用卡回饋查詢")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=0, width=833, height=843),
@@ -93,7 +93,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             # 下兩個區域
             RichMenuArea(
                 bounds=RichMenuBounds(x=0, y=843, width=833, height=843),
-                action=MessageAction(label="D", text="信用卡回饋查詢")
+                action=URIAction(label="D", uri="line://app/2008065321-vlAGLNjW")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=843, width=833, height=843),
