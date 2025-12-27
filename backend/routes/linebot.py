@@ -7,6 +7,16 @@ from backend.models.user import User
 from datetime import datetime, timedelta
 from backend.models.wishlist import Wishlist
 
+from backend.models.record import Record   #  記帳資料表
+from sqlalchemy import desc                #  查紀錄排序用
+import re                                  #  解析「午餐 150」用
+
+from datetime import datetime
+import pytz
+taipei = pytz.timezone("Asia/Taipei")
+datetime.now(taipei)
+
+
 linebot_bp = Blueprint("linebot", __name__)
 
 # 這裡填入你的 LINE Secret 與 Access Token
@@ -63,6 +73,29 @@ def process_credit_card_query(user_msg):
 
     return reply_text
 
+def parse_expense_text(text: str):
+    """
+    把像「午餐 150」這種訊息，拆成 (category, amount)
+    回傳：(category:str, amount:int) 或 (None, None) 代表不是合法記帳格式
+    """
+    text = (text or "").strip()
+    parts = text.split()
+
+    # 只接受兩個字串：「類別 金額」
+    if len(parts) != 2:
+        return None, None
+
+    category = parts[0]
+    amount_raw = parts[1]
+
+    # 把 "150"、"150元"、"$150"、"1,500" 都變成純數字字串
+    s = re.sub(r"[,\s\$＄元圓]", "", amount_raw)
+    if not re.fullmatch(r"\d+", s):
+        return None, None
+
+    return category, int(s)
+
+
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     line_user_id = event.source.user_id
@@ -70,30 +103,44 @@ def handle_message(event):
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
 
-    # 查詢使用者
+    # 從 LINE 取得 user id
     user = db.query(User).filter_by(line_user_id=line_user_id).first()
+
+    # ---------- Google 綁定檢查（真正符合你需求的版本） ----------
     if not user:
-        user = User(
-            line_user_id=line_user_id,
-            current_function=None,
-            last_activity_time=datetime.utcnow(),
-            provider="line",
-            provider_id=line_user_id,
-            name="",
-            email=""
-        )
-        db.add(user)
-        db.commit()
+        # 查詢是否有任何 Google 使用者綁定過這個 LINE user_id
+        google_user = db.query(User).filter(
+            User.provider == "google",
+            User.line_user_id == line_user_id
+        ).first()
+
+        if google_user:
+            # 找到 → 使用該 Google 綁定帳號
+            user = google_user
+        else:
+            # 找不到 → 尚未綁定 → 禁止使用
+            line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊「個人資料填寫」進行 Google 登入並綁定 LINE\n若綁定失敗可以參照以下步驟⭣\n" \
+                    "IPhone使用者：\n主頁\n  ⭣\n設定(右上角)\n  ⭣\nLINE Labs\n  ⭣\n關閉「使用預設瀏覽器開啟連結」")]
+                )
+            )
+            db.close()
+            return
+    # ---------- 綁定檢查完成 ----------
 
     # 超過 10 分鐘沒互動 → 重置
-    if user.last_activity_time and datetime.utcnow() - user.last_activity_time > timedelta(minutes=10):
-        user.current_function = None
-        db.commit()
+    if user.last_activity_time:
+        db_time = user.last_activity_time.replace(tzinfo=taipei)
+        if datetime.now(taipei) - db_time > timedelta(minutes=10):
+            user.current_function = None
+            db.commit()
 
     # 功能別名對應表
     function_alias = {
         "個人資料填寫": "功能 A",
-        "慾望清單": "功能 B",
+        "欲望清單": "功能 B",
         "紀錄消費": "功能 C",
         "信用卡回饋查詢": "功能 D",
         "儲蓄挑戰": "功能 E"
@@ -106,8 +153,11 @@ def handle_message(event):
     # 功能對應表
     function_map = {
         "功能 A": "📊 個人資料填寫（待接後端）",
-        "功能 B": "📉 慾望清單（待接 DB）",
-        "功能 C": "🧾 記帳紀錄（待接 DB）",
+
+        "功能 B": "📉 欲望清單（待接 DB）",
+        "功能 C": "🧾 記帳功能：可輸入「午餐 150」或「查紀錄」",
+
+
         "功能 D": "💳 信用卡回饋查詢（AI+DB搜尋回饋）",
         "功能 E": "⚠️ 儲蓄挑戰（待接分析功能）",
     }
@@ -117,16 +167,17 @@ def handle_message(event):
         reply_text = "請先點選功能"
     elif user_msg in ["功能 A", "功能 B", "功能 C", "功能 D", "功能 E"]:
         user.current_function = user_msg
-        user.last_activity_time = datetime.utcnow()
+        user.last_activity_time = datetime.now(taipei)
         db.commit()
         if user_msg == "功能 D":
+            user.current_function = "信用卡回饋查詢"  # 強制轉為 信用卡回饋查詢 狀態
             reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
         elif user_msg == "功能 B":
-            print("進入慾望清單模式")
+            print("進入欲望清單模式")
             user.current_function = "wishlist"  # 強制轉為 wishlist 狀態
             db.commit()
-            reply_text =  (
-                "請輸入欲望清單項目，格式：品項,價格\n"
+            reply_text = (
+                "✍️ 請輸入欲望清單項目，格式：品項,價格\n"
                 "支援一次輸入多筆 (用空白或換行隔開)！\n\n"
                 "例如：\n"
                 "iPhone,35000 滑鼠,1000"
@@ -143,9 +194,9 @@ def handle_message(event):
             )
         else:
             reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
-    elif user.current_function == "功能 D":
+    elif user.current_function == "信用卡回饋查詢":
 
-        print("👉 功能 D 已啟動，收到使用者輸入 =", user_msg)
+        print("👉 信用卡回饋查詢已啟動，收到使用者輸入 =", user_msg)
 
         # ⭐ 第 1 段：立即回覆避免 LINE Timeout
         line_bot_api.reply_message(
@@ -171,21 +222,16 @@ def handle_message(event):
 
     elif user.current_function == "wishlist":
         print(f"處理欲望清單輸入: {user_msg}")
+        
         # 使用正規表達式抓取所有符合 "文字,數字" 的組合
-        # 說明：
-        #   ([^,，\n]+)  -> 抓取前面任何不是逗號或換行的文字 (品項)
-        #   [,，]        -> 抓取半形或全形逗號
-        #   \s* -> 允許逗號後有空白
-        #   (\d+)        -> 抓取數字 (價格)
         pattern = r"([^,，\n]+)[,，]\s*(\d+)"
         matches = re.findall(pattern, user_msg)
 
         if not matches:
-            # 如果完全沒有抓到任何一組符合的
             reply_text = (
                 "格式看起來不太對喔 😅\n"
                 "請確認格式為「品項,價格」，支援一次輸入多筆！\n\n"
-                "範例：\n"
+                "例如：\n"
                 "iPhone, 35000\n"
                 "滑鼠, 1000"
             )
@@ -193,49 +239,103 @@ def handle_message(event):
             try:
                 added_items = []
                 for item_name, price_str in matches:
-                    # 去除多餘空白
                     clean_name = item_name.strip()
                     clean_price = int(price_str)
                     
-                    # 忽略空字串 (避免有些 user 輸入造成誤判)
-                    if not clean_name: 
-                        continue
+                    if not clean_name: continue
 
-                    # 建立物件
                     new_item = Wishlist(
                         user_id=user.id,
                         item_name=clean_name,
                         price=clean_price
                     )
                     db.add(new_item)
-                    added_items.append(f"{clean_name} (${clean_price})")
-                
+                    added_items.append(f"{clean_name} (${clean_price})")  
+
                 if not added_items:
                     reply_text = "找不到有效的品項，請重新輸入。"
                 else:
-                    db.commit() # 全部加完再一次 commit，效能較好
+                    db.commit() # 全部加完再一次 commit
                     
-                    # 組合回覆訊息
                     items_str = "\n".join([f"✅ {item}" for item in added_items])
                     reply_text = f"已為您一口氣新增 {len(added_items)} 筆清單！\n{items_str}"
 
-                    # 完成後重置狀態 (如果想讓使用者連續輸入，這兩行可以註解掉)
+                    # 完成後重置
                     user.current_function = None
-                    db.commit()
-
+                    db.commit()  
             except Exception as e:
                 db.rollback()
-                reply_text = f"寫入資料庫時發生錯誤 😭：{str(e)}"
-                print(f"Wishlist Batch Add Error: {e}")
+                reply_text = f"資料庫錯誤：{str(e)}"
+                print(f"Wishlist Batch Add Error: {e}")                                   
 
-    elif user_msg == "紀錄消費":
-        from backend.routes import expense_record
-        reply_text = expense_record.get_expense_summary(user_id=line_user_id)
+    elif user.current_function == "expense":
+        text = user_msg.strip()
+
+        if text == "離開":
+            user.current_function = None
+            db.commit()
+            reply_text = "已離開記帳模式，之後可以再點「紀錄消費」回來記帳～"
+
+        elif text == "查紀錄":
+            try:
+                q = (
+                    db.query(Record)
+                    .filter(Record.line_user_id == line_user_id)
+                    .order_by(desc(Record.timestamp), desc(Record.id))
+                    .limit(5)
+                )
+                rows = q.all()
+
+                if not rows:
+                    reply_text = "你目前還沒有任何記帳紀錄喔～\n可以試試輸入：午餐 150"
+                else:
+                    lines = ["你最近的記帳紀錄："]
+                    for r in rows:
+                        line = f"- {r.category} {r.amount} 元"
+                        if r.note:
+                            line += f"（{r.note}）"
+                        lines.append(line)
+                    reply_text = "\n".join(lines)
+            except Exception as e:
+                print("查紀錄錯誤：", e)
+                reply_text = "查詢紀錄時發生錯誤 QQ，等等再試試。"
+
+        else:
+            # 嘗試把輸入當成「午餐 150」這種記帳格式
+            category, amount = parse_expense_text(text)
+            if category is None or amount is None:
+                reply_text = (
+                    "記帳格式是：「項目 金額」，例如：\n"
+                    "・午餐 150\n"
+                    "・飲料 60\n"
+                    "也可以輸入「查紀錄」或「離開」。"
+                )
+            else:
+                try:
+                    rec = Record(
+                        line_user_id=line_user_id,
+                        type="支出",    # 目前全部先當支出
+                        category=category,
+                        amount=amount,
+                        note="",
+                    )
+                    db.add(rec)
+                    db.commit()
+                    reply_text = f"已幫你記錄：{category} {amount} 元 ✅"
+                except Exception as e:
+                    print("記帳寫入錯誤：", e)
+                    db.rollback()
+                    reply_text = "記帳失敗 QQ，等等再試試看。"   
+    
+    
     else:
-        reply_text = function_map.get(user_msg, f"你說的是：「{user_msg}」")
+        reply_text = function_map.get(
+            user_msg,
+            f"你說的是：「{user_msg}」"
+        )
 
     # 更新最後互動時間
-    user.last_activity_time = datetime.utcnow()
+    user.last_activity_time = datetime.now(taipei)
     db.commit()
 
     line_bot_api.reply_message(
