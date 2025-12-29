@@ -50,10 +50,10 @@
       </p>
 
       <div id="safari-hint" class="hidden mt-6 pt-6 border-t border-slate-100">
-        <button onclick="window.close()" class="w-full bg-emerald-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-600 active:scale-95 transition-all">
-          完成並回到 LINE
+        <button id="jump-btn" class="w-full bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-600 active:scale-95 transition-all">
+          立即回到 LINE
         </button>
-        <p class="text-[11px] text-slate-400 mt-3">若按鈕無反應，請直接關閉此 Safari 分頁</p>
+        <p id="countdown-text" class="text-[11px] text-slate-400 mt-3">系統將於 2 秒後自動跳轉...</p>
       </div>
 
       <div class="mt-8">
@@ -104,15 +104,26 @@
       document.getElementById("status-title").textContent = "登入完成";
       
       if (liff.isInClient()) {
-        // 在 LINE 內部開啟：自動關閉
-        document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>系統將於 3 秒後自動回到 LINE";
+        // 在 LINE 內部開啟：直接關閉視窗
+        document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>系統將於 2 秒後自動回到聊天室";
         setTimeout(() => {
           liff.closeWindow();
-        }, 3000);
+        }, 2000);
       } else {
-        // 在 Safari/外部瀏覽器開啟：顯示提示按鈕
-        document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>現在您可以安全地關閉此頁面";
+        // 在 Safari/外部瀏覽器開啟
+        document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>即將為您跳轉回 LINE 應用程式";
         document.getElementById("safari-hint").classList.remove('hidden');
+        
+        const jumpBtn = document.getElementById('jump-btn');
+        const triggerJump = () => { window.location.href = "line://"; };
+        
+        jumpBtn.onclick = triggerJump;
+
+        // 自動跳轉嘗試
+        setTimeout(() => {
+          triggerJump();
+          document.getElementById("countdown-text").textContent = "已嘗試自動跳轉，若無反應請點擊上方按鈕";
+        }, 2000);
       }
     }
 
