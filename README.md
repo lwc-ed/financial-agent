@@ -241,7 +241,7 @@ source venv/bin/activate
 ## 🧪 測試
 ```bash
 python3 backend/ai/test_full_flow.py
-python3 -m app.py
+python3 -m backend.app
 python3 -m backend.routes.credit_card.cube_benefit_scraper
 ```
 
@@ -278,3 +278,4 @@ sudo timedatectl set-timezone Asia/Taipei
 
 # ✅ 完成
 此 README 已為你整合成完整技術導向 + 雙語版本，可直接使用於 GitHub。  
+ 

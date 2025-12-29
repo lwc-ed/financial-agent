@@ -1,50 +1,137 @@
+
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>登入成功</title>
+  <title>理財小幫手 - 登入成功</title>
+  
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+  
   <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      flex-direction: column;
-    }
-    h2 {
-      font-size: 1.8rem;
-      color: #333;
-    }
+    body { font-family: 'Noto Sans TC', sans-serif; }
+    .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+    .animate-float { animation: float 3s ease-in-out infinite; }
+    .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes scaleIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .animate-scale-in { animation: scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
   </style>
 </head>
-<body>
-  <h2>🎉 歡迎使用我們的 AI Agent 🎉</h2>
+<body class="bg-gradient-to-br from-yellow-50 via-white to-emerald-50 min-h-screen flex items-center justify-center p-4">
 
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <div class="container max-w-sm w-full fade-in">
+    <div class="glass-card rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-10 text-center border border-white">
+      
+      <div class="mb-6 relative inline-block">
+        <div id="status-icon-bg" class="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center animate-float">
+          <svg id="loading-spinner" class="animate-spin h-10 w-10 text-emerald-500" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg id="success-check" class="hidden w-12 h-12 text-emerald-500 animate-scale-in" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+          <span class="text-[10px]">🎉</span>
+        </div>
+      </div>
+
+      <h2 id="status-title" class="text-3xl font-bold text-slate-800 mb-2">正在同步...</h2>
+      <p id="status-desc" class="text-slate-500 mb-8 leading-relaxed text-sm">
+        歡迎使用理財小幫手 AI<br>
+        我們正在為您串連帳號
+      </p>
+
+      <div id="safari-hint" class="hidden mt-6 pt-6 border-t border-slate-100">
+        <button id="jump-btn" class="w-full bg-emerald-500 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-600 active:scale-95 transition-all">
+          立即回到 LINE
+        </button>
+        <p id="countdown-text" class="text-[11px] text-slate-400 mt-3">系統將於 2 秒後自動跳轉...</p>
+      </div>
+
+      <div class="mt-8">
+        <div class="h-1 w-8 bg-emerald-200 mx-auto rounded-full mb-4"></div>
+        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Account Verification</p>
+      </div>
+    </div>
+  </div>
+
   <script>
+    const LIFF_ID = "2008065321-vlAGLNjW";
+    const BIND_API = "https://financial-agent.it.com/bind";
+
     async function main() {
-      await liff.init({ liffId: "2008065321-vlAGLNjW" });
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
 
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
+        const profile = await liff.getProfile();
+        const lineUserId = profile.userId;
+        const googleId = "{{ google_id }}";
+
+        const response = await fetch(BIND_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lineUserId, googleId })
+        });
+
+        if (response.ok) {
+          showSuccess();
+        } else {
+          throw new Error("Bind failed");
+        }
+
+      } catch (err) {
+        console.error(err);
+        showError();
       }
+    }
 
-      const profile = await liff.getProfile();
-      const lineUserId = profile.userId;
-      const googleId = "{{ google_id }}";
+    function showSuccess() {
+      document.getElementById("loading-spinner").classList.add('hidden');
+      document.getElementById("success-check").classList.remove('hidden');
+      document.getElementById("status-title").textContent = "登入完成";
+      
+      if (liff.isInClient()) {
+        // 在 LINE 內部開啟：直接關閉視窗
+        document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>系統將於 2 秒後自動回到聊天室";
+        setTimeout(() => {
+          liff.closeWindow();
+        }, 2000);
+      } else {
+        // 在 Safari/外部瀏覽器開啟
+        document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>即將為您跳轉回 LINE 應用程式";
+        document.getElementById("safari-hint").classList.remove('hidden');
+        
+        const jumpBtn = document.getElementById('jump-btn');
+        const triggerJump = () => { window.location.href = "line://"; };
+        
+        jumpBtn.onclick = triggerJump;
 
-      await fetch("https://financial-agent.it.com/bind", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lineUserId, googleId })
-      });
+        // 自動跳轉嘗試
+        setTimeout(() => {
+          triggerJump();
+          document.getElementById("countdown-text").textContent = "已嘗試自動跳轉，若無反應請點擊上方按鈕";
+        }, 2000);
+      }
+    }
 
-      document.body.insertAdjacentHTML("beforeend", "<h3>✅ 登入完成，請回到 LINE 聊天室繼續使用！</h3>");
+    function showError() {
+      document.getElementById("status-title").textContent = "同步失敗";
+      document.getElementById("status-desc").innerHTML = "抱歉，帳號綁定過程出現錯誤<br>請關閉視窗後重試一次";
+      document.getElementById("status-icon-bg").classList.replace('bg-emerald-100', 'bg-red-100');
+      document.getElementById("loading-spinner").classList.add('hidden');
     }
 
     main();

@@ -122,7 +122,7 @@ def handle_message(event):
             line_bot_api.reply_message(
                 ReplyMessageRequest(
                     reply_token=event.reply_token,
-                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊「個人資料填寫」進行 Google 登入並綁定 LINE\n若綁定失敗可以參照以下步驟⭣\n" \
+                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊下方連接進行 Google 登入並綁定 LINE\nhttps://financial-agent.it.com/login_google\n若綁定失敗可以參照以下步驟⭣\n" \
                     "IPhone使用者：\n主頁\n  ⭣\n設定(右上角)\n  ⭣\nLINE Labs\n  ⭣\n關閉「使用預設瀏覽器開啟連結」")]
                 )
             )
@@ -139,10 +139,10 @@ def handle_message(event):
 
     # 功能別名對應表
     function_alias = {
-        "個人資料填寫": "功能 A",
+        "信用卡回饋查詢": "功能 A",
         "欲望清單": "功能 B",
         "紀錄消費": "功能 C",
-        "信用卡回饋查詢": "功能 D",
+        "其他": "功能 D",
         "儲蓄挑戰": "功能 E"
     }
 
@@ -152,13 +152,13 @@ def handle_message(event):
 
     # 功能對應表
     function_map = {
-        "功能 A": "📊 個人資料填寫（待接後端）",
+        "功能 A": "💳 信用卡回饋查詢（AI+DB搜尋回饋",
 
         "功能 B": "📉 欲望清單（待接 DB）",
         "功能 C": "🧾 記帳功能：可輸入「午餐 150」或「查紀錄」",
 
 
-        "功能 D": "💳 信用卡回饋查詢（AI+DB搜尋回饋）",
+        "功能 D": "其他功能",
         "功能 E": "⚠️ 儲蓄挑戰（待接分析功能）",
     }
 
@@ -169,7 +169,7 @@ def handle_message(event):
         user.current_function = user_msg
         user.last_activity_time = datetime.now(taipei)
         db.commit()
-        if user_msg == "功能 D":
+        if user_msg == "功能 A":
             user.current_function = "信用卡回饋查詢"  # 強制轉為 信用卡回饋查詢 狀態
             reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
         elif user_msg == "功能 B":

@@ -1,65 +1,209 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="UTF-8">
-  <title>理財小幫手 - Google 登入</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>理財小幫手 - 歡迎回來</title>
+
+  <!-- 引入 LIFF SDK -->
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+
+  <!-- 引入 Tailwind CSS (用於快速美化介面) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- 引入 Google 字體 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+
   <style>
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      font-family: Arial, sans-serif;
+    body { font-family: 'Noto Sans TC', sans-serif; }
+
+    /* 磨砂玻璃效果 */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
     }
-    .container {
-      border: 2px solid #000;
-      padding: 2rem;
-      text-align: center;
-      width: 90%;
-      max-width: 400px;
+
+    /* 錢包圖標浮動動畫 */
+    @keyframes float {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+      100% { transform: translateY(0px); }
     }
-    h2 {
-      margin-bottom: 2rem;
-      font-size: 1.5rem;
+    .animate-float { animation: float 3s ease-in-out infinite; }
+
+    /* 整體卡片進場動畫 */
+    .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    #google-login-btn {
-      padding: 0.8rem 1.2rem;
-      font-size: 1rem;
-      border: 1px solid #000;
-      background-color: white;
-      cursor: pointer;
+
+    /* 按鈕載入動畫 */
+    .spinner {
+      border: 2px solid rgba(16, 185, 129, 0.2);
+      border-top: 2px solid #10b981;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
     }
-    #google-login-btn:hover {
-      background-color: #f0f0f0;
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <h2>早安</h2>
-    <button id="google-login-btn" type="button">
-      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" 
-           alt="Google" style="width:20px; height:20px; vertical-align:middle; margin-right:8px;">
-      使用 Google 登入
-    </button>
-  </div>
-  <script>
-    async function main() {
-      // 初始化 LIFF
-      await liff.init({ liffId: "2008065321-vlAGLNjW" });
+<body class="bg-gradient-to-br from-yellow-50 via-white to-emerald-50 min-h-screen flex items-center justify-center p-4">
 
-      document.getElementById("google-login-btn").addEventListener("click", () => {
-        liff.openWindow({
-          url: "https://financial-agent.it.com/login_google", // Google OAuth 後端入口
-          external: true // 🔑 強制跳系統瀏覽器
-        });
-      });
+  <div class="container max-w-sm w-full fade-in">
+    <div class="glass-card rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.08)] p-10 text-center border border-white">
+
+      <!-- 可愛圖示區 -->
+      <div class="mb-6 relative inline-block">
+        <div class="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center animate-float">
+          <svg class="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div class="absolute -top-1 -right-1 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-sm">
+          <span class="text-[10px]">✨</span>
+        </div>
+      </div>
+
+      <!-- 文字標題區 -->
+      <h2 class="text-3xl font-bold text-slate-800 mb-2">早安</h2>
+      <p class="text-slate-500 mb-8 leading-relaxed text-sm">
+        您的個人理財管家<br>
+        陪您聰明管理每一分錢
+      </p>
+
+      <!-- 錯誤提示區 (預設隱藏) -->
+      <div id="error-message" class="hidden mb-4 p-3 bg-red-50 text-red-500 text-xs rounded-xl border border-red-100"></div>
+
+      <!-- 登入按鈕 -->
+      <button id="google-login-btn" type="button"
+              class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-medium py-3.5 px-6 rounded-2xl hover:bg-slate-50 hover:shadow-md hover:border-emerald-200 transition-all duration-300 active:scale-[0.98]">
+        <img id="google-icon" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+             alt="Google" class="w-5 h-5">
+        <span id="btn-text">使用 Google 帳號登入</span>
+      </button>
+
+      <!-- 裝飾頁腳 -->
+      <div class="mt-8">
+        <div class="h-1 w-8 bg-emerald-200 mx-auto rounded-full mb-4"></div>
+        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Secure Connection</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ✅ 改成與 Rich Menu / Dashboard 一致的 LIFF ID
+    //（避免用錯 LIFF App，導致 OAuth 參數/redirectUri 不匹配而 400）
+    const LIFF_ID = "2008065321-vlAGLNjW";
+
+    // Google 綁定入口（後端 route）
+    const LOGIN_URL = "https://financial-agent.it.com/login_google";
+
+    // 本地測試開關：localhost / 127.0.0.1 不跑 LIFF
+    const IS_LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
+
+    const loginBtn = document.getElementById('google-login-btn');
+    const btnText = document.getElementById('btn-text');
+    const googleIcon = document.getElementById('google-icon');
+    const errorMsg = document.getElementById('error-message');
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.classList.remove('hidden');
     }
 
-    main();
+    function setLoading(isLoading) {
+      if (isLoading) {
+        loginBtn.disabled = true;
+        loginBtn.classList.add('opacity-70', 'cursor-not-allowed');
+        googleIcon.classList.add('hidden');
+        btnText.innerHTML = '<div class="flex items-center gap-2"><div class="spinner"></div> 正在連線...</div>';
+      } else {
+        loginBtn.disabled = false;
+        loginBtn.classList.remove('opacity-70', 'cursor-not-allowed');
+        googleIcon.classList.remove('hidden');
+        btnText.textContent = '使用 Google 帳號登入';
+      }
+    }
+
+    // 1) 初始化 LIFF：如果已綁定就直接進 /dashboard
+    async function initLiff() {
+      try {
+        if (IS_LOCAL) {
+          showError('目前為本地測試模式：不會進行 LIFF / LINE 驗證');
+          return;
+        }
+
+        await liff.init({ liffId: LIFF_ID });
+
+        if (!liff.isInClient()) {
+          showError('請從 LINE 內點擊進入此頁（不要用外部瀏覽器直接開）。');
+          return;
+        }
+
+        if (!liff.isLoggedIn()) {
+          // ✅ 指定 redirectUri，避免 redirectUri 不在 LIFF 後台允許清單導致 400
+          liff.login({ redirectUri: window.location.href });
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        const lineUserId = profile.userId;
+
+        const res = await fetch('/api/check_user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ line_user_id: lineUserId })
+        });
+
+        if (!res.ok) {
+          showError('後端檢查使用者失敗，請稍後再試。');
+          return;
+        }
+
+        const data = await res.json();
+
+        if (data.exists) {
+          window.location.replace('/dashboard');
+          return;
+        }
+
+        // 未綁定：留在登入頁
+
+      } catch (err) {
+        console.error('LIFF 初始化失敗', err);
+        showError('LIFF 初始化失敗：請確認 LIFF ID 與 Redirect URI 設定是否正確。');
+      }
+    }
+
+    // 2) 按鈕：開啟 Google 綁定（外部瀏覽器）
+    loginBtn.addEventListener('click', () => {
+      setLoading(true);
+
+      try {
+        if (IS_LOCAL) {
+          window.location.href = '/login_google';
+          return;
+        }
+
+        liff.openWindow({ url: LOGIN_URL, external: true });
+      } catch (err) {
+        console.error('跳轉失敗', err);
+        showError('跳轉失敗，請稍後再試。');
+        setLoading(false);
+      }
+
+      setTimeout(() => setLoading(false), 3000);
+    });
+
+    initLiff();
   </script>
 </body>
 </html>

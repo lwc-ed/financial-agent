@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>理財小幫手 Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .tab-active { color: #059669; }
+  </style>
+</head>
+
+<body class="bg-slate-200 min-h-screen flex justify-center">
+
+<div class="w-full max-w-md bg-white min-h-screen shadow-xl flex flex-col">
+
+  <!-- Header -->
+  <header class="px-5 py-4 border-b flex justify-between items-center">
+    <h1 class="font-bold text-lg">理財小幫手</h1>
+    <button onclick="toggleDrawer(true)">☰</button>
+  </header>
+
+  <!-- Side Drawer -->
+  <div id="drawer-overlay" class="hidden fixed inset-0 bg-black/40" onclick="toggleDrawer(false)"></div>
+  <div id="side-drawer" class="fixed top-0 right-[-100%] w-64 h-full bg-white shadow transition-all">
+    <div class="p-6 bg-emerald-600 text-white">
+      <p id="drawer-user-name" class="font-bold">---</p>
+      <p id="drawer-user-id" class="text-xs opacity-80 break-all"></p>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <main class="flex-1 p-5 space-y-4 overflow-y-auto">
+
+    <section id="page-home" class="page active">
+      <p id="hi-user" class="text-xs text-slate-500 mb-2"></p>
+
+      <h2 class="text-xl font-bold mb-2">資產總覽</h2>
+
+      <div class="bg-emerald-600 text-white rounded-xl p-4 mb-4">
+        <p class="text-xs opacity-80">總資產</p>
+        <p id="display-balance" class="text-2xl font-bold">$0</p>
+      </div>
+
+      <div class="h-40 bg-slate-100 rounded p-2">
+        <canvas id="mainChart"></canvas>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="border-t flex justify-around py-2">
+    <button onclick="showPage('home')" id="nav-home" class="tab-active">總覽</button>
+  </nav>
+
+</div>
+
+<script type="module">
+/* ===============================
+   Dashboard – 精簡可維護版本
+   =============================== */
+
+const LIFF_ID = "2008065321-vlAGLNjW";
+const API_BASE = location.origin;
+const IS_LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
+
+/* ===== App State ===== */
+const state = {
+  userId: "",
+  userName: "",
+  balance: 0,
+};
+
+/* ===== UI 更新 ===== */
+function updateUI() {
+  document.getElementById("hi-user").textContent =
+    `Hi: ${state.userId}`;
+
+  document.getElementById("drawer-user-name").textContent =
+    state.userName;
+
+  document.getElementById("drawer-user-id").textContent =
+    state.userId;
+
+  document.getElementById("display-balance").textContent =
+    `$${state.balance.toLocaleString()}`;
+}
+
+/* ===== 本地假資料 ===== */
+function initLocalMock() {
+  state.userId = "LOCAL-TEST-USER-001";
+  state.userName = "本地測試用戶";
+  state.balance = 88888;
+  updateUI();
+  initChart();
+}
+
+/* ===== LIFF 初始化 ===== */
+async function initLIFF() {
+  await liff.init({ liffId: LIFF_ID });
+
+  if (!liff.isInClient()) {
+    document.body.innerHTML = "<p style='padding:20px'>請從 LINE App 開啟</p>";
+    return;
+  }
+
+
+
+  const profile = await liff.getProfile();
+  state.userId = profile.userId;
+  state.userName = profile.displayName;
+  state.balance = 45280; // 暫用假資料
+
+  updateUI();
+  initChart();
+}
+
+/* ===== Chart ===== */
+function initChart() {
+  const ctx = document.getElementById("mainChart")?.getContext("2d");
+  if (!ctx) return;
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: ["一","二","三","四","五","六","日"],
+      datasets: [{
+        data: [500,800,600,900,1200,700,1000],
+        borderColor: "#10b981",
+        tension: 0.4
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { display: false } }
+    }
+  });
+}
+
+/* ===== Drawer ===== */
+window.toggleDrawer = (show) => {
+  document.getElementById("drawer-overlay").classList.toggle("hidden", !show);
+  document.getElementById("side-drawer").style.right = show ? "0" : "-100%";
+};
+
+/* ===== Page ===== */
+window.showPage = (page) => {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(`page-${page}`)?.classList.add("active");
+};
+
+/* ===== Entry ===== */
+window.addEventListener("DOMContentLoaded", () => {
+  showPage("home");
+  IS_LOCAL ? initLocalMock() : initLIFF();
+});
+</script>
+
+</body>
+</html>
