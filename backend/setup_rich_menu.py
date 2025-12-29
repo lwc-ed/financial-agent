@@ -16,6 +16,8 @@ from mimetypes import guess_type
 import requests
 import time
 
+
+
 # ✅ 請換成你自己的 Channel Access Token
 channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU="
 
@@ -97,10 +99,12 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=843, width=833, height=843),
-                action=MessageAction(label="E", text="儲蓄挑戰")
+                action=URIAction(label="E", uri="line://app/2008065321-vlAGLNjW")
+
             ),
         ]
     )
+    #line://app/2008065321-vlAGLNjW
     created_menu = messaging_api.create_rich_menu(rich_menu)
     rich_menu_id = created_menu.rich_menu_id
     print("✅ Rich Menu created! ID:", rich_menu_id)
