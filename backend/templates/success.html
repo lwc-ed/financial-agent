@@ -49,6 +49,13 @@
         我們正在為您串連帳號
       </p>
 
+      <div id="safari-hint" class="hidden mt-6 pt-6 border-t border-slate-100">
+        <button onclick="window.close()" class="w-full bg-emerald-500 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-emerald-200 hover:bg-emerald-600 active:scale-95 transition-all">
+          完成並回到 LINE
+        </button>
+        <p class="text-[11px] text-slate-400 mt-3">若按鈕無反應，請直接關閉此 Safari 分頁</p>
+      </div>
+
       <div class="mt-8">
         <div class="h-1 w-8 bg-emerald-200 mx-auto rounded-full mb-4"></div>
         <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Account Verification</p>
@@ -71,8 +78,6 @@
 
         const profile = await liff.getProfile();
         const lineUserId = profile.userId;
-        
-        // 此處 {{ google_id }} 會被後端 Flask/Django 替換為真實 ID
         const googleId = "{{ google_id }}";
 
         const response = await fetch(BIND_API, {
@@ -94,23 +99,21 @@
     }
 
     function showSuccess() {
-      // 1. 切換 UI 狀態
       document.getElementById("loading-spinner").classList.add('hidden');
       document.getElementById("success-check").classList.remove('hidden');
       document.getElementById("status-title").textContent = "登入完成";
       
-      // 2. 顯示自動關閉提示
-      document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>系統將於 3 秒後自動回到 LINE";
-
-      // 3. 延遲 3 秒後自動關閉視窗
-      setTimeout(() => {
-        if (liff.isInClient()) {
+      if (liff.isInClient()) {
+        // 在 LINE 內部開啟：自動關閉
+        document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>系統將於 3 秒後自動回到 LINE";
+        setTimeout(() => {
           liff.closeWindow();
-        } else {
-          // 若在外部瀏覽器開啟，顯示手動關閉提示
-          document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>請手動關閉此視窗並回到 LINE。";
-        }
-      }, 3000);
+        }, 3000);
+      } else {
+        // 在 Safari/外部瀏覽器開啟：顯示提示按鈕
+        document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>現在您可以安全地關閉此頁面";
+        document.getElementById("safari-hint").classList.remove('hidden');
+      }
     }
 
     function showError() {
