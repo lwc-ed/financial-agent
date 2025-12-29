@@ -94,10 +94,23 @@
     }
 
     function showSuccess() {
+      // 1. 切換 UI 狀態
       document.getElementById("loading-spinner").classList.add('hidden');
       document.getElementById("success-check").classList.remove('hidden');
       document.getElementById("status-title").textContent = "登入完成";
-      document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>現在您可以回到 LINE 繼續使用了";
+      
+      // 2. 顯示自動關閉提示
+      document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>系統將於 3 秒後自動回到 LINE";
+
+      // 3. 延遲 3 秒後自動關閉視窗
+      setTimeout(() => {
+        if (liff.isInClient()) {
+          liff.closeWindow();
+        } else {
+          // 若在外部瀏覽器開啟，顯示手動關閉提示
+          document.getElementById("status-desc").innerHTML = "✅ 帳號綁定成功！<br>請手動關閉此視窗並回到 LINE。";
+        }
+      }, 3000);
     }
 
     function showError() {
