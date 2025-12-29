@@ -176,7 +176,12 @@ def handle_message(event):
             print("進入欲望清單模式")
             user.current_function = "wishlist"  # 強制轉為 wishlist 狀態
             db.commit()
-            reply_text = "✍️ 請輸入欲望清單項目，格式：品項,價格\n例如：iPhone,35000"
+            reply_text = (
+                "✍️ 請輸入欲望清單項目，格式：品項,價格\n"
+                "支援一次輸入多筆 (用空白或換行隔開)！\n\n"
+                "例如：\n"
+                "iPhone,35000 滑鼠,1000"
+            )
         elif user_msg == "功能 C":
             print("進入記帳模式")
             user.current_function = "expense"   # 👈 記帳模式
@@ -217,34 +222,51 @@ def handle_message(event):
 
     elif user.current_function == "wishlist":
         print(f"處理欲望清單輸入: {user_msg}")
-        try:
-            # 處理中英文逗號
-            separator = "," if "," in user_msg else "，"
-            if separator not in user_msg:
-                raise ValueError("缺少逗號")
+        
+        # 使用正規表達式抓取所有符合 "文字,數字" 的組合
+        pattern = r"([^,，\n]+)[,，]\s*(\d+)"
+        matches = re.findall(pattern, user_msg)
 
-            item_name, price_str = user_msg.split(separator, 1)
-            
-            # ORM 寫入
-            new_item = Wishlist(
-                user_id=user.id,
-                item_name=item_name.strip(),
-                price=int(price_str.strip())
+        if not matches:
+            reply_text = (
+                "格式看起來不太對喔 😅\n"
+                "請確認格式為「品項,價格」，支援一次輸入多筆！\n\n"
+                "例如：\n"
+                "iPhone, 35000\n"
+                "滑鼠, 1000"
             )
-            db.add(new_item)
-            db.commit()
-            
-            reply_text = f"✅ 已新增「{item_name.strip()}」價格 {price_str.strip()} 元到清單！"
-            
-            # 完成後重置
-            user.current_function = None
-            db.commit()
-            
-        except ValueError:
-            reply_text = "格式錯誤！請確認使用逗號分隔，且價格為數字。\n範例：Switch, 10000"
-        except Exception as e:
-            reply_text = f"發生錯誤：{str(e)}"
-            print(f"Error: {e}")
+        else:
+            try:
+                added_items = []
+                for item_name, price_str in matches:
+                    clean_name = item_name.strip()
+                    clean_price = int(price_str)
+                    
+                    if not clean_name: continue
+
+                    new_item = Wishlist(
+                        user_id=user.id,
+                        item_name=clean_name,
+                        price=clean_price
+                    )
+                    db.add(new_item)
+                    added_items.append(f"{clean_name} (${clean_price})")  
+
+                if not added_items:
+                    reply_text = "找不到有效的品項，請重新輸入。"
+                else:
+                    db.commit() # 全部加完再一次 commit
+                    
+                    items_str = "\n".join([f"✅ {item}" for item in added_items])
+                    reply_text = f"已為您一口氣新增 {len(added_items)} 筆清單！\n{items_str}"
+
+                    # 完成後重置
+                    user.current_function = None
+                    db.commit()  
+            except Exception as e:
+                db.rollback()
+                reply_text = f"資料庫錯誤：{str(e)}"
+                print(f"Wishlist Batch Add Error: {e}")                                   
 
     elif user.current_function == "expense":
         text = user_msg.strip()
