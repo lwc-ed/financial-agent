@@ -142,7 +142,7 @@
      ============================= */
 
   // --- 1. 基本設定 ---
-  const LIFF_ID = "2008065321-vlAGLNjW";
+  const LIFF_ID = "2008795054-LpCQ6Gdh";
   const API_BASE = "https://financial-agent.it.com";
   const IS_LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
 
@@ -237,7 +237,14 @@
     state.userName = profile.displayName;
     state.userId = profile.userId;
     state.userIdDisplay = profile.userId.slice(0, 8) + "…";
-
+    // 🧪 LIFF 開啟測試：把 userId 打回後端，讓終端機印出來
+    fetch(`${API_BASE}/api/liff_open_test`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            user_id: profile.userId
+        })
+    });
     await fetchUserData(state.userId);
     initChart();
   }

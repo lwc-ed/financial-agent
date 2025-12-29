@@ -9,6 +9,7 @@ from backend.routes.expense_history import expense_history_bp
 from backend.routes.wishlist import wishlist_bp
 from backend.routes.challenge import challenge_bp
 from backend.routes.profile import profile_bp
+from backend.routes.liff_test import liff_test_bp
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -27,6 +28,7 @@ app.register_blueprint(expense_history_bp, url_prefix="/api/expense_history")
 app.register_blueprint(wishlist_bp, url_prefix="/api/wishlist")
 app.register_blueprint(challenge_bp, url_prefix="/api/challenge")
 app.register_blueprint(profile_bp, url_prefix="/api/profile")
+app.register_blueprint(liff_test_bp)
 
 if __name__ == "__main__":
     app.run(debug=True, port=8000, host="0.0.0.0")

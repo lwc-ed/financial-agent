@@ -93,7 +93,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             # 下兩個區域
             RichMenuArea(
                 bounds=RichMenuBounds(x=0, y=843, width=833, height=843),
-                action=URIAction(label="D", uri="line://app/2008065321-vlAGLNjW")
+                action=URIAction(label="D", uri="https://liff.line.me/2008795054-LpCQ6Gdh")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=843, width=833, height=843),
