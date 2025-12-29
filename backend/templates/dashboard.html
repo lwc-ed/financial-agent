@@ -115,10 +115,7 @@ async function initLIFF() {
     return;
   }
 
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
+
 
   const profile = await liff.getProfile();
   state.userId = profile.userId;
