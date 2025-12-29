@@ -95,16 +95,16 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
             # 下兩個區域
             RichMenuArea(
                 bounds=RichMenuBounds(x=0, y=843, width=833, height=843),
-                action=URIAction(label="D", uri="https://liff.line.me/2008795054-LpCQ6Gdh")
+                action=URIAction(label="D", uri="line://app/2008065321-vlAGLNjW")
             ),
             RichMenuArea(
                 bounds=RichMenuBounds(x=833, y=843, width=833, height=843),
-                action=URIAction(label="E", uri="line://app/2008065321-vlAGLNjW")
-
+                action=MessageAction(label="E", text="儲儲挑戰")
             ),
         ]
     )
     #line://app/2008065321-vlAGLNjW
+    #https://liff.line.me/2008795054-LpCQ6Gdh
     created_menu = messaging_api.create_rich_menu(rich_menu)
     rich_menu_id = created_menu.rich_menu_id
     print("✅ Rich Menu created! ID:", rich_menu_id)

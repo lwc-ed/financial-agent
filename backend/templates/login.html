@@ -120,10 +120,38 @@
     async function initLiff() {
       try {
         await liff.init({ liffId: LIFF_ID });
-        console.log("LIFF 載入成功");
+
+        // ⚠️ 確保在 LINE 裡
+        if (!liff.isInClient()) return;
+
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        const lineUserId = profile.userId;
+
+        // 🔑 關鍵判斷：問後端有沒有這個人
+        const res = await fetch("/api/check_user", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ line_user_id: lineUserId })
+        });
+
+        const data = await res.json();
+
+        if (data.exists) {
+          // ✅ 已綁定 → 直接進主網站
+          window.location.href = "/";
+          return;
+        }
+
+        // ❌ 沒綁定 → 留在登入頁（什麼都不用做）
+
       } catch (err) {
         console.error("LIFF 初始化失敗", err);
-        showError("無法連線至 LINE 服務，請確認網路狀態。");
+        showError("無法連線至 LINE 服務，請稍後再試。");
       }
     }
 
