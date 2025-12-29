@@ -241,7 +241,7 @@ source venv/bin/activate
 ## 🧪 測試
 ```bash
 python3 backend/ai/test_full_flow.py
-python3 -m app.py
+python3 -m backend.app
 python3 -m backend.routes.credit_card.cube_benefit_scraper
 ```
 
