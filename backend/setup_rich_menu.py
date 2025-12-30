@@ -21,7 +21,7 @@ channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiL
 
 
 # ✅ 圖片路徑
-image_path = "/Users/liweichen/financial-agent/picture/mainfunction.png"
+image_path = "/Users/liweichen/financial-agent/picture/menu.png"
 
 
 # ✅ 正確初始化方式（包含 host）
@@ -125,7 +125,7 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
     # 有些節點需要一點時間才一致，等待片刻再上傳
     time.sleep(1.0)
 
-    # ✅ 上傳圖片
+    # ✅ 上傳圖
     if os.path.exists(image_path):
         print("🖼️  Uploading image...")
         try:
