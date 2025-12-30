@@ -20,6 +20,7 @@ import re
 
 from backend.database import SessionLocal
 from backend.models.record import Record
+from backend.models.user import User
 
 expense_record_bp = Blueprint("expense_record", __name__)
 
@@ -49,6 +50,12 @@ def save_expense():
         return jsonify({"status": "error", "message": "請以 JSON 傳送資料"}), 400
 
     line_user_id = (data.get("line_user_id") or "anonymous").strip()
+    user = db.query(User).filter_by(line_user_id=line_user_id).first()
+    if not user:
+        return jsonify({
+            "status": "error",
+            "message": "找不到對應的使用者，請先完成登入綁定"
+        }), 404
     tx_type = (data.get("type") or "支出").strip()
     category = (data.get("category") or "").strip()
     amount = normalize_amount(data.get("amount"))
@@ -65,7 +72,7 @@ def save_expense():
     db = SessionLocal()
     try:
         rec = Record(
-            line_user_id=1,
+            line_user_id=line_user_id,
             type=tx_type,
             category=category,
             amount=amount,
@@ -80,7 +87,7 @@ def save_expense():
             "message": "已新增消費",
             "data": {
                 "id": rec.id,
-                "line_user_id": rec.line_user_id,
+                "line_user_id": user.id,
                 "type": rec.type,
                 "category": rec.category,
                 "amount": rec.amount,
