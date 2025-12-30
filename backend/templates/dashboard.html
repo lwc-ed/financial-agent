@@ -85,7 +85,7 @@ const state = {
 /* ===== UI 更新 ===== */
 function updateUI() {
   document.getElementById("hi-user").textContent =
-    `Hi: ${state.userId}`;
+    `Hi: ${state.userName}`;
 
   document.getElementById("drawer-user-name").textContent =
     state.userName;
@@ -98,10 +98,28 @@ function updateUI() {
 }
 
 /* ===== 本地假資料 ===== */
-function initLocalMock() {
+async function initLocalMock() {
   state.userId = "LOCAL-TEST-USER-001";
-  state.userName = "本地測試用戶";
-  state.balance = 88888;
+
+  try {
+    const res = await fetch("/api/profile/user/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ line_user_id: state.userId })
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      state.userName = data.name;
+    } else {
+      state.userName = "使用者";
+    }
+  } catch (err) {
+    console.error("local mock fetch failed", err);
+    state.userName = "使用者";
+  }
+
+  state.balance = 45280; // 假資料
   updateUI();
   initChart();
 }
