@@ -48,7 +48,7 @@ def save_expense():
     if not data:
         return jsonify({"status": "error", "message": "請以 JSON 傳送資料"}), 400
 
-    line_user_id = (data.get("line_user_id") or "anonymous").strip()
+    line_user_id = (data.get("id") or "anonymous").strip()
     tx_type = (data.get("type") or "支出").strip()
     category = (data.get("category") or "").strip()
     amount = normalize_amount(data.get("amount"))
