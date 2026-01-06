@@ -33,10 +33,10 @@ async function initSessionUser() {
     return;
   }
 
-  state.userId = data.user.id;
+  state.userId = data.user.line_user_id;
   state.userName = data.user.name;
   state.balance = data.user.balance || 0;
-
+  console.log("登入成功 userId =", state.userId);
   updateUI();
 }
 
