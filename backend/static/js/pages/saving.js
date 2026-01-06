@@ -81,23 +81,26 @@ async function loadSavingChallenges() {
   }
 
   try {
-
     const res = await fetch(`/api/saving-challenge/list?line_user_id=${savingState.userId}`, {
-        credentials: "include",
+      credentials: "include",
     });
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
+    console.log('🔥 API 回傳 pettype:', data.challenges);  // debug
+    
     savingState.challenges = (data.challenges || []).map(ch => ({
       ...ch,
-      pet_icon: getPetEmoji(ch.stage)
+      pet_icon: getPetEmoji(ch.stage),
+      pettype: ch.pettype  // 🔥 確保有 pettype
     }));
+    
+    console.log('🔥 前端狀態 pettype:', savingState.challenges.map(c => ({name: c.item_name, pettype: c.pettype})));
   } catch (err) {
     console.error("loadSavingChallenges failed", err);
   }
 }
+
 
 /* ===============================
    Render pet grid
