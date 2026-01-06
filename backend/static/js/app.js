@@ -2,7 +2,7 @@
 import { initHome } from "./pages/home.js";
 import { initSaving } from "./pages/saving.js";
 
-const LIFF_ID = "你的正式 LIFF ID";
+const LIFF_ID = "請填入你的正式 LIFF ID";
 
 export const state = {
   lineUserId: "",
@@ -10,7 +10,7 @@ export const state = {
   balance: 0,
 };
 
-/* ===== 只負責畫面 ===== */
+/* ===== UI ===== */
 function updateUI() {
   const hiUser = document.getElementById("hi-user");
   if (hiUser) {
@@ -20,8 +20,12 @@ function updateUI() {
   }
 }
 
-/* ===== 唯一的登入流程：LIFF ===== */
+/* ===== 唯一登入流程（LIFF） ===== */
 async function initFromLIFF() {
+  if (typeof liff === "undefined") {
+    throw new Error("LIFF SDK not loaded");
+  }
+
   await liff.init({ liffId: LIFF_ID });
 
   if (!liff.isLoggedIn()) {
@@ -34,7 +38,6 @@ async function initFromLIFF() {
 
   console.log("[LIFF] line_user_id =", state.lineUserId);
 
-  // 👉 用 line_user_id 問後端「你是誰」
   const res = await fetch("/api/check_user", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -45,18 +48,16 @@ async function initFromLIFF() {
   });
 
   if (!res.ok) {
-    throw new Error(`check_user failed ${res.status}`);
+    throw new Error(`check_user failed: ${res.status}`);
   }
 
   const data = await res.json();
 
   if (!data.exists) {
-    // 尚未註冊 / 尚未綁定
     window.location.href = "/login_page";
     return;
   }
 
-  // ✅ 後端資料才是最終狀態
   state.userName = data.user.name;
   state.balance = data.user.balance || 0;
 }
@@ -80,6 +81,6 @@ window.addEventListener("DOMContentLoaded", async () => {
     updateUI();
   } catch (err) {
     console.error("LIFF init failed", err);
-    alert("初始化失敗，請從 LINE 重新開啟");
+    alert("初始化失敗，請務必從 LINE 內開啟");
   }
 });
