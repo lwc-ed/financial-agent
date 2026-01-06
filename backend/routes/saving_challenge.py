@@ -99,24 +99,29 @@ def get_wishlist():
     line_user_id = request.args.get("line_user_id")
     db = SessionLocal()
     try:
+        #1️⃣line_user_id -> user.id
         user = db.query(User).filter_by(line_user_id=line_user_id).first()
         if not user:
             return jsonify({"wishlist": []}), 200
         
+
+        # 2️⃣ user.id → wishlists.userid
+        wishlists = db.query(Wishlist).filter_by(userid=user.id).all()
+
         # 🔥 用已建立但未完成的挑戰當願望清單
         challenges = db.query(SavingChallenge)\
             .filter_by(user_id=user.id)\
             .filter(SavingChallenge.current_amount < SavingChallenge.target_amount)\
             .all()
         
-        wishlist = [
+        wishlist_data = [
             {
                 "itemname": c.item_name,
                 "price": float(c.target_amount)
             }
-            for c in challenges
+            for c in wishlists
         ]
-        return jsonify({"wishlist": wishlist})
+        return jsonify({"wishlist": wishlist_data})
     finally:
         db.close()
 
