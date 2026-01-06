@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 from backend.database import SessionLocal
 from backend.models.saving_challenge import SavingChallenge
 from backend.models.user import User
+from backend.models.wishlist import Wishlist  # 🔥 照 linebot.py 一樣
+
 
 saving_challenge_bp = Blueprint(
     "saving_challenge",
