@@ -7,9 +7,13 @@ liff_test_bp = Blueprint("liff_test", __name__)
 @liff_test_bp.route("/api/check_user", methods=["POST"])
 def check_user():
     data = request.get_json(silent=True) or {}
+    print(f"DEBUG: 收到 data = {data}")  # ✅ 先印出來看前端傳什麼
+
+
     line_user_id = data.get("line_user_id")
 
     if not line_user_id:
+        print(f"DEBUG: line_userid 是 None，data={data}")  # ✅ 印錯誤原因
         return jsonify({
             "exists": False,
             "error": "missing line_user_id"
