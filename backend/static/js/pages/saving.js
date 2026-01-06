@@ -387,7 +387,8 @@ function openPetDetail(challenge, opts = {}) {
   document.getElementById("pet-target").textContent =
     challenge.target_amount.toLocaleString();
 
-  const display = getPetDisplay(challenge.stage, challenge.pet_type);
+  const petType = challenge.pettype || 'cat';
+  const display = getPetDisplay(challenge.stage, petType);  
   document.getElementById("pet-stage").textContent =
     `Stage ${challenge.stage} · ${display.label}`;
 
