@@ -191,7 +191,8 @@ def feed_challenge():
                 "item_name": challenge.item_name,
                 "target_amount": float(challenge.target_amount),
                 "current_amount": float(challenge.current_amount),
-                "stage": challenge.stage
+                "stage": challenge.stage,
+                "pettype": challenge.pettype
             }
         })
     finally:
