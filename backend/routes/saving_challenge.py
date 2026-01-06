@@ -108,7 +108,10 @@ def get_wishlist():
         
 
         # 2️⃣ user.id → wishlists.userid
-        wishlists = db.query(Wishlist).filter_by(userid=user.id).all()
+        print(f"🔍 正在查找 user_id={user.id} 的願望清單資料庫")
+        wishlists = db.query(Wishlist).filter_by(user_id=user.id).all()
+        print(f"🔍 找到 {len(wishlists)} 筆願望")
+
 
         # 🔥 用已建立但未完成的挑戰當願望清單
         challenges = db.query(SavingChallenge)\
@@ -123,6 +126,7 @@ def get_wishlist():
             }
             for c in wishlists
         ]
+        print(f"🔍 回傳願望清單: {wishlist_data}")
         return jsonify({"wishlist": wishlist_data})
     finally:
         db.close()
