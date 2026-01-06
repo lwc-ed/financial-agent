@@ -62,9 +62,11 @@ async function initLIFF() {
 
   const data = await res.json();
 
-  if (!data.exists) {
-    // 未註冊 → 導向登入頁
-    window.location.href = "/login_page";
+  if (data.exists === false) {
+    // 未註冊 → 導向登入頁（避免重複導向）
+    if (location.pathname !== "/login_page") {
+      window.location.href = "/login_page";
+    }
     return;
   }
 }
