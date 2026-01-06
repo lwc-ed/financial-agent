@@ -23,7 +23,9 @@ function updateUI() {
 async function initSessionUser() {
   const res = await fetch("/api/check_user", {
     method: "POST",
-    credentials: "include"
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+    credentials: "include",
   });
 
   const data = await res.json();
@@ -37,7 +39,7 @@ async function initSessionUser() {
   state.userName = data.user.name;
   state.balance = data.user.balance || 0;
   console.log("登入成功 userId =", state.userId);
-  updateUI();
+  // 不在這裡呼叫 updateUI
 }
 
 /* ===== UI 共用 ===== */
@@ -68,6 +70,7 @@ window.toggleDrawer = (show) => {
 window.addEventListener("DOMContentLoaded", async () => {
   await initSessionUser();
   showPage("home");
+  updateUI(); // 🔴 這行一定要在 showPage 後
 });
 // ===== expose functions for inline onclick (ES module fix) =====
 window.showPage = window.showPage;
