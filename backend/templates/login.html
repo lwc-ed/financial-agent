@@ -155,13 +155,11 @@
         }
 
         const profile = await liff.getProfile();
-        const lineUserId = profile.userId;
-        /*
-        //const res = await fetch('/api/check_user', {
-        //  method: 'POST',
-        //  headers: { 'Content-Type': 'application/json' },
-        //  body: JSON.stringify({ line_user_id: lineUserId })
-        //});
+        // 直接用 session 檢查登入狀態，不再傳 line_user_id
+        const res = await fetch('/api/check_user', {
+          method: 'POST',
+          credentials: 'include'
+        });
 
         if (!res.ok) {
           showError('後端檢查使用者失敗，請稍後再試。');
@@ -171,10 +169,10 @@
         const data = await res.json();
 
         if (data.exists) {
+          // ✅ 已完成 LINE + Google 綁定並建立 session
           window.location.replace('/dashboard');
           return;
         }
-        */
         // 已登入 LINE，但是否綁定交給後端流程
         // 留在登入頁，讓使用者按 Google 登入
         return;
