@@ -19,7 +19,7 @@ def create_challenge():
     line_user_id = data.get("line_user_id")
     item_name = data.get("item_name")
     target_amount = data.get("target_amount")
-    pettype = data.get("pettype","cat") #預設貓
+    pettype = data.get("pettype","chicken") #預設貓
     print(f"收到pettype:{pettype}") #debug
 
 
@@ -87,7 +87,7 @@ def list_challenges():
         
         result = []
         for challenge in challenges:  # 🔥 正確變數名
-            pettype = getattr(challenge, 'pettype', 'cat')
+            pettype = getattr(challenge, 'pettype', 'chicken')
             print(f"🔥 /list 回傳: {challenge.item_name} pettype={pettype}")
             
             result.append({

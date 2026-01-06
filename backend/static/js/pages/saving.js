@@ -130,7 +130,7 @@ function renderSavingPets() {
       (ch.current_amount / ch.target_amount) * 100
     );
 
-    const display = getPetDisplay(ch.stage, ch.pettype || 'cat');
+    const display = getPetDisplay(ch.stage, ch.pettype || 'chicken');
 
     pet.innerHTML = `
       <div class="mb-2">
@@ -404,7 +404,7 @@ function openPetDetail(challenge, opts = {}) {
   document.getElementById("pet-target").textContent =
     challenge.target_amount.toLocaleString();
 
-  const petType = challenge.pettype || 'cat';
+  const petType = challenge.pettype || 'chicken';
   const display = getPetDisplay(challenge.stage, petType);  
   document.getElementById("pet-stage").textContent =
     `Stage ${challenge.stage} · ${display.label}`;
@@ -510,7 +510,7 @@ function playEvolveTransition(fromStage, toStage, onDone) {
   const key = `${fromStage}-${toStage}`;
   const evolveFile = EVOLVE_ANIMATION_MAP[key] || "evolve.mp4";
   // 🔥 修正：pettype
-  const petType = activePet.pettype || 'cat';
+  const petType = activePet.pettype || 'chicken';
   const evolveSrc = `/static/assets/pets/${petType}/${evolveFile}`;
 
 
