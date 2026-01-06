@@ -19,7 +19,10 @@ def create_challenge():
     line_user_id = data.get("line_user_id")
     item_name = data.get("item_name")
     target_amount = data.get("target_amount")
+    pettype = data.get("pettype","cat") #預設貓
+    print(f"收到pettype:{pettype}") #debug
 
+    
     if not all([line_user_id, item_name, target_amount]):
         return jsonify({"error": "missing fields"}), 400
 
