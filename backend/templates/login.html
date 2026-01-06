@@ -157,11 +157,11 @@
         const profile = await liff.getProfile();
         const lineUserId = profile.userId;
 
-        const res = await fetch('/api/check_user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ line_user_id: lineUserId })
-        });
+        //const res = await fetch('/api/check_user', {
+        //  method: 'POST',
+        //  headers: { 'Content-Type': 'application/json' },
+        //  body: JSON.stringify({ line_user_id: lineUserId })
+        //});
 
         if (!res.ok) {
           showError('後端檢查使用者失敗，請稍後再試。');

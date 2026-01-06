@@ -21,16 +21,27 @@ function updateUI() {
 }
 
 async function initSessionUser() {
-  const res = await fetch("/api/check_user", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({}),
-    credentials: "include",
-  });
+  let res;
+
+  try {
+    res = await fetch("/api/check_user", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (e) {
+    console.error("check_user network error", e);
+    return;
+  }
+
+  // ⭐ 非 200，一律視為未登入
+  if (!res.ok) {
+    window.location.href = "/login_page";
+    return;
+  }
 
   const data = await res.json();
 
-  if (!data.exists) {
+  if (!data.exists || !data.user) {
     window.location.href = "/login_page";
     return;
   }
@@ -38,8 +49,8 @@ async function initSessionUser() {
   state.userId = data.user.line_user_id;
   state.userName = data.user.name;
   state.balance = data.user.balance || 0;
+
   console.log("登入成功 userId =", state.userId);
-  // 不在這裡呼叫 updateUI
 }
 
 /* ===== UI 共用 ===== */
