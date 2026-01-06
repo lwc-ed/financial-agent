@@ -22,26 +22,25 @@ function updateUI() {
 
 async function initSessionUser() {
   let res;
-
   try {
     res = await fetch("/api/check_user", {
       method: "POST",
-      credentials: "include",
+      credentials: "include", // 只靠 session
     });
   } catch (e) {
-    console.error("check_user network error", e);
+    console.error("check_user fetch failed", e);
     return;
   }
 
-  // ⭐ 非 200，一律視為未登入
   if (!res.ok) {
+    console.warn("check_user failed:", res.status);
     window.location.href = "/login_page";
     return;
   }
 
   const data = await res.json();
 
-  if (!data.exists || !data.user) {
+  if (!data.exists) {
     window.location.href = "/login_page";
     return;
   }
@@ -50,7 +49,7 @@ async function initSessionUser() {
   state.userName = data.user.name;
   state.balance = data.user.balance || 0;
 
-  console.log("登入成功 userId =", state.userId);
+  console.log("✅ Session user loaded:", state);
 }
 
 /* ===== UI 共用 ===== */
