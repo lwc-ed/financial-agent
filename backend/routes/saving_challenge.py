@@ -22,7 +22,7 @@ def create_challenge():
     pettype = data.get("pettype","cat") #預設貓
     print(f"收到pettype:{pettype}") #debug
 
-    
+
     if not all([line_user_id, item_name, target_amount]):
         return jsonify({"error": "missing fields"}), 400
 
@@ -84,18 +84,20 @@ def list_challenges():
             return jsonify({"challenges": []}), 200  # 🔥 空正常
 
         challenges = db.query(SavingChallenge).filter_by(user_id=user.id).all()
-        return jsonify({
-            "challenges": [
-                {
-                    "item_name": c.item_name,
-                    "target_amount": float(c.target_amount),
-                    "current_amount": float(c.current_amount),
-                    "stage": c.stage,
-                    "pettype": getattr(c, 'pettype', 'cat')  # 🔥 前端要
-                }
-                for c in challenges
-            ]
-        })
+
+        result =[]
+        for c in challenges:
+            pettype = getattr(c,'pettype','cat')
+            print(f"🔥 /list 回傳: {c.item_name} pettype={pettype}")  # debug
+        result.append({
+                "item_name": c.item_name,
+                "target_amount": float(c.target_amount),
+                "current_amount": float(c.current_amount),
+                "stage": c.stage,
+                "pettype": pettype  # 🔥 確保有
+            })
+        
+        return jsonify({"challenges": result})
     finally:
         db.close()
 

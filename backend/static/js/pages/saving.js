@@ -291,6 +291,8 @@ window.confirmPetSelection = async () => {
     }
 
     const data = await res.json();
+    console.log('🔥 /list 回傳:', data.challenges);  // 🔥 看有沒有 pettype
+    
     savingState.challenges.push({
       ...data.challenge,
       pet_icon: getPetEmoji(data.challenge.stage)
