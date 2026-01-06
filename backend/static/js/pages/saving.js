@@ -157,11 +157,11 @@ window.openWishlistPicker = async () => {
   const selectEl = document.getElementById("wishlist-select");
   selectEl.innerHTML = "<option>載入中...</option>";
 
+  // 🔥 已建立挑戰的 item_name 清單
+  const usedItems = savingState.challenges.map(ch => ch.item_name);
+
   if (IS_LOCAL) {
     selectEl.innerHTML = "";
-
-    // 已建立挑戰的 item_name 清單
-    const usedItems = savingState.challenges.map(ch => ch.item_name);
 
     // 過濾尚未被使用的 wishlist
     const availableWishlist = MOCK_WISHLIST.filter(
@@ -188,28 +188,42 @@ window.openWishlistPicker = async () => {
     return;
   }
 
-  // production: wishlist already comes from backend in previous step
-    else {
-    // 🔥 新增：真的呼叫你的 API
-    try {
-        const res = await fetch(`/api/saving-challenge/wishlist?line_user_id=${savingState.userId}`);
-        const data = await res.json();
-        
-        selectEl.innerHTML = '';
-        data.wishlist.forEach(item => {
-        const opt = document.createElement('option');
-        opt.value = item.itemname;
-        opt.textContent = `${item.itemname}（$${item.price.toLocaleString()}）`;
-        opt.dataset.price = item.price;
-        selectEl.appendChild(opt);
-        });
-    } catch (e) {
-        console.error('載入願望清單失敗', e);
-        selectEl.innerHTML = '<option>暫無願望清單</option>';
-    }
+  // 🔥 Production：API + 已用過灰掉
+  try {
+    const res = await fetch(`/api/saving-challenge/wishlist?line_user_id=${savingState.userId}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    
+    const data = await res.json();
+    selectEl.innerHTML = '';
+
+    if (!data.wishlist || data.wishlist.length === 0) {
+      selectEl.innerHTML = '<option disabled selected>暫無願望清單</option>';
+      return;
     }
 
+    data.wishlist.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.itemname;
+      opt.dataset.price = item.price;
+      
+      // 🔥 已選過的願望：灰掉 + ✅ 標記
+      if (usedItems.includes(item.itemname)) {
+        opt.textContent = `✅ ${item.itemname}（$${item.price.toLocaleString()}）`;
+        opt.disabled = true;  // 不可選
+        opt.style.color = '#9CA3AF';  // 灰色
+      } else {
+        opt.textContent = `${item.itemname}（$${item.price.toLocaleString()}）`;
+      }
+      
+      selectEl.appendChild(opt);
+    });
+
+  } catch (e) {
+    console.error('載入願望清單失敗', e);
+    selectEl.innerHTML = '<option disabled selected>載入失敗，請重試</option>';
+  }
 };
+
 
 /* ===============================
    Confirm create challenge (two-step)
