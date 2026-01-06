@@ -8,41 +8,27 @@ export const state = {
   balance: 0,
 };
 
-function updateUI() {
-  const hiUser = document.getElementById("hi-user");
-  const drawerName = document.getElementById("drawer-user-name");
-  const drawerId = document.getElementById("drawer-user-id");
-  const balanceEl = document.getElementById("display-balance");
-
-  if (hiUser) hiUser.textContent = `Hi: ${state.userName}`;
-  if (drawerName) drawerName.textContent = state.userName;
-  if (drawerId) drawerId.textContent = state.userId;
-  if (balanceEl) balanceEl.textContent = `$${state.balance.toLocaleString()}`;
-}
-
 async function initSessionUser() {
   let res;
   try {
     res = await fetch("/api/check_user", {
       method: "POST",
-      credentials: "include", // 只靠 session
+      credentials: "include",
     });
   } catch (e) {
     console.error("check_user fetch failed", e);
-    return;
+    return false;
   }
 
   if (!res.ok) {
     console.warn("check_user failed:", res.status);
-    window.location.href = "/login_page";
-    return;
+    return false;
   }
 
   const data = await res.json();
 
   if (!data.exists) {
-    window.location.href = "/login_page";
-    return;
+    return false;
   }
 
   state.userId = data.user.line_user_id;
@@ -50,6 +36,7 @@ async function initSessionUser() {
   state.balance = data.user.balance || 0;
 
   console.log("✅ Session user loaded:", state);
+  return true;
 }
 
 /* ===== UI 共用 ===== */
@@ -78,7 +65,11 @@ window.toggleDrawer = (show) => {
 
 /* ===== Entry ===== */
 window.addEventListener("DOMContentLoaded", async () => {
-  await initSessionUser();
+  const ok = await initSessionUser();
+  if (!ok) {
+    window.location.href = "/login_page";
+    return;
+  }
   showPage("home");
   updateUI(); // 🔴 這行一定要在 showPage 後
 });
