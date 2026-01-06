@@ -64,22 +64,20 @@ def create_challenge():
         db.close()
 
 
-@saving_challenge_bp.route("/list", methods=["POST"])
+# 只改 list 改 GET，其餘完美
+@saving_challenge_bp.route("/list", methods=["GET"])  # 🔥 GET，不是 POST
 def list_challenges():
-    data = request.get_json()
-    line_user_id = data.get("line_user_id")
-
+    line_user_id = request.args.get("line_user_id")  # 🔥 GET 用 args，不是 json
     if not line_user_id:
-        return jsonify({"error": "missing line_user_id"}), 400
+        return jsonify({"challenges": []}), 200  # 🔥 空正常
 
     db = SessionLocal()
     try:
         user = db.query(User).filter_by(line_user_id=line_user_id).first()
         if not user:
-            return jsonify({"error": "user not found"}), 404
+            return jsonify({"challenges": []}), 200  # 🔥 空正常
 
         challenges = db.query(SavingChallenge).filter_by(user_id=user.id).all()
-
         return jsonify({
             "challenges": [
                 {
@@ -87,13 +85,26 @@ def list_challenges():
                     "target_amount": float(c.target_amount),
                     "current_amount": float(c.current_amount),
                     "stage": c.stage,
-                    "created_at": c.created_at.isoformat()
+                    "pettype": getattr(c, 'pettype', 'cat')  # 🔥 前端要
                 }
                 for c in challenges
             ]
         })
     finally:
         db.close()
+
+# 🔥 新增願望清單 API
+@saving_challenge_bp.route("/wishlist", methods=["GET"])
+def get_wishlist():
+    line_user_id = request.args.get("line_user_id")
+    # 暫時 mock，之後接 DB
+    wishlist = [
+        {"itemname": "iPhone 16", "price": 42000},
+        {"itemname": "MacBook Pro", "price": 80000},
+        {"itemname": "AirPods Pro", "price": 6500}
+    ]
+    return jsonify({"wishlist": wishlist})
+
 
 
 @saving_challenge_bp.route("/feed", methods=["POST"])

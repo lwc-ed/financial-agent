@@ -81,10 +81,10 @@ async function loadSavingChallenges() {
   }
 
   try {
-    const res = await fetch("/api/saving-challenge/list", {
+
+    const res = await fetch(`/api/saving-challenge/list?line_user_id=${savingState.userId}`, {
         credentials: "include",
     });
-
     if (!res.ok) {
       throw new Error(`HTTP ${res.status}`);
     }
@@ -127,7 +127,7 @@ function renderSavingPets() {
       (ch.current_amount / ch.target_amount) * 100
     );
 
-    const display = getPetDisplay(ch.stage, ch.pet_type);
+    const display = getPetDisplay(ch.stage, ch.pettype || 'cat');
 
     pet.innerHTML = `
       <div class="mb-2">
@@ -189,6 +189,26 @@ window.openWishlistPicker = async () => {
   }
 
   // production: wishlist already comes from backend in previous step
+    else {
+    // 🔥 新增：真的呼叫你的 API
+    try {
+        const res = await fetch(`/api/saving-challenge/wishlist?line_user_id=${savingState.userId}`);
+        const data = await res.json();
+        
+        selectEl.innerHTML = '';
+        data.wishlist.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.itemname;
+        opt.textContent = `${item.itemname}（$${item.price.toLocaleString()}）`;
+        opt.dataset.price = item.price;
+        selectEl.appendChild(opt);
+        });
+    } catch (e) {
+        console.error('載入願望清單失敗', e);
+        selectEl.innerHTML = '<option>暫無願望清單</option>';
+    }
+    }
+
 };
 
 /* ===============================
