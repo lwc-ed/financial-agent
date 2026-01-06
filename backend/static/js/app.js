@@ -20,55 +20,24 @@ function updateUI() {
   if (balanceEl) balanceEl.textContent = `$${state.balance.toLocaleString()}`;
 }
 
-const IS_LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
-
-/* ===== 本地假登入 ===== */
-async function initLocalMock() {
-  state.userId = "LOCAL-TEST-USER-001";
-  state.userName = "測試使用者";
-  state.balance = 45280;
-  updateUI();
-}
-
-/* ===== LIFF 登入 ===== */
-async function initLIFF() {
-  await liff.init({ liffId: "你的 LIFF ID" });
-
-  // 必須在 LINE App 內
-  if (!liff.isInClient()) {
-    document.body.innerHTML = "<p style='padding:20px'>請從 LINE App 開啟</p>";
-    return;
-  }
-
-  // 尚未登入 → 走 LINE Login
-  if (!liff.isLoggedIn()) {
-    liff.login();
-    return;
-  }
-
-  // 取得 LINE Profile
-  const profile = await liff.getProfile();
-  state.userId = profile.userId;
-  state.userName = profile.displayName;
-  state.balance = 45280; // 暫用
-  updateUI();
-
-  // 🔍 檢查是否已在後端註冊
+async function initSessionUser() {
   const res = await fetch("/api/check_user", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ line_user_id: state.userId })
+    credentials: "include"
   });
 
   const data = await res.json();
 
-  if (data.exists === false) {
-    // 未註冊 → 導向登入頁（避免重複導向）
-    if (location.pathname !== "/login_page") {
-      window.location.href = "/login_page";
-    }
+  if (!data.exists) {
+    window.location.href = "/login_page";
     return;
   }
+
+  state.userId = data.user.id;
+  state.userName = data.user.name;
+  state.balance = data.user.balance || 0;
+
+  updateUI();
 }
 
 /* ===== UI 共用 ===== */
@@ -97,12 +66,7 @@ window.toggleDrawer = (show) => {
 
 /* ===== Entry ===== */
 window.addEventListener("DOMContentLoaded", async () => {
-  if (IS_LOCAL) {
-    await initLocalMock();
-  } else {
-    await initLIFF();
-  }
-  updateUI();
+  await initSessionUser();
   showPage("home");
 });
 // ===== expose functions for inline onclick (ES module fix) =====
