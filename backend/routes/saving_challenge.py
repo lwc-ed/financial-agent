@@ -99,10 +99,14 @@ def list_challenges():
 @saving_challenge_bp.route("/wishlist", methods=["GET"])
 def get_wishlist():
     line_user_id = request.args.get("line_user_id")
+
+    print(f"🔍 查詢 line_user_id: {line_user_id}")
     db = SessionLocal()
+    
     try:
         #1️⃣line_user_id -> user.id
         user = db.query(User).filter_by(line_user_id=line_user_id).first()
+        print(f"🔍 找到 user.id: {user.id if user else 'None'}")
         if not user:
             return jsonify({"wishlist": []}), 200
         
@@ -122,7 +126,7 @@ def get_wishlist():
         wishlist_data = [
             {
                 "itemname": c.item_name,
-                "price": float(c.target_amount)
+                "price": float(c.price)
             }
             for c in wishlists
         ]
