@@ -71,35 +71,37 @@ def create_challenge():
 
 
 # 只改 list 改 GET，其餘完美
-@saving_challenge_bp.route("/list", methods=["GET"])  # 🔥 GET，不是 POST
+@saving_challenge_bp.route("/list", methods=["GET"])
 def list_challenges():
-    line_user_id = request.args.get("line_user_id")  # 🔥 GET 用 args，不是 json
+    line_user_id = request.args.get("line_user_id")
     if not line_user_id:
-        return jsonify({"challenges": []}), 200  # 🔥 空正常
+        return jsonify({"challenges": []}), 200
 
     db = SessionLocal()
     try:
         user = db.query(User).filter_by(line_user_id=line_user_id).first()
         if not user:
-            return jsonify({"challenges": []}), 200  # 🔥 空正常
+            return jsonify({"challenges": []}), 200
 
         challenges = db.query(SavingChallenge).filter_by(user_id=user.id).all()
-
-        result =[]
-        for c in challenges:
-            pettype = getattr(c,'pettype','cat')
-            print(f"🔥 /list 回傳: {c.item_name} pettype={pettype}")  # debug
-        result.append({
-                "item_name": c.item_name,
-                "target_amount": float(c.target_amount),
-                "current_amount": float(c.current_amount),
-                "stage": c.stage,
-                "pettype": pettype  # 🔥 確保有
+        
+        result = []
+        for challenge in challenges:  # 🔥 正確變數名
+            pettype = getattr(challenge, 'pettype', 'cat')
+            print(f"🔥 /list 回傳: {challenge.item_name} pettype={pettype}")
+            
+            result.append({
+                "item_name": challenge.item_name,      # 🔥 challenge，不是 c
+                "target_amount": float(challenge.target_amount),
+                "current_amount": float(challenge.current_amount),
+                "stage": challenge.stage,
+                "pettype": pettype
             })
         
         return jsonify({"challenges": result})
     finally:
         db.close()
+
 
 # 🔥 新增願望清單 API
 @saving_challenge_bp.route("/wishlist", methods=["GET"])
