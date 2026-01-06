@@ -26,7 +26,12 @@
 
   <!-- Header -->
   <header class="px-5 py-4 border-b flex justify-between items-center">
-    <h1 class="font-bold text-lg">理財小幫手</h1>
+    <h1
+      class="font-bold text-lg cursor-pointer"
+      onclick="showPage('home')"
+    >
+      理財小幫手
+    </h1>
     <button onclick="toggleDrawer(true)">☰</button>
   </header>
 
@@ -36,6 +41,14 @@
     <div class="p-6 bg-emerald-600 text-white">
       <p id="drawer-user-name" class="font-bold">---</p>
       <p id="drawer-user-id" class="text-xs opacity-80 break-all"></p>
+    </div>
+    <div class="p-4 space-y-2">
+      <button
+        onclick="toggleDrawer(false); showPage('saving')"
+        class="w-full text-left px-3 py-2 rounded hover:bg-slate-100 text-slate-700"
+      >
+        💰 儲蓄挑戰
+      </button>
     </div>
   </div>
 
@@ -57,133 +70,147 @@
       </div>
     </section>
 
-  </main>
+    <section id="page-saving" class="page">
+      <h2 class="text-xl font-bold mb-2">儲蓄挑戰</h2>
 
-  <!-- Bottom Nav -->
-  <nav class="border-t flex justify-around py-2">
-    <button onclick="showPage('home')" id="nav-home" class="tab-active">總覽</button>
-  </nav>
+      <!-- 寵物挑戰列表 -->
+      <div id="saving-pet-list" class="grid grid-cols-1 gap-4">
+        <!-- JS 會動態插入寵物卡片 -->
+      </div>
+
+
+    </section>
+
+    <!-- Floating Add Button -->
+    <button
+      id="fab-add-wishlist"
+      onclick="openWishlistPicker()"
+      class="hidden fixed bottom-6 right-6 w-14 h-14 rounded-full
+             bg-emerald-600 text-white text-3xl
+             shadow-lg flex items-center justify-center"
+    >
+      +
+    </button>
+
+    <!-- Wishlist Picker Modal -->
+    <div
+      id="wishlist-modal"
+      class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+    >
+      <div class="bg-white w-80 rounded-xl p-4">
+        <h3 class="font-bold mb-2">選擇願望清單項目</h3>
+
+        <select
+          id="wishlist-select"
+          class="w-full border rounded px-2 py-1"
+        >
+          <option>載入中...</option>
+        </select>
+
+        <div class="flex justify-end mt-4 space-x-2">
+          <button
+            onclick="closeWishlistPicker()"
+            class="px-3 py-1 text-sm"
+          >取消</button>
+          <button
+            onclick="confirmCreateChallenge()"
+            class="px-3 py-1 text-sm bg-emerald-600 text-white rounded"
+          >
+            確定
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Pet Selection Modal -->
+    <div
+      id="pet-modal"
+      class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-xl w-80 p-4">
+        <h3 class="font-bold mb-3 text-center">選擇你的夥伴</h3>
+
+        <div
+          id="pet-option-grid"
+          class="grid grid-cols-4 gap-3 mb-4"
+        >
+          <!-- JS 會動態插入寵物選項 -->
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button
+            onclick="closePetPickerModal()"
+            class="px-3 py-1 text-sm rounded border"
+          >
+            取消
+          </button>
+          <button
+            onclick="confirmPetSelection()"
+            class="px-3 py-1 text-sm bg-emerald-600 text-white rounded"
+          >
+            確定
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pet Interaction Modal -->
+    <div
+      id="pet-interact-modal"
+      class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 pointer-events-auto"
+    >
+      <div class="bg-white rounded-xl w-80 p-4 pointer-events-auto">
+        <h3 id="pet-title" class="font-bold text-center mb-2"></h3>
+
+        <p id="pet-stage" class="text-center text-sm text-slate-500 mb-2"></p>
+
+        <div class="h-32 bg-slate-100 rounded flex items-center justify-center mb-3">
+          <div id="pet-animation"></div>
+        </div>
+
+        <div class="text-sm mb-2">
+          <p>目前：$<span id="pet-current"></span></p>
+          <p>目標：$<span id="pet-target"></span></p>
+        </div>
+
+        <div class="w-full bg-slate-200 rounded h-2 mb-3">
+          <div
+            id="pet-progress"
+            class="bg-emerald-600 h-2 rounded"
+            style="width: 0%"
+          ></div>
+        </div>
+
+        <input
+          id="feed-input"
+          type="number"
+          placeholder="存入金額"
+          class="w-full border rounded px-2 py-1 mb-3"
+        />
+
+        <div class="flex justify-end gap-2">
+          <button
+            type="button"
+            onclick="closePetModal()"
+            class="text-sm"
+          >
+            取消
+          </button>
+          <button
+            onclick="feedPet()"
+            class="bg-emerald-600 text-white text-sm px-3 py-1 rounded"
+          >
+            餵食
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+  </main>
 
 </div>
 
-<script type="module">
-/* ===============================
-   Dashboard – 精簡可維護版本
-   =============================== */
-
-const LIFF_ID = "2008065321-vlAGLNjW";
-const API_BASE = location.origin;
-const IS_LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
-
-/* ===== App State ===== */
-const state = {
-  userId: "",
-  userName: "",
-  balance: 0,
-};
-
-/* ===== UI 更新 ===== */
-function updateUI() {
-  document.getElementById("hi-user").textContent =
-    `Hi: ${state.userName}`;
-
-  document.getElementById("drawer-user-name").textContent =
-    state.userName;
-
-  document.getElementById("drawer-user-id").textContent =
-    state.userId;
-
-  document.getElementById("display-balance").textContent =
-    `$${state.balance.toLocaleString()}`;
-}
-
-/* ===== 本地假資料 ===== */
-async function initLocalMock() {
-  state.userId = "LOCAL-TEST-USER-001";
-
-  try {
-    const res = await fetch("/api/profile/user/profile", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ line_user_id: state.userId })
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      state.userName = data.name;
-    } else {
-      state.userName = "使用者";
-    }
-  } catch (err) {
-    console.error("local mock fetch failed", err);
-    state.userName = "使用者";
-  }
-
-  state.balance = 45280; // 假資料
-  updateUI();
-  initChart();
-}
-
-/* ===== LIFF 初始化 ===== */
-async function initLIFF() {
-  await liff.init({ liffId: LIFF_ID });
-
-  if (!liff.isInClient()) {
-    document.body.innerHTML = "<p style='padding:20px'>請從 LINE App 開啟</p>";
-    return;
-  }
-
-
-
-  const profile = await liff.getProfile();
-  state.userId = profile.userId;
-  state.userName = profile.displayName;
-  state.balance = 45280; // 暫用假資料
-
-  updateUI();
-  initChart();
-}
-
-/* ===== Chart ===== */
-function initChart() {
-  const ctx = document.getElementById("mainChart")?.getContext("2d");
-  if (!ctx) return;
-
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: ["一","二","三","四","五","六","日"],
-      datasets: [{
-        data: [500,800,600,900,1200,700,1000],
-        borderColor: "#10b981",
-        tension: 0.4
-      }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: { y: { display: false } }
-    }
-  });
-}
-
-/* ===== Drawer ===== */
-window.toggleDrawer = (show) => {
-  document.getElementById("drawer-overlay").classList.toggle("hidden", !show);
-  document.getElementById("side-drawer").style.right = show ? "0" : "-100%";
-};
-
-/* ===== Page ===== */
-window.showPage = (page) => {
-  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-  document.getElementById(`page-${page}`)?.classList.add("active");
-};
-
-/* ===== Entry ===== */
-window.addEventListener("DOMContentLoaded", () => {
-  showPage("home");
-  IS_LOCAL ? initLocalMock() : initLIFF();
-});
-</script>
+<script type="module" src="/static/js/app.js"></script>
 
 </body>
 </html>

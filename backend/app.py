@@ -7,7 +7,7 @@ from backend.routes.linebot import linebot_bp
 from backend.routes.expense_record import expense_record_bp
 from backend.routes.expense_history import expense_history_bp
 from backend.routes.wishlist import wishlist_bp
-from backend.routes.challenge import challenge_bp
+from backend.routes.saving_challenge import saving_challenge_bp
 from backend.routes.profile import profile_bp
 from backend.routes.liff_test import liff_test_bp
 from backend.routes.dashboard import dashboard_bp
@@ -27,10 +27,11 @@ app.register_blueprint(linebot_bp)
 app.register_blueprint(expense_record_bp, url_prefix="/api/expense_record")
 app.register_blueprint(expense_history_bp, url_prefix="/api/expense_history")
 app.register_blueprint(wishlist_bp, url_prefix="/api/wishlist")
-app.register_blueprint(challenge_bp, url_prefix="/api/challenge")
+#app.register_blueprint(saving_challenge_bp, url_prefix="/api/saving_challenge")
 app.register_blueprint(profile_bp, url_prefix="/api/profile")
 app.register_blueprint(liff_test_bp)
 app.register_blueprint(dashboard_bp)
+app.register_blueprint(saving_challenge_bp)
 
 
 if __name__ == "__main__":

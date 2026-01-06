@@ -255,7 +255,15 @@ python3 setup_rich_menu.py
 git checkout main
 git pull
 git checkout feature-login
-git merge main
+git merge origin/main
+```
+
+## 網站本地登入
+```
+#先跑
+python3 -m backend.app
+#測試網址：http://localhost:8000/dashboard
+
 ```
 
 ## 下載套件
