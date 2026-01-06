@@ -2,41 +2,24 @@
 import { initHome } from "./pages/home.js";
 import { initSaving } from "./pages/saving.js";
 
+const LIFF_ID = "請替換成你的 LIFF ID";
+
 export const state = {
   userId: "",
   userName: "",
   balance: 0,
 };
 
-async function initSessionUser() {
-  let res;
-  try {
-    res = await fetch("/api/check_user", {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch (e) {
-    console.error("check_user fetch failed", e);
-    return false;
+async function initLineUser() {
+  await liff.init({ liffId: LIFF_ID });
+  if (!liff.isLoggedIn()) {
+    liff.login();
+    return;
   }
-
-  if (!res.ok) {
-    console.warn("check_user failed:", res.status);
-    return false;
-  }
-
-  const data = await res.json();
-
-  if (!data.exists) {
-    return false;
-  }
-
-  state.userId = data.user.line_user_id;
-  state.userName = data.user.name;
-  state.balance = data.user.balance || 0;
-
-  console.log("✅ Session user loaded:", state);
-  return true;
+  const profile = await liff.getProfile();
+  state.userId = profile.userId;
+  state.userName = profile.displayName;
+  state.balance = 0;
 }
 
 /* ===== UI 共用 ===== */
@@ -65,11 +48,7 @@ window.toggleDrawer = (show) => {
 
 /* ===== Entry ===== */
 window.addEventListener("DOMContentLoaded", async () => {
-  const ok = await initSessionUser();
-  if (!ok) {
-    window.location.href = "/login_page";
-    return;
-  }
+  await initLineUser();
   showPage("home");
   updateUI(); // 🔴 這行一定要在 showPage 後
 });
