@@ -156,7 +156,7 @@
 
         const profile = await liff.getProfile();
         const lineUserId = profile.userId;
-
+        /*
         //const res = await fetch('/api/check_user', {
         //  method: 'POST',
         //  headers: { 'Content-Type': 'application/json' },
@@ -174,7 +174,10 @@
           window.location.replace('/dashboard');
           return;
         }
-
+        */
+        // 已登入 LINE，但是否綁定交給後端流程
+        // 留在登入頁，讓使用者按 Google 登入
+        return;
         // 未綁定：留在登入頁
 
       } catch (err) {
