@@ -33,6 +33,13 @@ async function initLocalMock() {
 /* ===== LIFF 登入 ===== */
 async function initLIFF() {
   await liff.init({ liffId: "你的 LIFF ID" });
+
+  if (!liff.isLoggedIn()) {
+    // 尚未登入 → 導向 LINE Login
+    liff.login();
+    return;
+  }
+
   const profile = await liff.getProfile();
 
   state.userId = profile.userId;
