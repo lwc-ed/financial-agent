@@ -492,9 +492,10 @@ function playEvolveTransition(fromStage, toStage, onDone) {
 
   const key = `${fromStage}-${toStage}`;
   const evolveFile = EVOLVE_ANIMATION_MAP[key] || "evolve.mp4";
+  // 🔥 修正：pettype
+  const petType = activePet.pettype || 'cat';
+  const evolveSrc = `/static/assets/pets/${petType}/${evolveFile}`;
 
-  const evolveSrc =
-    `/static/assets/pets/${activePet.pet_type}/${evolveFile}`;
 
   el.innerHTML = renderPetVideo({
     src: evolveSrc,
