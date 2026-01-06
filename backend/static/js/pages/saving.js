@@ -1,5 +1,6 @@
 // saving.js
-const IS_LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
+//const IS_LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
+const IS_LOCAL = false
 
 // 進化提示元素（動態建立）
 let evolveToast = null;
