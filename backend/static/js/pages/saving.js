@@ -280,7 +280,8 @@ window.confirmPetSelection = async () => {
       body: JSON.stringify({
         line_user_id: savingState.userId,
         item_name: savingState.pendingChallenge.item_name,
-        target_amount: savingState.pendingChallenge.target_amount
+        target_amount: savingState.pendingChallenge.target_amount,
+        pettype: savingState.selectedPet.type  // 🔥 加這行！雞=chicken
       })
     });
 

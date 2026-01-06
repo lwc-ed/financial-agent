@@ -46,7 +46,8 @@ def create_challenge():
             item_name=item_name,
             target_amount=target_amount,
             current_amount=0,
-            stage=1
+            stage=1,
+            pettype = pettype
         )
 
         db.add(challenge)
