@@ -158,6 +158,8 @@
         // 直接用 session 檢查登入狀態，不再傳 line_user_id
         const res = await fetch('/api/check_user', {
           method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
           credentials: 'include'
         });
 
