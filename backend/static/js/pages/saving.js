@@ -352,7 +352,9 @@ function renderPetVideo({ src, loop = true, size = "w-24 h-24" }) {
       ${loop ? "loop" : ""}
       muted
       playsinline
+      preload="auto"
       class="${size} object-contain"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"
     ></video>
   `;
 }
