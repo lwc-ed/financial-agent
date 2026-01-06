@@ -97,13 +97,30 @@ def list_challenges():
 @saving_challenge_bp.route("/wishlist", methods=["GET"])
 def get_wishlist():
     line_user_id = request.args.get("line_user_id")
-    # 暫時 mock，之後接 DB
-    wishlist = [
-        {"itemname": "iPhone 16", "price": 42000},
-        {"itemname": "MacBook Pro", "price": 80000},
-        {"itemname": "AirPods Pro", "price": 6500}
-    ]
-    return jsonify({"wishlist": wishlist})
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter_by(line_user_id=line_user_id).first()
+        if not user:
+            return jsonify({"wishlist": []}), 200
+        
+        # 🔥 用已建立但未完成的挑戰當願望清單
+        challenges = db.query(SavingChallenge)\
+            .filter_by(user_id=user.id)\
+            .filter(SavingChallenge.current_amount < SavingChallenge.target_amount)\
+            .all()
+        
+        wishlist = [
+            {
+                "itemname": c.item_name,
+                "price": float(c.target_amount)
+            }
+            for c in challenges
+        ]
+        return jsonify({"wishlist": wishlist})
+    finally:
+        db.close()
+
+    
 
 
 
