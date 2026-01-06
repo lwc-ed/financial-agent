@@ -75,3 +75,30 @@ window.addEventListener("DOMContentLoaded", async () => {
   updateUI();
   showPage("home");
 });
+// ===== expose functions for inline onclick (ES module fix) =====
+window.showPage = window.showPage;
+window.toggleDrawer = window.toggleDrawer;
+
+// Wishlist / Saving Challenge
+if (typeof window.openWishlistPicker === "function")
+  window.openWishlistPicker = window.openWishlistPicker;
+if (typeof window.closeWishlistPicker === "function")
+  window.closeWishlistPicker = window.closeWishlistPicker;
+if (typeof window.confirmCreateChallenge === "function")
+  window.confirmCreateChallenge = window.confirmCreateChallenge;
+
+// Pet picker modal
+if (typeof window.openPetPickerModal === "function")
+  window.openPetPickerModal = window.openPetPickerModal;
+if (typeof window.closePetPickerModal === "function")
+  window.closePetPickerModal = window.closePetPickerModal;
+if (typeof window.confirmPetSelection === "function")
+  window.confirmPetSelection = window.confirmPetSelection;
+
+// Pet interaction modal
+if (typeof window.openPetInteractModal === "function")
+  window.openPetInteractModal = window.openPetInteractModal;
+if (typeof window.closePetInteractModal === "function")
+  window.closePetInteractModal = window.closePetInteractModal;
+if (typeof window.feedPet === "function")
+  window.feedPet = window.feedPet;
