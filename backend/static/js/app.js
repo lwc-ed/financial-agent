@@ -34,18 +34,39 @@ async function initLocalMock() {
 async function initLIFF() {
   await liff.init({ liffId: "你的 LIFF ID" });
 
+  // 必須在 LINE App 內
+  if (!liff.isInClient()) {
+    document.body.innerHTML = "<p style='padding:20px'>請從 LINE App 開啟</p>";
+    return;
+  }
+
+  // 尚未登入 → 走 LINE Login
   if (!liff.isLoggedIn()) {
-    // 尚未登入 → 導向 LINE Login
     liff.login();
     return;
   }
 
+  // 取得 LINE Profile
   const profile = await liff.getProfile();
-
   state.userId = profile.userId;
   state.userName = profile.displayName;
   state.balance = 45280; // 暫用
   updateUI();
+
+  // 🔍 檢查是否已在後端註冊
+  const res = await fetch("/api/check_user", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ line_user_id: state.userId })
+  });
+
+  const data = await res.json();
+
+  if (!data.exists) {
+    // 未註冊 → 導向登入頁
+    window.location.href = "/login_page";
+    return;
+  }
 }
 
 /* ===== UI 共用 ===== */
