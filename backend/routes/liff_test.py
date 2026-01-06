@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from backend.database import SessionLocal
 from backend.models.user import User
 
@@ -6,17 +6,25 @@ liff_test_bp = Blueprint("liff_test", __name__)
 
 @liff_test_bp.route("/api/check_user", methods=["POST"])
 def check_user():
-    data = request.get_json()
-    line_user_id = data.get("line_user_id")
+    user_id = session.get("user_id")
 
-    if not line_user_id:
-        return jsonify({"exists": False, "error": "missing line_user_id"}), 400
+    if not user_id:
+        return jsonify({"exists": False}), 200
 
     db = SessionLocal()
     try:
-        user = db.query(User).filter_by(line_user_id=line_user_id).first()
+        user = db.query(User).get(user_id)
+        if not user:
+            session.clear()
+            return jsonify({"exists": False}), 200
+
         return jsonify({
-            "exists": user is not None
-        })
+            "exists": True,
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "line_user_id": user.line_user_id
+            }
+        }), 200
     finally:
         db.close()
