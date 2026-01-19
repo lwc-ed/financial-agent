@@ -81,23 +81,26 @@ async function loadSavingChallenges() {
   }
 
   try {
-    const res = await fetch("/api/saving-challenge/list", {
-        credentials: "include",
+    const res = await fetch(`/api/saving-challenge/list?line_user_id=${savingState.userId}`, {
+      credentials: "include",
     });
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
+    console.log('🔥 API 回傳 pettype:', data.challenges);  // debug
+    
     savingState.challenges = (data.challenges || []).map(ch => ({
       ...ch,
-      pet_icon: getPetEmoji(ch.stage)
+      pet_icon: getPetEmoji(ch.stage),
+      pettype: ch.pettype  // 🔥 確保有 pettype
     }));
+    
+    console.log('🔥 前端狀態 pettype:', savingState.challenges.map(c => ({name: c.item_name, pettype: c.pettype})));
   } catch (err) {
     console.error("loadSavingChallenges failed", err);
   }
 }
+
 
 /* ===============================
    Render pet grid
@@ -127,7 +130,7 @@ function renderSavingPets() {
       (ch.current_amount / ch.target_amount) * 100
     );
 
-    const display = getPetDisplay(ch.stage, ch.pet_type);
+    const display = getPetDisplay(ch.stage, ch.pettype || 'chicken');
 
     pet.innerHTML = `
       <div class="mb-2">
@@ -157,11 +160,11 @@ window.openWishlistPicker = async () => {
   const selectEl = document.getElementById("wishlist-select");
   selectEl.innerHTML = "<option>載入中...</option>";
 
+  // 🔥 已建立挑戰的 item_name 清單
+  const usedItems = savingState.challenges.map(ch => ch.item_name);
+
   if (IS_LOCAL) {
     selectEl.innerHTML = "";
-
-    // 已建立挑戰的 item_name 清單
-    const usedItems = savingState.challenges.map(ch => ch.item_name);
 
     // 過濾尚未被使用的 wishlist
     const availableWishlist = MOCK_WISHLIST.filter(
@@ -188,8 +191,42 @@ window.openWishlistPicker = async () => {
     return;
   }
 
-  // production: wishlist already comes from backend in previous step
+  // 🔥 Production：API + 已用過灰掉
+  try {
+    const res = await fetch(`/api/saving-challenge/wishlist?line_user_id=${savingState.userId}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    
+    const data = await res.json();
+    selectEl.innerHTML = '';
+
+    if (!data.wishlist || data.wishlist.length === 0) {
+      selectEl.innerHTML = '<option disabled selected>暫無願望清單</option>';
+      return;
+    }
+
+    data.wishlist.forEach(item => {
+      const opt = document.createElement('option');
+      opt.value = item.itemname;
+      opt.dataset.price = item.price;
+      
+      // 🔥 已選過的願望：灰掉 + ✅ 標記
+      if (usedItems.includes(item.itemname)) {
+        opt.textContent = `✅ ${item.itemname}（$${item.price.toLocaleString()}）`;
+        opt.disabled = true;  // 不可選
+        opt.style.color = '#9CA3AF';  // 灰色
+      } else {
+        opt.textContent = `${item.itemname}（$${item.price.toLocaleString()}）`;
+      }
+      
+      selectEl.appendChild(opt);
+    });
+
+  } catch (e) {
+    console.error('載入願望清單失敗', e);
+    selectEl.innerHTML = '<option disabled selected>載入失敗，請重試</option>';
+  }
 };
+
 
 /* ===============================
    Confirm create challenge (two-step)
@@ -260,7 +297,8 @@ window.confirmPetSelection = async () => {
       body: JSON.stringify({
         line_user_id: savingState.userId,
         item_name: savingState.pendingChallenge.item_name,
-        target_amount: savingState.pendingChallenge.target_amount
+        target_amount: savingState.pendingChallenge.target_amount,
+        pettype: savingState.selectedPet.type  // 🔥 加這行！雞=chicken
       })
     });
 
@@ -270,6 +308,8 @@ window.confirmPetSelection = async () => {
     }
 
     const data = await res.json();
+    console.log('🔥 /list 回傳:', data.challenges);  // 🔥 看有沒有 pettype
+    
     savingState.challenges.push({
       ...data.challenge,
       pet_icon: getPetEmoji(data.challenge.stage)
@@ -329,7 +369,9 @@ function renderPetVideo({ src, loop = true, size = "w-24 h-24" }) {
       ${loop ? "loop" : ""}
       muted
       playsinline
+      preload="auto"
       class="${size} object-contain"
+      onerror="this.style.display='none'; this.nextElementSibling.style.display='block'"
     ></video>
   `;
 }
@@ -362,7 +404,8 @@ function openPetDetail(challenge, opts = {}) {
   document.getElementById("pet-target").textContent =
     challenge.target_amount.toLocaleString();
 
-  const display = getPetDisplay(challenge.stage, challenge.pet_type);
+  const petType = challenge.pettype || 'chicken';
+  const display = getPetDisplay(challenge.stage, petType);  
   document.getElementById("pet-stage").textContent =
     `Stage ${challenge.stage} · ${display.label}`;
 
@@ -466,9 +509,10 @@ function playEvolveTransition(fromStage, toStage, onDone) {
 
   const key = `${fromStage}-${toStage}`;
   const evolveFile = EVOLVE_ANIMATION_MAP[key] || "evolve.mp4";
+  // 🔥 修正：pettype
+  const petType = activePet.pettype || 'chicken';
+  const evolveSrc = `/static/assets/pets/${petType}/${evolveFile}`;
 
-  const evolveSrc =
-    `/static/assets/pets/${activePet.pet_type}/${evolveFile}`;
 
   el.innerHTML = renderPetVideo({
     src: evolveSrc,

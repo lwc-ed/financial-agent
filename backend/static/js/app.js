@@ -73,8 +73,20 @@ async function initFromLIFF() {
 window.showPage = (page) => {
   document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
   document.getElementById(`page-${page}`)?.classList.add("active");
-  if (page === "home") initHome(state);
-  if (page === "saving") initSaving({ userId: state.lineUserId });
+
+  if (page === "home") {
+    initHome(state);
+    document.getElementById('fab-add-wishlist')?.classList.add('hidden');  // 🔥 隱藏 +
+  }
+  if (page === "saving") {
+    initSaving({ userId: state.lineUserId });
+    // 🔥 強制顯示 + 號
+    const fab = document.getElementById('fab-add-wishlist');
+    if (fab) {
+      fab.classList.remove('hidden');
+      console.log('✅ + 號顯示');
+    }
+  }
 };
 
 /* ===== Entry ===== */

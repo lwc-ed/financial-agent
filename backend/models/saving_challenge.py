@@ -16,7 +16,8 @@ class SavingChallenge(Base):
     current_amount = Column(Numeric(12, 2), default=0)
     stage = Column(Integer, default=1)
     created_at = Column(DateTime, default=lambda: datetime.now(tz))
-
+    pettype = Column(String(50), default="cat")  # 🔥 加這行
+    
     __table_args__ = (
         UniqueConstraint("user_id", "item_name", name="uq_user_item"),
     )

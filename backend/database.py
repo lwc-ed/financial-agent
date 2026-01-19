@@ -4,7 +4,7 @@ from urllib.parse import quote_plus
 
 DB_USER = "nycuiemagent"
 DB_PASSWORD = quote_plus("SUPERidol$")  # 密碼含 $
-DB_HOST = "financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com"
+DB_HOST = "financial-agent-rescued.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com"
 DB_PORT = "3306"
 
 # --- 主應用資料庫 financial_agent ---
