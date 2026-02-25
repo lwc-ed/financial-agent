@@ -285,7 +285,21 @@ sudo timedatectl set-timezone Asia/Taipei
 ---
 
 
-# 在EC2上更新程式碼方式(常駐時)
+# 先忽略以下
+## 開啟常駐
+```bash
+#直接啟動服務：
+sudo systemctl start financial-agent
+
+#確認有跑起來：
+sudo systemctl status financial-agent --no-pager
+ss -ltnp | grep :8000
+
+#看 log（含你 LINE 訊息與 SQL log）：
+sudo journalctl -u financial-agent -f
+```
+
+## 在EC2上更新程式碼方式(常駐時)
 ```bash
 cd /home/ubuntu/financial-agent
 git pull
@@ -301,7 +315,7 @@ sudo systemctl restart financial-agent
 sudo systemctl status financial-agent --no-pager
 ```
 
-# 把常駐方案停掉
+## 把常駐方案停掉
 ```bash
 #停止
 sudo systemctl stop financial-agent
