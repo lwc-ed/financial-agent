@@ -191,7 +191,7 @@ def feed_challenge():
         # ✅ 同步寫入記帳 records（同一筆 transaction）
         record = Record(
             line_user_id=line_user_id,
-            type="income",
+            type="expense",
             category="saving_challenge",
             amount=amount,
             note=f"餵養存錢挑戰：{item_name}",
