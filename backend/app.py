@@ -12,7 +12,19 @@ from backend.routes.profile import profile_bp
 from backend.routes.liff_test import liff_test_bp
 from backend.routes.dashboard import dashboard_bp
 from dotenv import load_dotenv
+import subprocess
+import os
 load_dotenv()
+
+# 🔥 顯示目前 git commit（方便部署確認版本）
+try:
+    git_commit = subprocess.check_output(
+        ["git", "rev-parse", "--short", "HEAD"],
+        cwd=os.path.dirname(os.path.abspath(__file__)),
+    ).decode("utf-8").strip()
+    print(f"🚀 Financial Agent starting... git commit = {git_commit}")
+except Exception:
+    print("🚀 Financial Agent starting... (git commit unknown)")
 
 # 建立資料表
 Base.metadata.create_all(bind=engine)
