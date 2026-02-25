@@ -218,7 +218,7 @@ python3 app.py
 
 ## 🖥 EC2 SSH
 ```bash
-ssh ubuntu@3.21.167.93
+ssh ubuntu@18.222.158.104
 ```
 
 ## 🗄 RDS MySQL
@@ -259,7 +259,7 @@ git merge origin/main
 ```
 
 ## 網站本地登入
-```
+```bash
 #先跑
 python3 -m backend.app
 #測試網址：http://localhost:8000/dashboard
@@ -283,6 +283,41 @@ sudo timedatectl set-timezone Asia/Taipei
 - LINE 回覆若顯示舊版本，多為 EC2 未更新 branch 或未重新啟動  
 
 ---
+
+
+# 在EC2上更新程式碼方式(常駐時)
+```bash
+cd /home/ubuntu/financial-agent
+git pull
+source venv/bin/activate
+
+# 如果你有新增/更新套件（建議每次都跑一次也行）
+pip install -r requirements.txt
+
+# 重啟服務讓新程式碼生效
+sudo systemctl restart financial-agent
+
+# 檢查狀態
+sudo systemctl status financial-agent --no-pager
+```
+
+# 把常駐方案停掉
+```bash
+#停止
+sudo systemctl stop financial-agent
+
+#確認真的停了
+sudo systemctl status financial-agent --no-pager
+#應該要顯示 Active: inactive (dead)
+
+#再次確認
+ss -ltnp | grep :8000
+#如果沒有輸出，代表 gunicorn 已停止。
+
+```
+
+
+
 
 # ✅ 完成
 此 README 已為你整合成完整技術導向 + 雙語版本，可直接使用於 GitHub。  
