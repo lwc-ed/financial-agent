@@ -1,5 +1,4 @@
 import os
-import json
 from datetime import datetime
 import pytz
 from backend.models.daily_news import DailyNews
@@ -14,13 +13,6 @@ def get_taiwan_now():
     return datetime.now(taipei).replace(tzinfo=None)
 
 
-def to_json_text(value: str) -> str:
-    """
-    將純文字包成合法 JSON 字串，避免 DB JSON 欄位寫入失敗。
-    """
-    return json.dumps({"content": value}, ensure_ascii=False)
-
-
 def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
     """
     流程：Perplexity -> 存 DB -> OpenAI -> 更新 DB -> 回傳摘要
@@ -30,21 +22,25 @@ def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
 
     try:
         perplexity_raw = fetch_perplexity_news(topic)
+        print("[daily_news] perplexity fetched, len =", len(perplexity_raw))
 
         row = DailyNews(
             user_id=user_id,
-            perplexity_scraper=to_json_text(perplexity_raw),
+            perplexity_scraper={"content": perplexity_raw},
             gpt_response=None,
             created_at=get_taiwan_now(),
         )
         db.add(row)
         db.commit()
         db.refresh(row)
+        print("[daily_news] raw saved, no =", row.no)
 
         gpt_response = summarize_news_with_openai(perplexity_raw, topic)
-        row.gpt_response = to_json_text(gpt_response)
+        print("[daily_news] openai summarized, len =", len(gpt_response))
+        row.gpt_response = {"content": gpt_response}
         row.created_at = get_taiwan_now()
         db.commit()
+        print("[daily_news] summary saved, no =", row.no)
 
         return gpt_response
 
