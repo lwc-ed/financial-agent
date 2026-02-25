@@ -32,6 +32,11 @@ Base.metadata.create_all(bind=engine)
 app = Flask(__name__)
 CORS(app)
 
+
+@app.route("/favicon.ico")
+def favicon():
+    return "", 204
+
 # ✅ 使用新版 LINE Bot (linebot.v3) Blueprint
 # 註冊 Blueprint
 app.register_blueprint(auth_bp)

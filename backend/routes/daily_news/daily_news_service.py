@@ -27,7 +27,7 @@ def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
         row = DailyNews(
             user_id=user_id,
             perplexity_scraper={"content": perplexity_raw},
-            gpt_response=None,
+            gpt_response={"content": ""},
             created_at=get_taiwan_now(),
         )
         db.add(row)

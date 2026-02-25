@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from urllib.parse import quote_plus
+import json
 
 DB_USER = "nycuiemagent"
 DB_PASSWORD = quote_plus("SUPERidol$")  # 密碼含 $
@@ -17,6 +18,7 @@ engine = create_engine(
     future=True,
     pool_pre_ping=True,
     pool_recycle=280,
+    json_serializer=lambda obj: json.dumps(obj, ensure_ascii=False),
 )
 
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False, future=True)
@@ -31,6 +33,7 @@ engine_benefit = create_engine(
     future=True,
     pool_pre_ping=True,
     pool_recycle=280,
+    json_serializer=lambda obj: json.dumps(obj, ensure_ascii=False),
 )
 
 # 給 cube_benefits 爬蟲用（寫入 credit_card_benefits DB）
