@@ -21,7 +21,7 @@ def summarize_news_with_openai(perplexity_raw: str, topic: str) -> str:
     )
     user_prompt = f"""
 請幫我整理成「LINE 投資晨報格式」，規則如下：
-1. 總字數控制在 250–400 字
+1. 總字數控制在 250–300 字
 2. 結構固定為：
 • 標題
 • 發生什麼事
