@@ -3,6 +3,8 @@ from backend.database import SessionLocal
 from backend.models.saving_challenge import SavingChallenge
 from backend.models.user import User
 from backend.models.wishlist import Wishlist  # 🔥 照 linebot.py 一樣
+from backend.models.record import Record
+from datetime import datetime
 
 
 saving_challenge_bp = Blueprint(
@@ -18,7 +20,11 @@ def create_challenge():
 
     line_user_id = data.get("line_user_id")
     item_name = data.get("item_name")
-    target_amount = data.get("target_amount")
+    raw_target_amount = data.get("target_amount")
+    try:
+        target_amount = float(raw_target_amount)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid target_amount"}), 400
     pettype = data.get("pettype","chicken") #預設貓
     print(f"收到pettype:{pettype}") #debug
 
@@ -62,7 +68,8 @@ def create_challenge():
                 "item_name": challenge.item_name,
                 "target_amount": float(challenge.target_amount),
                 "current_amount": float(challenge.current_amount),
-                "stage": challenge.stage
+                "stage": challenge.stage,
+                "pettype": challenge.pettype
             }
         })
 
@@ -153,7 +160,14 @@ def feed_challenge():
 
     line_user_id = data.get("line_user_id")
     item_name = data.get("item_name")
-    amount = data.get("amount")
+    raw_amount = data.get("amount")
+    try:
+        amount = float(raw_amount)
+    except (TypeError, ValueError):
+        return jsonify({"error": "invalid amount"}), 400
+
+    if amount <= 0:
+        return jsonify({"error": "invalid amount"}), 400
 
     if not all([line_user_id, item_name, amount]):
         return jsonify({"error": "missing fields"}), 400
@@ -172,7 +186,18 @@ def feed_challenge():
         if not challenge:
             return jsonify({"error": "challenge not found"}), 404
 
-        challenge.current_amount += amount
+        challenge.current_amount = float(challenge.current_amount) + amount
+
+        # ✅ 同步寫入記帳 records（同一筆 transaction）
+        record = Record(
+            line_user_id=line_user_id,
+            type="income",
+            category="saving_challenge",
+            amount=amount,
+            note=f"餵養存錢挑戰：{item_name}",
+            timestamp=datetime.now(),
+        )
+        db.add(record)
 
         # stage 計算（前端會做轉場，後端只存結果）
         ratio = float(challenge.current_amount) / float(challenge.target_amount)
