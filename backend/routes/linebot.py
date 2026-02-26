@@ -10,20 +10,31 @@ from backend.models.wishlist import Wishlist
 from backend.models.record import Record   #  記帳資料表
 from sqlalchemy import desc                #  查紀錄排序用
 import re                                  #  解析「午餐 150」用
+from backend.routes.daily_news.daily_news_service import run_daily_news_pipeline
 
 from datetime import datetime
 import pytz
+import os
+from dotenv import load_dotenv
 taipei = pytz.timezone("Asia/Taipei")
 datetime.now(taipei)
 
 
 linebot_bp = Blueprint("linebot", __name__)
 
-# 這裡填入你的 LINE Secret 與 Access Token
-handler = WebhookHandler("bde6ff24868fe4edeef87393ea9db525")
-configuration = Configuration(
-    access_token="4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU="
-)
+# Load environment variables from .env (if present)
+load_dotenv()
+
+CHANNEL_SECRET = os.getenv("CHANNEL_SECRET", "").strip()
+CHANNEL_ACCESS_TOKEN = os.getenv("CHANNEL_ACCESS_TOKEN", "").strip()
+
+if not CHANNEL_SECRET or not CHANNEL_ACCESS_TOKEN:
+    raise RuntimeError(
+        "Missing LINE credentials. Please set CHANNEL_SECRET and CHANNEL_ACCESS_TOKEN (env or .env)."
+    )
+
+handler = WebhookHandler(CHANNEL_SECRET)
+configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 api_client = ApiClient(configuration)
 line_bot_api = MessagingApi(api_client)
 
@@ -32,7 +43,12 @@ line_bot_api = MessagingApi(api_client)
 def callback():
     body = request.get_data(as_text=True)
     signature = request.headers.get("X-Line-Signature")
-    handler.handle(body, signature)
+    try:
+        handler.handle(body, signature)
+    except Exception as e:
+        # Make webhook failures visible in logs
+        print("[callback] handler.handle failed:", repr(e))
+        raise
     return "OK"
 
 
@@ -119,13 +135,16 @@ def handle_message(event):
             user = google_user
         else:
             # 找不到 → 尚未綁定 → 禁止使用
-            line_bot_api.reply_message(
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,
-                    messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊下方連接進行 Google 登入並綁定 LINE\nhttps://financial-agent.it.com/login_google\n若綁定失敗可以參照以下步驟⭣\n" \
-                    "IPhone使用者：\n主頁\n  ⭣\n設定(右上角)\n  ⭣\nLINE Labs\n  ⭣\n關閉「使用預設瀏覽器開啟連結」")]
+            try:
+                line_bot_api.reply_message(
+                    ReplyMessageRequest(
+                        reply_token=event.reply_token,
+                        messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊下方連接進行 Google 登入並綁定 LINE\nhttps://financial-agent.it.com/login_google\n若綁定失敗可以參照以下步驟⭣\n" \
+                        "IPhone使用者：\n主頁\n  ⭣\n設定(右上角)\n  ⭣\nLINE Labs\n  ⭣\n關閉「使用預設瀏覽器開啟連結」")]
+                    )
                 )
-            )
+            except Exception as e:
+                print("[linebot] reply_message failed (bind check):", repr(e))
             db.close()
             return
     # ---------- 綁定檢查完成 ----------
@@ -143,7 +162,7 @@ def handle_message(event):
         "欲望清單": "功能 B",
         "紀錄消費": "功能 C",
         "其他": "功能 D",
-        "儲蓄挑戰": "功能 E"
+        "每日產業新聞": "功能 E"
     }
 
     # 如果 user_msg 在 function_alias，則轉換為對應功能
@@ -159,7 +178,7 @@ def handle_message(event):
 
 
         "功能 D": "其他功能",
-        "功能 E": "⚠️ 儲蓄挑戰（待接分析功能）",
+        "功能 E": "每日產業新聞",
     }
 
     # 回覆文字
@@ -192,6 +211,13 @@ def handle_message(event):
                 "・查紀錄：輸入「查紀錄」會顯示最近 5 筆\n"
                 "・離開記帳：輸入「離開」"
             )
+        elif user_msg == "功能 E":
+            print("為您提供每日產業新聞")
+            user.current_function = "daily_news"
+            reply_text = (
+                "為您提供每日產業新聞，\n"
+                "請問您今天有興趣讀哪方面的產業新聞呢？（若無請填無）"
+            )
         else:
             reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
     elif user.current_function == "信用卡回饋查詢":
@@ -199,12 +225,15 @@ def handle_message(event):
         print("👉 信用卡回饋查詢已啟動，收到使用者輸入 =", user_msg)
 
         # ⭐ 第 1 段：立即回覆避免 LINE Timeout
-        line_bot_api.reply_message(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text="🔍 正在為您查詢中，請稍候…")]
+        try:
+            line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[TextMessage(text="🔍 正在為您查詢中，請稍候…")]
+                )
             )
-        )
+        except Exception as e:
+            print("[linebot] reply_message failed (query ack):", repr(e))
 
         # ⭐ 第 2 段：後台執行真正查詢
         final_reply = process_credit_card_query(user_msg)
@@ -212,12 +241,15 @@ def handle_message(event):
         # ⭐ 第 3 段：push 第二段訊息（查詢結果）
         from linebot.v3.messaging import PushMessageRequest
 
-        line_bot_api.push_message(
-            PushMessageRequest(
-                to=line_user_id,
-                messages=[TextMessage(text=final_reply)]
+        try:
+            line_bot_api.push_message(
+                PushMessageRequest(
+                    to=line_user_id,
+                    messages=[TextMessage(text=final_reply)]
+                )
             )
-        )
+        except Exception as e:
+            print("[linebot] push_message failed (query result):", repr(e))
         return   # ⚠️ 不要再往下執行
 
     elif user.current_function == "wishlist":
@@ -267,6 +299,47 @@ def handle_message(event):
                 db.rollback()
                 reply_text = f"資料庫錯誤：{str(e)}"
                 print(f"Wishlist Batch Add Error: {e}")                                   
+
+    elif user.current_function == "daily_news":
+        topic = user_msg.strip()
+
+        if topic == "離開":
+            user.current_function = None
+            db.commit()
+            reply_text = "已離開每日產業新聞模式。"
+        else:
+            # 先回覆受理，避免 LINE webhook timeout
+            try:
+                line_bot_api.reply_message(
+                    ReplyMessageRequest(
+                        reply_token=event.reply_token,
+                        messages=[TextMessage(text="📰 正在整理今日產業新聞，請稍候…")]
+                    )
+                )
+            except Exception as e:
+                print("[linebot] reply_message failed (daily news ack):", repr(e))
+
+            final_reply = run_daily_news_pipeline(
+                db=db,
+                user_id=user.id,
+                topic=topic,
+            )
+
+            from linebot.v3.messaging import PushMessageRequest
+            try:
+                line_bot_api.push_message(
+                    PushMessageRequest(
+                        to=line_user_id,
+                        messages=[TextMessage(text=final_reply)]
+                    )
+                )
+            except Exception as e:
+                print("[linebot] push_message failed (daily news result):", repr(e))
+
+            user.current_function = None
+            user.last_activity_time = datetime.now(taipei)
+            db.commit()
+            return
 
     elif user.current_function == "expense":
         text = user_msg.strip()
@@ -338,9 +411,12 @@ def handle_message(event):
     user.last_activity_time = datetime.now(taipei)
     db.commit()
 
-    line_bot_api.reply_message(
-        ReplyMessageRequest(
-            reply_token=event.reply_token,
-            messages=[TextMessage(text=reply_text)]
+    try:
+        line_bot_api.reply_message(
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[TextMessage(text=reply_text)]
+            )
         )
-    )
+    except Exception as e:
+        print("[linebot] reply_message failed (final):", repr(e))
