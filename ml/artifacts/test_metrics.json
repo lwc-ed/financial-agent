@@ -1,0 +1,41 @@
+{
+  "model_name": "hgbr",
+  "target_column": "future_expense_7d_sum",
+  "best_val_metric": 852.075953649333,
+  "test_mae": 988.8817274927254,
+  "test_rmse": 1275.8180026000844,
+  "baseline_mae": {
+    "naive_7d_sum": 1479.1553955078125,
+    "moving_avg_30d_x7": 1217.206298828125
+  },
+  "baseline_rmse": {
+    "naive_7d_sum": 1942.8567240020557,
+    "moving_avg_30d_x7": 1662.0213596702058
+  },
+  "baseline_metrics": {
+    "naive_7d_sum": {
+      "mae": 1479.1553955078125,
+      "rmse": 1942.8567240020557
+    },
+    "moving_avg_30d_x7": {
+      "mae": 1217.206298828125,
+      "rmse": 1662.0213596702058
+    }
+  },
+  "beat_moving_avg_30d_x7": true,
+  "train_rows": 609,
+  "val_rows": 244,
+  "test_rows": 296,
+  "feature_count": 22,
+  "candidate_validation_metrics": {
+    "mlp": {
+      "mae": 1669.651611328125,
+      "rmse": 2020.9476118890366
+    },
+    "hgbr": {
+      "mae": 852.075953649333,
+      "rmse": 1157.946132678102
+    }
+  },
+  "note": "Model selection uses validation only; test is evaluated once at the end on the selected model."
+}
