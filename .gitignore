@@ -6,7 +6,7 @@ __pycache__/
 *.pyd
 *.pdb
 *.egg-info/
-#.env
+.env
 .env.*
 !.env.example
 .venv/

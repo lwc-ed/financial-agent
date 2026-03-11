@@ -1,40 +1,40 @@
 {
-  "model_name": "hgbr",
+  "model_name": "mlp",
   "target_column": "future_expense_7d_sum",
-  "best_val_metric": 852.075953649333,
-  "test_mae": 988.8817274927254,
-  "test_rmse": 1275.8180026000844,
+  "best_val_metric": 4327.6455078125,
+  "test_mae": 1914.069091796875,
+  "test_rmse": 2752.970577394535,
   "baseline_mae": {
-    "naive_7d_sum": 1479.1553955078125,
-    "moving_avg_30d_x7": 1217.206298828125
+    "naive_7d_sum": 1746.2757568359375,
+    "moving_avg_30d_x7": 1780.7589111328125
   },
   "baseline_rmse": {
-    "naive_7d_sum": 1942.8567240020557,
-    "moving_avg_30d_x7": 1662.0213596702058
+    "naive_7d_sum": 2391.1794161041116,
+    "moving_avg_30d_x7": 4408.610665504497
   },
   "baseline_metrics": {
     "naive_7d_sum": {
-      "mae": 1479.1553955078125,
-      "rmse": 1942.8567240020557
+      "mae": 1746.2757568359375,
+      "rmse": 2391.1794161041116
     },
     "moving_avg_30d_x7": {
-      "mae": 1217.206298828125,
-      "rmse": 1662.0213596702058
+      "mae": 1780.7589111328125,
+      "rmse": 4408.610665504497
     }
   },
-  "beat_moving_avg_30d_x7": true,
-  "train_rows": 609,
-  "val_rows": 244,
-  "test_rows": 296,
+  "beat_moving_avg_30d_x7": false,
+  "train_rows": 1583,
+  "val_rows": 608,
+  "test_rows": 671,
   "feature_count": 22,
   "candidate_validation_metrics": {
     "mlp": {
-      "mae": 1669.651611328125,
-      "rmse": 2020.9476118890366
+      "mae": 4327.6455078125,
+      "rmse": 17105.828714213178
     },
     "hgbr": {
-      "mae": 852.075953649333,
-      "rmse": 1157.946132678102
+      "mae": 4687.562530770134,
+      "rmse": 13006.371592811094
     }
   },
   "note": "Model selection uses validation only; test is evaluated once at the end on the selected model."

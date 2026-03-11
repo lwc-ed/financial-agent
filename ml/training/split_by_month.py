@@ -11,7 +11,7 @@ ML_DIR = ROOT_DIR / "ml"
 ARTIFACT_DIR = ML_DIR / "artifacts"
 DEFAULT_LEDGER_PATH = ARTIFACT_DIR / "daily_ledger_all.parquet"
 DEFAULT_FEATURES_PATH = ARTIFACT_DIR / "features_all.parquet"
-DEFAULT_MIN_DAYS_PER_MONTH = 15 #調整活躍天數
+DEFAULT_MIN_DAYS_PER_MONTH = 20 #調整活躍天數
 
 
 def parse_args() -> argparse.Namespace:

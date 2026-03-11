@@ -9,7 +9,7 @@ OUT_DIR = Path("artifacts")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # 之後可改成 argparse，但先用常數快速跑通
-USER_IDS = [f"user{i}" for i in range(1, 16)]
+USER_IDS = [f"user{i}" for i in range(1, 21)]
 
 
 def load_raw(path: Path) -> pd.DataFrame:
