@@ -637,7 +637,7 @@ def main() -> None:
     with metrics_path.open("w", encoding="utf-8") as file:
         json.dump(metrics, file, ensure_ascii=False, indent=2)
 
-    report_path = args.output_dir / "training_report.txt"
+    report_path = args.output_dir / "training_report_v1.txt"
     report_text = build_training_report(
         metrics=metrics,
         output_paths={

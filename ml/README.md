@@ -6,6 +6,17 @@
 - 每支程式會產生哪些檔案
 - 這些檔案的用途是什麼
 
+## 一次跑完整個訓練流程(one valid)
+```bash
+./run_training_pipeline.sh
+```
+
+## 一次跑完整個訓練流程(three valid)
+```bash
+./run_training_expanding_window_version.sh
+```
+
+
 ## 環境建立
 
 建議使用獨立的 `venv_ml`：
@@ -288,3 +299,48 @@ python3 ml/training/train_model.py
 - [test_metrics.json](/Users/liweichen/financial-agent/ml/artifacts/test_metrics.json)
 - [predictions_test.csv](/Users/liweichen/financial-agent/ml/artifacts/predictions_test.csv)
 - [training_report.txt](/Users/liweichen/financial-agent/ml/artifacts/training_report.txt)
+
+## Expanding Window Validation
+
+新增工具檔：
+- [expanding_window_cv.py](/Users/liweichen/financial-agent/ml/training/expanding_window_cv.py)
+
+主要函式：
+- `build_expanding_window_folds(df, date_column="date", n_folds=3, val_fraction=0.1)`
+
+行為說明：
+- 每個 `user_id` 會先各自按 `date` 排序
+- 之後做 expanding window，再把每位 user 在同一 fold 的 train/val 合併
+- 預設 `n_folds=3`, `val_fraction=0.1` 時，折數節奏為：
+  - fold1: train 前 50%，val 下一個 10%
+  - fold2: train 前 60%，val 下一個 10%
+  - fold3: train 前 70%，val 下一個 10%
+- 若某個 user 的驗證區間超出可用範圍，會自動截斷到可用資料
+- 回傳型別：`List[(train_df, val_df)]`
+
+快速使用範例：
+
+```python
+import pandas as pd
+from ml.training.expanding_window_cv import build_expanding_window_folds
+
+df = pd.read_parquet("ml/artifacts/features_all.parquet")
+folds = build_expanding_window_folds(
+    df,
+    date_column="date",
+    n_folds=3,
+    val_fraction=0.1,
+)
+
+for fold_idx, (train_df, val_df) in enumerate(folds, start=1):
+    print(f"fold={fold_idx} train_rows={len(train_df)} val_rows={len(val_df)}")
+```
+
+訓練迴圈範例（內建）：
+
+```python
+from ml.training.expanding_window_cv import example_train_with_expanding_window
+
+metrics_df = example_train_with_expanding_window(df)
+print(metrics_df)
+```

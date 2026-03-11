@@ -1,0 +1,417 @@
+Training Run Summary(BASIC)
+model_name: hgbr
+target_column: future_expense_7d_sum
+best_val_metric: 4537.057036
+test_mae: 1491.484829
+test_rmse: 2569.156570
+
+Baselines
+naive_7d_sum mae: 1721.567993
+naive_7d_sum rmse: 2377.552208
+moving_avg_30d_x7 mae: 1785.713135
+moving_avg_30d_x7 rmse: 4451.909927
+
+Dataset Sizes
+train_rows: 1459
+val_rows: 579
+test_rows: 655
+feature_count: 22
+
+comparison: hgbr beat moving_avg_30d_x7 on both MAE and RMSE (1491.484829/2569.156570 vs 1785.713135/4451.909927).
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_hgbr_model.pkl
+history_csv: /Users/liweichen/financial-agent/ml/artifacts/training_history.csv
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test.csv
+metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics.json
+diagnostics_md: /Users/liweichen/financial-agent/ml/artifacts/diagnostics.md
+
+================================================================================
+
+Training Run Summary v6
+model_name: hgbr_v6
+target_column: future_expense_7d_sum
+searched_subsets: 2000
+subset_size_range: 3-20
+best_trial_id: 244
+best_val_metric: 3565.178838
+best_val_rmse: 11899.892387
+test_mae: 1318.270834
+test_rmse: 2083.522258
+
+Dataset Sizes
+train_rows: 1459
+val_rows: 579
+test_rows: 655
+feature_pool_count: 22
+selected_feature_count: 7
+
+Selected Features
+- daily_expense
+- expense_30d_sum
+- expense_7d_mean
+- has_expense
+- has_income
+- net_30d_sum
+- txn_30d_sum
+
+Baselines
+naive_7d_sum mae: 1721.567993
+naive_7d_sum rmse: 2377.552208
+moving_avg_30d_x7 mae: 1785.713135
+moving_avg_30d_x7 rmse: 4451.909927
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_hgbr_model_v6.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml/artifacts/feature_search_results_v6.csv
+best_features_json: /Users/liweichen/financial-agent/ml/artifacts/best_features_v6.json
+test_metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v6.json
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v6.csv
+
+
+================================================================================
+
+[run_timestamp] 2026-03-04 20:57:00
+
+Training Run Summary V5
+model_name: hgbr_v5
+target_column: future_expense_7d_sum
+searched_subsets: 3000
+subset_size_range: 2-22
+best_trial_id: 1409
+best_val_metric: 3555.709417
+best_val_rmse: 11823.048638
+test_mae: 1371.225590
+test_rmse: 2136.362092
+
+Dataset Sizes
+train_rows: 1459
+val_rows: 579
+test_rows: 655
+feature_pool_count: 22
+selected_feature_count: 13
+
+Selected Features
+- daily_expense
+- expense_30d_mean
+- expense_7d_mean
+- expense_7d_sum
+- has_expense
+- has_income
+- income_txn_count
+- is_weekend
+- is_winter_vacation
+- net_30d_sum
+- txn_30d_sum
+- txn_7d_sum
+- txn_count
+
+Baselines
+naive_7d_sum mae: 1721.567993
+naive_7d_sum rmse: 2377.552208
+moving_avg_30d_x7 mae: 1785.713135
+moving_avg_30d_x7 rmse: 4451.909927
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_hgbr_model_v5.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml/artifacts/feature_search_results_v5.csv
+best_features_json: /Users/liweichen/financial-agent/ml/artifacts/best_features_v5.json
+test_metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v5.json
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v5.csv
+
+================================================================================
+
+[run_timestamp] 2026-03-04 21:35:22
+
+Training Run Summary V5
+model_name: hgbr_v5
+target_column: future_expense_7d_sum
+searched_subsets: 5000
+subset_size_range: 3-21
+best_trial_id: 985
+best_val_metric: 3555.761404
+best_val_rmse: 11830.159412
+test_mae: 1363.096269
+test_rmse: 2052.846842
+
+Dataset Sizes
+train_rows: 1459
+val_rows: 579
+test_rows: 655
+feature_pool_count: 22
+selected_feature_count: 14
+
+Selected Features
+- daily_expense
+- daily_income
+- daily_net
+- dow
+- expense_30d_mean
+- expense_7d_mean
+- expense_7d_sum
+- has_expense
+- income_txn_count
+- is_weekend
+- net_30d_sum
+- txn_30d_sum
+- txn_7d_sum
+- txn_count
+
+Baselines
+naive_7d_sum mae: 1721.567993
+naive_7d_sum rmse: 2377.552208
+moving_avg_30d_x7 mae: 1785.713135
+moving_avg_30d_x7 rmse: 4451.909927
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_hgbr_model_v5.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml/artifacts/feature_search_results_v5.csv
+best_features_json: /Users/liweichen/financial-agent/ml/artifacts/best_features_v5.json
+test_metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v5.json
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v5.csv
+
+================================================================================
+
+[run_timestamp] 2026-03-04 22:07:29
+
+Training Run Summary v6
+model_name: mlp_v6
+target_column: future_expense_7d_sum
+searched_subsets: 5000
+subset_size_range: 7-21
+best_trial_id: 1807
+best_val_metric: 3901.840332
+best_val_rmse: 11980.920165
+test_mae: 1636.211304
+test_rmse: 2406.546280
+
+Dataset Sizes
+train_rows: 1459
+val_rows: 579
+test_rows: 655
+feature_pool_count: 22
+selected_feature_count: 9
+
+Selected Features
+- daily_net
+- expense_txn_count
+- has_expense
+- income_txn_count
+- is_summer_vacation
+- is_weekend
+- net_30d_sum
+- txn_7d_sum
+- txn_count
+
+Baselines
+naive_7d_sum mae: 1721.567993
+naive_7d_sum rmse: 2377.552208
+moving_avg_30d_x7 mae: 1785.713135
+moving_avg_30d_x7 rmse: 4451.909927
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_mlp_model_v6.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml/artifacts/feature_search_results_v6.csv
+best_features_json: /Users/liweichen/financial-agent/ml/artifacts/best_features_v6.json
+test_metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v6.json
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v6.csv
+
+================================================================================
+
+[run_timestamp] 2026-03-09 14:21:05
+
+Training Run Summary v3_hgbr
+model_name: hgbr_v3_hgbr
+target_column: future_expense_7d_sum
+searched_subsets: 3000
+subset_size_range: 3-21
+best_trial_id: 2539
+best_val_metric: 3029.525894
+best_val_rmse: 10803.130952
+test_mae: 1220.855084
+test_rmse: 1899.763467
+
+Dataset Sizes
+train_rows: 1789
+val_rows: 700
+test_rows: 794
+feature_pool_count: 22
+selected_feature_count: 17
+
+Selected Features
+- daily_expense
+- daily_income
+- daily_net
+- dow
+- expense_30d_mean
+- expense_30d_sum
+- expense_7d_mean
+- expense_txn_count
+- has_income
+- income_txn_count
+- is_weekend
+- is_winter_vacation
+- net_30d_sum
+- net_7d_sum
+- txn_30d_sum
+- txn_7d_sum
+- txn_count
+
+Baselines
+naive_7d_sum mae: 1608.877808
+naive_7d_sum rmse: 2237.000447
+moving_avg_30d_x7 mae: 1608.886963
+moving_avg_30d_x7 rmse: 4064.703433
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_hgbr_model_v3_hgbr.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml/artifacts/feature_search_results_v3_hgbr.csv
+best_features_json: /Users/liweichen/financial-agent/ml/artifacts/best_features_v3_hgbr.json
+test_metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v3_hgbr.json
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v3_hgbr.csv
+
+================================================================================
+
+[run_timestamp] 2026-03-09 14:30:43
+
+Training Run Summary v4_regression
+model_name: mlp_v4_regression
+target_column: future_expense_7d_sum
+searched_subsets: 2000
+subset_size_range: 7-21
+best_trial_id: 1319
+best_val_metric: 3293.402100
+best_val_rmse: 10049.420282
+test_mae: 1497.792358
+test_rmse: 2278.716964
+
+Dataset Sizes
+train_rows: 1789
+val_rows: 700
+test_rows: 794
+feature_pool_count: 22
+selected_feature_count: 8
+
+Selected Features
+- daily_expense
+- expense_txn_count
+- has_income
+- income_txn_count
+- month
+- net_30d_sum
+- txn_30d_sum
+- txn_7d_sum
+
+Baselines
+naive_7d_sum mae: 1608.877808
+naive_7d_sum rmse: 2237.000447
+moving_avg_30d_x7 mae: 1608.886963
+moving_avg_30d_x7 rmse: 4064.703433
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_mlp_model_v4_regression.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml/artifacts/feature_search_results_v4_regression.csv
+best_features_json: /Users/liweichen/financial-agent/ml/artifacts/best_features_v4_regression.json
+test_metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v4_regression.json
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v4_regression.csv
+
+================================================================================
+
+[run_timestamp] 2026-03-09 15:03:01
+
+Training Run Summary v3_hgbr
+model_name: hgbr_v3_hgbr
+target_column: future_expense_7d_sum
+searched_subsets: 3000
+subset_size_range: 3-21
+best_trial_id: 1246
+best_val_metric: 3364.890576
+best_val_rmse: 11515.957303
+test_mae: 1247.629130
+test_rmse: 2096.649343
+
+Dataset Sizes
+train_rows: 1583
+val_rows: 608
+test_rows: 671
+feature_pool_count: 22
+selected_feature_count: 4
+
+Selected Features
+- expense_30d_mean
+- has_income
+- net_30d_sum
+- txn_7d_sum
+
+Baselines
+naive_7d_sum mae: 1746.275757
+naive_7d_sum rmse: 2391.179416
+moving_avg_30d_x7 mae: 1780.758911
+moving_avg_30d_x7 rmse: 4408.610666
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_hgbr_model_v3_hgbr.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml/artifacts/feature_search_results_v3_hgbr.csv
+best_features_json: /Users/liweichen/financial-agent/ml/artifacts/best_features_v3_hgbr.json
+test_metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v3_hgbr.json
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v3_hgbr.csv
+
+================================================================================
+
+[run_timestamp] 2026-03-09 15:19:57
+
+Training Run Summary v4_regression
+model_name: mlp_v4_regression
+target_column: future_expense_7d_sum
+searched_subsets: 2000
+subset_size_range: 7-21
+best_trial_id: 1894
+best_val_metric: 3726.192139
+best_val_rmse: 11283.093193
+test_mae: 1549.446777
+test_rmse: 2303.388591
+
+Dataset Sizes
+train_rows: 1583
+val_rows: 608
+test_rows: 671
+feature_pool_count: 22
+selected_feature_count: 7
+
+Selected Features
+- daily_income
+- expense_txn_count
+- has_income
+- income_txn_count
+- net_30d_sum
+- txn_30d_sum
+- txn_7d_sum
+
+Baselines
+naive_7d_sum mae: 1746.275757
+naive_7d_sum rmse: 2391.179416
+moving_avg_30d_x7 mae: 1780.758911
+moving_avg_30d_x7 rmse: 4408.610666
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_mlp_model_v4_regression.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml/artifacts/feature_search_results_v4_regression.csv
+best_features_json: /Users/liweichen/financial-agent/ml/artifacts/best_features_v4_regression.json
+test_metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v4_regression.json
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v4_regression.csv
