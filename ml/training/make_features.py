@@ -22,6 +22,11 @@ def add_rolling_features(g: pd.DataFrame) -> pd.DataFrame:
         g[f"net_{w}d_sum"] = g["daily_net"].rolling(w, min_periods=1).sum().shift(1).fillna(0.0)
         g[f"txn_{w}d_sum"] = g["txn_count"].rolling(w, min_periods=1).sum().shift(1).fillna(0.0)
 
+    # Trend & Momentum features
+    # +1 smoothing prevents divide-by-zero when 30d mean is 0.
+    g["expense_7d_30d_ratio"] = (g["expense_7d_mean"] + 1.0) / (g["expense_30d_mean"] + 1.0)
+    g["expense_trend"] = g["expense_7d_mean"] - g["expense_30d_mean"]
+
     # 目標候選：未來 H 天支出總和（包含明天到第 H 天）
     # 例：H=7，對應 t+1 ~ t+7
     future = (
@@ -48,6 +53,10 @@ def main():
 
     # 週末特徵
     df["is_weekend"] = df["is_weekend"].astype(int)
+
+    # Advanced temporal feature: distance to month end (month end = 0)
+    month_end = df["date"] + pd.offsets.MonthEnd(0)
+    df["days_to_end_of_month"] = (month_end - df["date"]).dt.days.astype(int)
 
     feat = df.groupby("user_id", group_keys=False).apply(add_rolling_features)
 

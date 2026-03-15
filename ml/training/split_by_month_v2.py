@@ -14,6 +14,7 @@ DEFAULT_FEATURES_PATH = ARTIFACT_DIR / "features_all.parquet"
 DEFAULT_MIN_DAYS_PER_MONTH = 15
 DEFAULT_N_FOLDS = 3
 DEFAULT_VAL_FRACTION = 0.1
+DEFAULT_TEST_FRACTION = 0.2
 
 
 def parse_args() -> argparse.Namespace:
@@ -31,6 +32,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--n-folds", type=int, default=DEFAULT_N_FOLDS, help="Number of expanding folds")
     parser.add_argument("--val-fraction", type=float, default=DEFAULT_VAL_FRACTION, help="Validation fraction per fold")
+    parser.add_argument(
+        "--test-fraction",
+        type=float,
+        default=DEFAULT_TEST_FRACTION,
+        help="Holdout test fraction from latest eligible months per user",
+    )
     return parser.parse_args()
 
 
@@ -80,34 +87,54 @@ def build_expanding_assignments(
     eligible_months: pd.DataFrame,
     n_folds: int,
     val_fraction: float,
-) -> tuple[pd.DataFrame, list[str]]:
+    test_fraction: float,
+) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
     if n_folds < 1:
         raise ValueError("n_folds must be >= 1")
     if not (0 < val_fraction < 1):
         raise ValueError("val_fraction must be between 0 and 1")
+    if not (0 < test_fraction < 1):
+        raise ValueError("test_fraction must be between 0 and 1")
 
     base_train_fraction = 0.5
     assignments = []
+    holdout_assignments = []
     skipped_users = []
 
     for user_id, user_df in eligible_months.groupby("user_id"):
         months = sorted(user_df["month_start"].tolist())
         n_months = len(months)
-        if n_months < 2:
+
+        test_count = int(np.floor(n_months * test_fraction))
+        test_count = max(1, min(test_count, n_months - 1))
+        cv_months = months[:-test_count]
+        holdout_months = months[-test_count:]
+
+        if len(cv_months) < 2:
             skipped_users.append(user_id)
             continue
 
+        for month in holdout_months:
+            holdout_assignments.append(
+                {
+                    "user_id": user_id,
+                    "month_start": month,
+                    "split": "test",
+                }
+            )
+
+        n_cv_months = len(cv_months)
         for fold_idx in range(n_folds):
             train_fraction = base_train_fraction + fold_idx * val_fraction
-            train_end = int(np.floor(n_months * train_fraction))
-            train_end = max(1, min(train_end, n_months))
+            train_end = int(np.floor(n_cv_months * train_fraction))
+            train_end = max(1, min(train_end, n_cv_months))
 
             val_start = train_end
-            val_end = int(np.floor(n_months * (train_fraction + val_fraction)))
-            val_end = max(val_start, min(val_end, n_months))
+            val_end = int(np.floor(n_cv_months * (train_fraction + val_fraction)))
+            val_end = max(val_start, min(val_end, n_cv_months))
 
-            train_months = months[:train_end]
-            val_months = months[val_start:val_end]
+            train_months = cv_months[:train_end]
+            val_months = cv_months[val_start:val_end]
             if not val_months:
                 continue
 
@@ -132,6 +159,8 @@ def build_expanding_assignments(
 
     if not assignments:
         raise RuntimeError("No fold assignments were generated. Check data size and split params.")
+    if not holdout_assignments:
+        raise RuntimeError("No holdout test assignments were generated. Check data size and split params.")
 
     assignment_df = (
         pd.DataFrame(assignments)
@@ -139,7 +168,13 @@ def build_expanding_assignments(
         .sort_values(["fold", "user_id", "month_start", "split"])
         .reset_index(drop=True)
     )
-    return assignment_df, skipped_users
+    holdout_df = (
+        pd.DataFrame(holdout_assignments)
+        .drop_duplicates(subset=["user_id", "month_start", "split"])
+        .sort_values(["user_id", "month_start", "split"])
+        .reset_index(drop=True)
+    )
+    return assignment_df, holdout_df, skipped_users
 
 
 def save_fold_split(df: pd.DataFrame, fold: int, split: str, output_dir: Path) -> None:
@@ -149,6 +184,17 @@ def save_fold_split(df: pd.DataFrame, fold: int, split: str, output_dir: Path) -
     df.to_csv(csv_path, index=False)
     print(
         f"[FOLD {fold} {split.upper()}] saved {parquet_path.name} and {csv_path.name} "
+        f"rows={len(df)} users={df['user_id'].nunique() if not df.empty else 0}"
+    )
+
+
+def save_named_split(df: pd.DataFrame, split_name: str, output_dir: Path) -> None:
+    parquet_path = output_dir / f"features_{split_name}.parquet"
+    csv_path = output_dir / f"features_{split_name}.csv"
+    df.to_parquet(parquet_path, index=False)
+    df.to_csv(csv_path, index=False)
+    print(
+        f"[{split_name.upper()}] saved {parquet_path.name} and {csv_path.name} "
         f"rows={len(df)} users={df['user_id'].nunique() if not df.empty else 0}"
     )
 
@@ -170,10 +216,11 @@ def main() -> None:
         output_dir=args.output_dir,
     )
 
-    assignments, skipped_users = build_expanding_assignments(
+    assignments, holdout_assignments, skipped_users = build_expanding_assignments(
         eligible_months=kept_user_months,
         n_folds=args.n_folds,
         val_fraction=args.val_fraction,
+        test_fraction=args.test_fraction,
     )
 
     features = add_month_start(features)
@@ -205,8 +252,26 @@ def main() -> None:
             "val_months": int(val_df["month_start"].nunique()),
         }
 
+    pretest_features = features.merge(
+        assignments[["user_id", "month_start"]].drop_duplicates(),
+        on=["user_id", "month_start"],
+        how="inner",
+        validate="many_to_one",
+    ).sort_values(["user_id", "date"]).reset_index(drop=True)
+    holdout_test = features.merge(
+        holdout_assignments[["user_id", "month_start"]],
+        on=["user_id", "month_start"],
+        how="inner",
+        validate="many_to_one",
+    ).sort_values(["user_id", "date"]).reset_index(drop=True)
+
+    save_named_split(pretest_features, "pretest", args.output_dir)
+    save_named_split(holdout_test, "holdout_test", args.output_dir)
+
     assignment_path = args.output_dir / "month_split_v2_assignments.csv"
     assignments.to_csv(assignment_path, index=False)
+    holdout_path = args.output_dir / "month_split_v2_holdout_test.csv"
+    holdout_assignments.to_csv(holdout_path, index=False)
 
     summary = {
         "daily_ledger_path": str(args.daily_ledger),
@@ -214,9 +279,14 @@ def main() -> None:
         "min_days_per_month": args.min_days_per_month,
         "n_folds": args.n_folds,
         "val_fraction": args.val_fraction,
+        "test_fraction": args.test_fraction,
         "eligible_user_months": int(len(kept_user_months)),
         "skipped_users": skipped_users,
         "fold_stats": fold_stats,
+        "pretest_rows": int(len(pretest_features)),
+        "holdout_test_rows": int(len(holdout_test)),
+        "holdout_test_users": int(holdout_test["user_id"].nunique()),
+        "holdout_test_months": int(holdout_test["month_start"].nunique()),
     }
     summary_path = args.output_dir / "month_split_v2_summary.json"
     with summary_path.open("w", encoding="utf-8") as file:
@@ -227,6 +297,7 @@ def main() -> None:
         print(f"[WARN] users skipped due to insufficient eligible months: {', '.join(skipped_users)}")
     print(f"[DEBUG] saved invalid months to {debug_path}")
     print(f"[DONE] saved fold assignments to {assignment_path}")
+    print(f"[DONE] saved holdout assignments to {holdout_path}")
     print(f"[DONE] saved summary to {summary_path}")
 
 

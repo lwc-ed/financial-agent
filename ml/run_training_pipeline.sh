@@ -18,7 +18,7 @@ echo "========== STEP 5: train_model_v2 =========="
 python3 training/train_model_v2.py --feature-set user_selected_v1
 
 echo "========== STEP 6: train_model_v3_loop_search_hgbr =========="
-python3 training/train_model_v3_hgbr.py --trials 3000 --random-state 88 --min-features 3 --max-features 21
+python3 training/train_model_v3_hgbr.py --trials 1000 --random-state 1999 --min-features 5 --max-features 21
 
 echo "========== STEP 7: train_model_v4_loop_search_regression =========="
 python3 training/train_model_v4_regression.py --trials 2000 --random-state 9192 --min-features 7 --max-features 21

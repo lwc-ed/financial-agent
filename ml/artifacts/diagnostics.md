@@ -1,7 +1,7 @@
 # Diagnostics
 
 - target_column: `future_expense_7d_sum`
-- feature_count: 22
+- feature_count: 25
 
 ## Test Target Distribution
 
@@ -17,8 +17,8 @@
 ```text
 model                             mae         rmse
 --------------------------------------------------
-mlp                       1914.069092  2752.970577
-hgbr                      1164.361001  1649.674477
+mlp                       1853.903442  2701.936343
+hgbr                      1165.793531  1650.570547
 naive_7d_sum              1746.275757  2391.179416
 moving_avg_30d_x7         1780.758911  4408.610666
 ```
