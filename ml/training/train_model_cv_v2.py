@@ -93,6 +93,19 @@ def load_fold_data(input_dir: Path, fold: int) -> tuple[pd.DataFrame, pd.DataFra
     return train_df, val_df
 
 
+def load_holdout_data(input_dir: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
+    pretest_path = input_dir / "features_pretest.parquet"
+    holdout_path = input_dir / "features_holdout_test.parquet"
+    if not pretest_path.exists() or not holdout_path.exists():
+        raise FileNotFoundError(
+            "Missing holdout files: features_pretest.parquet and/or features_holdout_test.parquet. "
+            "Re-run split_by_month_v2.py to generate them."
+        )
+    pretest_df = pd.read_parquet(pretest_path)
+    holdout_df = pd.read_parquet(holdout_path)
+    return pretest_df, holdout_df
+
+
 def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
@@ -173,6 +186,34 @@ def main() -> None:
         "fold_metrics": fold_metrics,
     }
 
+    pretest_df, holdout_df = load_holdout_data(args.input_dir)
+    if feature_columns is None:
+        feature_columns = resolve_feature_columns(pretest_df, target_column, args.feature_columns)
+    if holdout_df.empty or pretest_df.empty:
+        raise RuntimeError("Pretest or holdout_test split is empty; cannot compute final test metrics.")
+
+    final_model = HistGradientBoostingRegressor(
+        random_state=args.random_state,
+        max_iter=500,
+        early_stopping=True,
+        validation_fraction=0.1,
+        n_iter_no_change=25,
+    )
+    x_pretest = pretest_df[feature_columns].to_numpy(dtype=np.float32)
+    y_pretest = pretest_df[target_column].to_numpy(dtype=np.float32)
+    x_holdout = holdout_df[feature_columns].to_numpy(dtype=np.float32)
+    y_holdout = holdout_df[target_column].to_numpy(dtype=np.float32)
+    final_model.fit(x_pretest, y_pretest)
+    holdout_pred = final_model.predict(x_holdout)
+    holdout_metrics = compute_metrics(y_holdout, holdout_pred)
+    summary["holdout_test"] = {
+        "rows": int(len(holdout_df)),
+        "users": int(holdout_df["user_id"].nunique()),
+        "mae": holdout_metrics["mae"],
+        "rmse": holdout_metrics["rmse"],
+        "iterations": int(final_model.n_iter_),
+    }
+
     metrics_csv_path = args.output_dir / "cv_metrics_v2.csv"
     metrics_df.to_csv(metrics_csv_path, index=False)
 
@@ -206,6 +247,13 @@ def main() -> None:
             f"cv_mean_rmse: {mean_rmse:.6f}",
             f"cv_std_rmse: {std_rmse:.6f}",
             "",
+            "Holdout Test",
+            f"test_rows: {len(holdout_df)}",
+            f"test_users: {holdout_df['user_id'].nunique()}",
+            f"test_mae: {holdout_metrics['mae']:.6f}",
+            f"test_rmse: {holdout_metrics['rmse']:.6f}",
+            f"test_iters: {final_model.n_iter_}",
+            "",
             "Artifacts",
             f"metrics_csv: {metrics_csv_path}",
             f"metrics_json: {metrics_json_path}",
@@ -217,6 +265,10 @@ def main() -> None:
     report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
 
     print(f"[CV SUMMARY] mean_mae={mean_mae:.6f} std_mae={std_mae:.6f} mean_rmse={mean_rmse:.6f} std_rmse={std_rmse:.6f}")
+    print(
+        f"[HOLDOUT TEST] rows={len(holdout_df)} users={holdout_df['user_id'].nunique()} "
+        f"mae={holdout_metrics['mae']:.6f} rmse={holdout_metrics['rmse']:.6f} iters={final_model.n_iter_}"
+    )
     print(f"saved report to {report_path}")
     print(f"saved metrics csv to {metrics_csv_path}")
     print(f"saved metrics json to {metrics_json_path}")

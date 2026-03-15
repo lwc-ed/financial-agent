@@ -1,19 +1,20 @@
 {
   "model_name": "mlp_v4_regression",
-  "trial_id": 1894,
+  "trial_id": 141,
   "target_column": "future_expense_7d_sum",
-  "feature_count": 7,
+  "feature_count": 8,
   "feature_columns": [
-    "daily_income",
-    "expense_txn_count",
+    "daily_expense",
+    "dow",
+    "expense_7d_30d_ratio",
     "has_income",
-    "income_txn_count",
+    "is_summer_vacation",
+    "is_weekend",
     "net_30d_sum",
-    "txn_30d_sum",
     "txn_7d_sum"
   ],
-  "best_val_metric": 3726.192138671875,
-  "best_val_rmse": 11283.093192914786,
+  "best_val_metric": 3697.32568359375,
+  "best_val_rmse": 11400.99364090692,
   "iterations": 300,
   "config": {
     "hidden_layer_sizes": [

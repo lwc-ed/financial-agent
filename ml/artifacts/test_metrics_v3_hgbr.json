@@ -1,17 +1,18 @@
 {
   "model_name": "hgbr_v3_hgbr",
   "target_column": "future_expense_7d_sum",
-  "trial_id": 1246,
+  "trial_id": 395,
   "feature_columns": [
-    "expense_30d_mean",
-    "has_income",
-    "net_30d_sum",
-    "txn_7d_sum"
+    "expense_30d_sum",
+    "expense_trend",
+    "income_txn_count",
+    "is_weekend",
+    "net_30d_sum"
   ],
-  "best_val_metric": 3364.8905760828607,
-  "best_val_rmse": 11515.957302519448,
-  "test_mae": 1247.6291301320962,
-  "test_rmse": 2096.649342537954,
+  "best_val_metric": 3359.229672604098,
+  "best_val_rmse": 11517.234022526229,
+  "test_mae": 1254.3852934530607,
+  "test_rmse": 1990.742001616517,
   "baseline_mae": {
     "naive_7d_sum": 1746.2757568359375,
     "moving_avg_30d_x7": 1780.7589111328125
@@ -24,6 +25,6 @@
   "train_rows": 1583,
   "val_rows": 608,
   "test_rows": 671,
-  "feature_pool_count": 22,
-  "searched_subsets": 3000
+  "feature_pool_count": 25,
+  "searched_subsets": 1000
 }
