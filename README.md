@@ -331,8 +331,14 @@ ss -ltnp | grep :8000
 ```
 
 
-
+# ml資料夾是做ml 模型
+是一個單獨隔離出來的環境，並不會破壞掉原本的主程式
 
 # ✅ 完成
-此 README 已為你整合成完整技術導向 + 雙語版本，可直接使用於 GitHub。  
+此 README 已為你整合成完整技術導向 + 雙語版本，可直接使用於 GitHub。
+
+# 重開 EC2 方法/ DB
+1. 開啟EC2 並記下 public IP
+2. 去 namecheap 更改endpoint  public IP
+3. 去 .env 更改 database URL(endpoint)
  
