@@ -49,4 +49,4 @@ Desktop.ini
 
 # ---- Logs ----
 *.log
-logs/
+logs/.claude/
