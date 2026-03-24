@@ -50,3 +50,4 @@ Desktop.ini
 # ---- Logs ----
 *.log
 logs/.claude/
+.claude/
