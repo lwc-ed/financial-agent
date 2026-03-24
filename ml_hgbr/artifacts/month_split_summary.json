@@ -1,0 +1,22 @@
+{
+  "daily_ledger_path": "/Users/liweichen/financial-agent/ml/artifacts/daily_ledger_all.parquet",
+  "features_path": "/Users/liweichen/financial-agent/ml/artifacts/features_all.parquet",
+  "min_days_per_month": 20,
+  "eligible_user_months": 96,
+  "skipped_users_with_lt_3_months": [],
+  "split_row_counts": {
+    "train": 1583,
+    "val": 608,
+    "test": 671
+  },
+  "split_user_counts": {
+    "train": 13,
+    "val": 13,
+    "test": 13
+  },
+  "split_month_counts": {
+    "train": 32,
+    "val": 17,
+    "test": 19
+  }
+}

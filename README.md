@@ -341,4 +341,12 @@ ss -ltnp | grep :8000
 1. 開啟EC2 並記下 public IP
 2. 去 namecheap 更改endpoint  public IP
 3. 去 .env 更改 database URL(endpoint)
+
+---
+
+# 📊 實驗結果
+
+| 日期 | 訓練模型 | 訓練結果 | 備注 |
+|------|----------|----------|------|
+|      |          |          |      |
  

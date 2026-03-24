@@ -1,0 +1,27 @@
+Training Run Summary
+model_name: mlp
+target_column: future_expense_7d_sum
+best_val_metric: 4285.446777
+test_mae: 1853.903442
+test_rmse: 2701.936343
+
+Baselines
+naive_7d_sum mae: 1746.275757
+naive_7d_sum rmse: 2391.179416
+moving_avg_30d_x7 mae: 1780.758911
+moving_avg_30d_x7 rmse: 4408.610666
+
+Dataset Sizes
+train_rows: 1583
+val_rows: 608
+test_rows: 671
+feature_count: 25
+
+comparison: mlp did not beat moving_avg_30d_x7 on both MAE and RMSE (1853.903442/2701.936343 vs 1780.758911/4408.610666).
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml/artifacts/best_mlp_model.pkl
+history_csv: /Users/liweichen/financial-agent/ml/artifacts/training_history.csv
+predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test.csv
+metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics.json
+diagnostics_md: /Users/liweichen/financial-agent/ml/artifacts/diagnostics.md
