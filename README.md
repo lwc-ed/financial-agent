@@ -1,54 +1,52 @@
 # financial-agent
 
-# 📦 必要安裝套件與工具
+LINE Bot 理財助手，支援記帳、消費查詢、慾望清單與儲蓄挑戰等功能。
 
-本專案開發與執行需要安裝以下套件與工具，以下為 macOS / Linux 平台的安裝範例。
-[Line官方帳號管理後台](https://developers.line.biz/console/channel/2007892068/messaging-api)
+- [LINE 官方帳號管理後台](https://developers.line.biz/console/channel/2007892068/messaging-api)
 
-### Python (後端)
-安裝依賴套件
-```
+---
+
+# 📦 必要安裝套件
+
+### Python（後端）
+```bash
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-檢查是否安裝成功
+
+### Node.js / npm（前端）
+主要套件：`react`、`react-dom`、`vite`、`liff`、`axios`、`openai`
+```bash
+cd frontend
+npm install
 ```
-pip list
-```
 
-### Node.js / npm (前端)
-
-- 使用 React 與 Vite 建構前端
-- 主要套件包括：
-  - react
-  - react-dom
-  - vite
-- 可選套件（視專案需求）：
-  - liff（LINE Front-end Framework）
-  - axios（HTTP 請求）
-  - openai（OpenAI API 客戶端）
-- 安裝方式：
-  ```bash
-  cd frontend
-  npm install
-  ```
-  會根據 `package.json` 自動安裝所有依賴套件。
-
-
+---
 
 # 🚀 啟動方式
 
-1. **更新並進入專案目錄**
-   ```bash
-   cd financial-agent
-   git pull
-   ```
+### 後端
+```bash
+cd backend
+python3 app.py
+```
+或使用 FastAPI：
+```bash
+cd backend
+uvicorn main:app --reload
+```
+啟動後可至 http://127.0.0.1:8000/docs 測試 API。
 
-2. **啟動後端伺服器（於 `backend/` 目錄）**
-   ```bash
-   cd backend
-   python3 app.py
-   ```
+### 前端
+```bash
+cd frontend
+npm install
+npm start
+```
+
+> 確認 `.env` 設定正確，避免啟動錯誤。
+
+---
 
 # 📌 功能統整表
 
@@ -62,82 +60,173 @@ pip list
 
 ---
 
-# 🔹 整體架構運作
+# 🏗️ 整體架構
 
-1. **LINE Bot**  
-   - 基本互動（輸入消費、查詢紀錄、呼叫功能）  
-   - 傳文字 / 按鈕 / Quick Reply  
-
-2. **伺服器 + 資料庫（核心大腦）**  
-   - Flask / FastAPI / Node.js  
-   - MySQL / PostgreSQL / MongoDB  
-   - 演算法處理（消費統計、儲蓄規劃）  
-
-3. **AI API（選配）**  
-   - 把演算法結果轉成自然語言建議  
-   - 例如「依照你的清單，我建議先完成耳機，再挑戰 Switch！」  
-
-4. **LIFF / 外部網站**  
-   - 適合表單（資料填寫）和進度視覺化（圖表、清單、進度條）  
-   - 讓使用者「感覺還在 LINE 內操作」，體驗無縫 
+1. **LINE Bot** — 基本互動（輸入消費、查詢紀錄、呼叫功能），傳文字 / 按鈕 / Quick Reply
+2. **伺服器 + 資料庫** — Flask / FastAPI、MySQL / PostgreSQL，演算法處理（消費統計、儲蓄規劃）
+3. **AI API（選配）** — 把演算法結果轉成自然語言建議
+4. **LIFF / 外部網站** — 適合表單與進度視覺化，讓使用者感覺還在 LINE 內操作
 
 ---
 
-# 📂 專案結構與檔案說明
+# 📂 專案結構
 
 ```
 financial-agent/
 ├── backend/
 │   ├── app.py                 # Flask 主程式，啟動後端伺服器
 │   ├── linebot_handler.py     # 處理 LINE Bot 事件的邏輯
-│   ├── routes/                # 使用 Blueprint 模組管理 API 路由，依功能分離（如 expense_record、wishlist 等），各模組皆暴露一個 _bp 方便註冊與維護
-│   ├── models/                # 資料模型定義（ORM 或 schema），負責資料庫資料結構與操作
-│   ├── setup_rich_menu.py     # 設定 LINE Rich Menu 的腳本
-├─── frontend/
+│   ├── routes/                # Blueprint 模組，依功能分離（expense_record、wishlist 等）
+│   ├── models/                # 資料模型定義（ORM / schema）
+│   └── setup_rich_menu.py     # 設定 LINE Rich Menu 的腳本
+├── frontend/
 │   ├── public/                # React 公開資源
 │   ├── src/                   # React 程式碼
-│   ├── .env                   # 前端環境變數設定（API 端點等）
+│   ├── .env                   # 前端環境變數設定
 │   └── package.json
 ├── picture/
-│   └── rich_menu/             # 儲存 LINE Rich Menu 使用的圖片
+│   └── rich_menu/             # LINE Rich Menu 使用的圖片
 ├── README.md
 └── .gitignore
 ```
 
-- **backend/**：後端使用 Flask 框架，`app.py` 是主入口，`linebot_handler.py` 負責處理 LINE Bot 事件，`routes/` 用於分模組管理 API 路由，依功能分離（如 expense_record、wishlist 等），每個 Blueprint 模組皆暴露 `_bp` 方便註冊與維護。`models/` 則定義資料模型（ORM 或 schema），處理資料庫的資料結構與操作。`setup_rich_menu.py` 用於部署 Rich Menu。環境變數可透過專案根目錄或系統環境設定管理。
-
-- **frontend/**：React 應用程式，包含前端頁面與互動邏輯，`.env` 用來設定前端環境變數（如 API 伺服器 URL），確保前後端分離。
-
-- **picture/**：存放圖片資源，尤其是 LINE Rich Menu 使用的圖片素材。
-
-- **命名規範與提交規則**：
-  - Blueprint 命名皆以 `_bp` 結尾，例如 `user_bp`、`expense_bp`，以利識別。
-  - Git commit 訊息請清楚描述改動內容，避免使用模糊字眼，方便多人協作與版本追蹤。
-
-- **啟動提醒**：
-  - 後端啟動請在 `backend/` 目錄下執行：
-    ```
-    python3 app.py
-    ```
-  - 前端啟動請在 `frontend/` 目錄下執行：
-    ```
-    npm install
-    npm start
-    ```
-  - 確認 `.env` 設定正確，避免啟動錯誤。
-
-請依此專案結構與規範進行開發與維護，確保團隊合作順暢。
+**命名規範**：Blueprint 皆以 `_bp` 結尾（例如 `user_bp`、`expense_bp`）。
 
 ---
 
-# 補充說明
+# 🗄️ 資料庫（AWS RDS MySQL）
 
-## setup_rich_menu 執行方式 (only for lwc)
+### WSL 連線 RDS
+
+**1. 確認 DNS 解析**
+```bash
+nslookup financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com
+```
+
+**2. 安裝 MySQL client 並測試連線**
+```bash
+sudo apt update && sudo apt install mysql-client -y
+mysql -h financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com -P 3306 -u nycuiemagent -p
+```
+
+**3. 修正 WSL DNS 問題（如無法解析）**
+```bash
+sudo nano /etc/wsl.conf
+# 加入：
+# [network]
+# generateResolvConf = false
+
+sudo rm /etc/resolv.conf
+echo -e "nameserver 8.8.8.8\nnameserver 1.1.1.1" | sudo tee /etc/resolv.conf
+# 重啟 WSL：wsl --shutdown
+```
+
+**常見錯誤**
+- `Unknown MySQL server host` → 檢查 `/etc/resolv.conf`，確認有 8.8.8.8 或 1.1.1.1
+- `Access denied for user` → 帳號或密碼錯誤，或 RDS user 無對外權限
+- `Timeout` → AWS Console → Security group → Inbound rules，開放 MySQL/3306
+
+### 常用 SQL 指令
+```sql
+USE financial_agent;
+SHOW TABLES;
+SELECT * FROM users;
+SELECT * FROM messages;
+```
+
+### FastAPI 常用 API
+| 方法 | 路徑 | 說明 |
+|------|------|------|
+| POST | `/users/` | 新增使用者 |
+| GET | `/users/{user_id}` | 讀取使用者 |
+| POST | `/posts/` | 新增貼文 |
+| GET | `/posts/{post_id}` | 讀取貼文 |
+| DELETE | `/posts/{post_id}` | 刪除貼文 |
+
+---
+
+# ☁️ EC2 部署
+
+**連線 EC2**
+```bash
+# lwc 專用
+ssh -i ~/desktop/劉建良專題/financial-agent-key.pem ubuntu@3.21.167.93
+
+# 所有人
+ssh ubuntu@3.21.167.93
+```
+
+**在 EC2 測試自己的 branch**
+```bash
+# Step 1：本地寫完後推上去
+git push
+
+# Step 2：進 EC2 切換 branch
+ssh ubuntu@3.21.167.93
+cd financial-agent
+git checkout 自己的branch  # 例如：git checkout feature-login
+
+# Step 3：更新並啟動
+git pull
+cd backend
+python3 app.py
+
+# Step 4：測試無誤後，回 GitHub 發 PR merge 到 main
+```
+
+**更改 EC2 時區**
+```bash
+sudo timedatectl set-timezone Asia/Taipei
+timedatectl  # 確認時區
+```
+
+---
+
+# 🔀 Git 工作流程
+
+**讓 feature branch 與 main 同步**
+```bash
+git fetch origin
+git checkout main
+git pull origin main
+git checkout feature-login
+git merge main
+```
+
+---
+
+# 🐍 虛擬環境
+
+```bash
+# 建立
+python3 -m venv venv
+
+# 啟動
+source venv/bin/activate
+
+# 安裝套件
+pip install -r requirements.txt
+
+# 啟動後端
+python3 -m backend.app
+```
+
+**其他指令**
+```bash
+python3 -m backend.routes.credit_card.cube_benefits_scraper  # 爬蟲
+python3 backend/ai/test_full_flow.py                          # 測試檔
+```
+
+---
+
+# 🔧 補充說明
+
+**setup_rich_menu 執行方式（only for lwc）**
 ```bash
 /opt/homebrew/bin/python3.10 setup_rich_menu.py
 ```
 
-## Line畫面區域配置示意
+**LINE 畫面區域配置示意**
 ```
 ┌────────────┬────────────┬────────────┐
 │   Area A   │   Area B   │            │  ← 上半部 (y=0 ~ 421)
@@ -146,260 +235,14 @@ financial-agent/
 └────────────┴────────────┴────────────┘
 ```
 
+**待修改項目**
+- `ai/` 資料夾裡的 `ai_query` 尋找邏輯還要再改
+- `ai_parser` 也還要再改
+
 ---
 
-# 遇到問題可以先問GPT大神或Claude，把error貼給他們看
+# 📊 實驗結果
 
-# Fast API + MySQL 說明
-
-## 安裝必要套件
-請先安裝依賴套件：
-```bash
-pip install fastapi uvicorn sqlalchemy pymysql python-dotenv
-```
-
-# WSL 連接 AWS RDS (MySQL) 教學
-## 1. 檢查 DNS 是否能解析
-```bash
-nslookup financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com
-```
-若正確，會解析出一個 Public IP (例如 3.129.xx.xx)。
-
-## 2. 測試能否連到 RDS
-安裝 MySQL client：
-```bash
-sudo apt update
-sudo apt install mysql-client -y
-```
-測試連線：
-```bash
-mysql -h financial-agent.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com -P 3306 -u nycuiemagent -p
-```
-輸入密碼後，若成功會進到 MySQL prompt (mysql>)，表示網路跟帳號都 OK。
-
-## 3. 設定 DNS (避免 WSL DNS 問題)
-有時候 WSL 會用錯 DNS，需要手動設定。
-```bash
-sudo nano /etc/wsl.conf
-```
-內容加上：
-```ini
-[network]
-generateResolvConf = false
-```
-然後修改 DNS：
-```bash
-sudo rm /etc/resolv.conf
-echo -e "nameserver 8.8.8.8\nnameserver 1.1.1.1" | sudo tee /etc/resolv.conf
-```
-重啟 WSL：
-```powershell
-wsl --shutdown
-```
-## 4.常見錯誤排查
-Unknown MySQL server host
-
-代表 DNS 無法解析 → 檢查 /etc/resolv.conf，確認有 8.8.8.8 或 1.1.1.1。
-
-❌ Access denied for user
-
-帳號或密碼錯誤。
-
-或者 RDS user 沒有對外權限，檢查 IAM / MySQL user 權限。
-
-❌ Timeout
-
-RDS 安全群組沒有開放你的 IP。
-
-在 AWS console → Security group → Inbound rules，加上：
-
-Type: MySQL/Aurora
-
-Port: 3306
-
-Source: 你的 IP (或測試用 0.0.0.0/0)
-
-## 連接fastapi
-
-進入 backend/ 資料夾，執行：
-```bash
-uvicorn main:app --reload
-```
-啟動後開啟瀏覽器連到：
-👉 http://127.0.0.1:8000/docs#/
-
-這裡可以直接測試 API 功能。
-
-API 功能
-
-POST /posts/ : 新增一篇貼文
-
-GET /posts/{post_id} : 讀取貼文
-
-DELETE /posts/{post_id} : 刪除貼文
-
-POST /users/ : 新增使用者
-
-GET /users/{user_id} : 讀取使用者
-
-#建立使用者
-```bash
-POST /users/
-{
-  "username": "alice"
-}
-```
-
-#查詢使用者
-```bash
-GET /users/{user_id}
-```
-
-#建立文章
-```bash
-POST /posts/
-{
-  "title": "First Post",
-  "content": "Hello FastAPI!",
-  "user_id": 1
-}
-```
-
-#查詢文章
-```bash
-GET /posts/{post_id}
-```
-
-#刪除文章
-```bash
-DELETE /posts/{post_id}
-```
-
-
-#啟動後端伺服器
-
-進入 backend/ 資料夾，執行：
-```bash
-uvicorn main:app --reload
-```
-啟動後開啟瀏覽器連到：
-👉 http://127.0.0.1:8000/docs#/
-
-這裡可以直接測試 API 功能。
-
-## financial_agent 資料庫
-```
-mysql> SELECT * FROM users;
-+----+----------+-------------+--------+------------------+---------+---------------------+
-| id | provider | provider_id | name   | email            | picture | created_at          |
-+----+----------+-------------+--------+------------------+---------+---------------------+
-|  1 | line     | U1234567890 | 小明   | test@example.com  | NULL    | 2025-09-16 01:45:11 |
-+----+----------+-------------+--------+------------------+---------+---------------------+
-1 row in set (0.203 sec)
-
-mysql> INSERT INTO messages (user_id, content, reply)
-    -> VALUES (1, '哈囉', '你好呀！'); -- 測試內容
-Query OK, 1 row affected (0.206 sec)
-
-mysql> SELECT * FROM messages;
-+----+---------+---------------------+-----------------+---------------------+
-| id | user_id | content(使用者輸入的) | reply(我們回覆的) | created_at          |
-+----+---------+---------------------+-----------------+---------------------+
-|  1 |       1 | 哈囉                 | 你好呀！         | 2025-09-16 01:45:34 |
-+----+---------+---------------------+-----------------+---------------------+
-```
-跑EC2(lwc)
-```
-ssh -i ~/desktop/劉建良專題/financial-agent-key.pem ubuntu@3.21.167.93
-```
-所有人
-```
-ssh ubuntu@3.21.167.93
-```
-```
--- 選擇你要用的資料庫
-USE financial_agent;
-
--- 確認有哪些資料表
-SHOW TABLES;
-
--- 查使用者資料
-SELECT * FROM users;
-```
-在EC2在自己的branch上測試自己的branch置否寫對（測試完再merge到main）
-```
-#step1:先在本地寫完程式
-git push
-
-#step2:進EC2
-ssh ubuntu@3.21.167.93
-cd financial-agent
-git checkout 自己的branch
-
-#範例： git checkout feature-login
-
-#step3: 更新repo
-git pull
-cd backend
-python3 app.py #跑主程式
-
-#---重複動作，直到測試沒問題後----
-#step4:回到自己github上 merge到main
-```
-
-
-# 讓branch跟main同步
-# 先確保 main 的遠端更新有拉到本地
-```
-git fetch origin
-```
-# 切換到 main
-```
-git checkout main
-```
-# 把遠端 main 的更新合併到本地 main
-```
-git pull origin main
-```
-# 再切回 feature-login
-```
-git checkout feature-login
-```
-# 如果要把 main 的最新更新合併進來
-```
-git merge main
-```
-
-# 使用虛擬環境
-## 建立虛擬環境
-```
-python3 -m venv venv
-```
-## 開啟虛擬環境
-```
-source venv/bin/activate
-python3 -m backend.app
-```
-## 下載套件
-```
-pip install -r requirements.txt
-```
-
-## 還要修改內容
-ai資料夾裡的ai_query尋找邏輯還要再改，ai_parser也還要再改
-
-## 進虛擬環境
-```
-python3 -m backend.routes.credit_card.cube_benefits_scraper ##爬蟲
-python3 backend/ai/test_full_flow.py ##測試檔
-```
-
-## hi
-
-
-## 更改EC2時區
-```
-sudo timedatectl set-timezone Asia/Taipei #更改時區
-timedatectl #確認時區
-```
-
+| 日期 | 訓練模型 | 訓練結果 | 備注 |
+|------|----------|----------|------|
+|      |          |          |      |
