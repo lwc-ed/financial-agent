@@ -1,0 +1,46 @@
+
+=======================================================
+Training Run Summary — GRU Transfer Learning
+=======================================================
+model_name       : gru_transfer_v1
+feature_set      : user_selected_v1
+target_column    : future_expense_7d_sum
+val_mae          : 1,329.257690
+val_rmse         : 2,626.351074
+
+Dataset Sizes
+  train_rows     : 4657
+  val_rows       : 1165
+  input_days     : 30
+  feature_count  : 7
+
+Selected Features
+  - daily_expense
+  - expense_7d_mean
+  - expense_30d_sum
+  - has_expense
+  - has_income
+  - net_30d_sum
+  - txn_30d_sum
+
+Baselines
+  naive_7d_sum mae          : 8,130.198974
+  naive_7d_sum rmse         : 23,669.372811
+  moving_avg_30d_x7 mae     : 7,019.182884
+  moving_avg_30d_x7 rmse    : 19,089.005327
+  beat_moving_avg_30d_x7    : True
+
+Risk Thresholds
+  🟢 安全  : 預測消費 < 餘額 30%
+  🟡 注意  : 預測消費 < 餘額 50%
+  🟠 警告  : 預測消費 < 餘額 80%
+  🔴 危險  : 預測消費 ≥ 餘額 80%
+
+Artifacts
+  finetune_model   : artificats/finetune_gru.pth
+  pretrain_model   : artificats/pretrain_gru.pth
+  feature_scaler   : artificats/personal_feature_scaler.pkl
+  target_scaler    : artificats/personal_target_scaler.pkl
+  predictions_csv  : artificats/predictions_val.csv
+  metrics_json     : artificats/metrics.json
+=======================================================
