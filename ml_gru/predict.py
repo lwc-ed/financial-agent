@@ -98,6 +98,8 @@ X_test = np.load(f"{ARTIFACTS_DIR}/personal_X_test.npy")
 y_test = np.load(f"{ARTIFACTS_DIR}/personal_y_test.npy")
 X_train = np.load(f"{ARTIFACTS_DIR}/personal_X_train.npy")
 y_train = np.load(f"{ARTIFACTS_DIR}/personal_y_train.npy")
+val_user_ids = np.load(f"{ARTIFACTS_DIR}/personal_val_user_ids.npy", allow_pickle=True)
+test_user_ids = np.load(f"{ARTIFACTS_DIR}/personal_test_user_ids.npy", allow_pickle=True)
 
 print(f"  訓練集 : {X_train.shape[0]} 筆")
 print(f"  驗證集 : {X_val.shape[0]} 筆")
@@ -183,26 +185,6 @@ print(f"  GRU Test MAE       : {test_mae:,.2f}  {'✅ 贏過 baseline' if beat_m
 # 6b. 相對誤差指標（SMAPE、Per-user NMAE）
 # ─────────────────────────────────────────
 print("\n📐 計算相對誤差指標...")
-
-INPUT_DAYS = 30
-FEATURE_COLS_PREPROCESS = [
-    "daily_expense", "expense_7d_mean", "expense_30d_sum",
-    "has_expense", "has_income", "net_30d_sum", "txn_30d_sum",
-]
-TARGET_COL = "future_expense_7d_sum"
-
-# 重建 val/test 各樣本對應的 user_id（與 preprocess_personal.py 切法一致）
-val_user_ids, test_user_ids = [], []
-for user_id in df["user_id"].unique():
-    u = df[df["user_id"] == user_id].reset_index(drop=True)
-    u = u.dropna(subset=[TARGET_COL])
-    n_windows = len(u) - INPUT_DAYS
-    if n_windows <= 0:
-        continue
-    t_end = int(n_windows * 0.70)
-    v_end = int(n_windows * 0.85)
-    val_user_ids.extend([user_id]  * (v_end - t_end))
-    test_user_ids.extend([user_id] * (n_windows - v_end))
 
 val_smape   = smape(y_val_true_real,  y_val_pred_real)
 test_smape  = smape(y_test_true_real, y_test_pred_real)
