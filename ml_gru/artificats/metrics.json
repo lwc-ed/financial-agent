@@ -1,17 +1,17 @@
 {
   "model_name": "gru_transfer_v1",
-  "val_mae": 2555.979492,
-  "val_rmse": 5080.46582,
-  "val_smape": 86.7488,
-  "val_per_user_nmae": 168.5294,
-  "test_mae": 3793.927979,
-  "test_rmse": 8504.081055,
-  "test_smape": 82.8568,
-  "test_per_user_nmae": 92.5385,
+  "val_mae": 4623.90332,
+  "val_rmse": 11759.696289,
+  "val_smape": 95.5126,
+  "val_per_user_nmae": 220.4055,
+  "test_mae": 5952.552246,
+  "test_rmse": 14905.889648,
+  "test_smape": 90.1819,
+  "test_per_user_nmae": 139.6839,
   "naive_7d_mae": 8130.198974,
   "naive_7d_rmse": 23669.372811,
   "moving_avg_30d_mae": 7019.182884,
   "moving_avg_30d_rmse": 19089.005327,
   "beat_moving_avg": true,
-  "timestamp": "2026-03-25 20:15:52"
+  "timestamp": "2026-03-25 23:31:37"
 }
