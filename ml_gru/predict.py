@@ -110,6 +110,26 @@ print(f"  測試集 : {X_test.shape[0]} 筆")
 print("\n🔮 預測驗證集與測試集...")
 
 
+def smape(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    y_true, y_pred = y_true.flatten(), y_pred.flatten()
+    denom = (np.abs(y_true) + np.abs(y_pred)) / 2
+    mask  = denom > 0
+    return float(np.mean(np.abs(y_pred[mask] - y_true[mask]) / denom[mask]) * 100)
+
+
+def per_user_nmae(y_true: np.ndarray, y_pred: np.ndarray, user_ids: list) -> float:
+    """每個 user 的 MAE 除以該 user 的 y_true 平均，再對所有 user 取平均（%）"""
+    y_true, y_pred = y_true.flatten(), y_pred.flatten()
+    users = np.unique(user_ids)
+    nmae_list = []
+    for u in users:
+        mask   = np.array(user_ids) == u
+        mean_u = y_true[mask].mean()
+        if mean_u > 0:
+            nmae_list.append(np.mean(np.abs(y_pred[mask] - y_true[mask])) / mean_u * 100)
+    return float(np.mean(nmae_list))
+
+
 def evaluate_split(X_split: np.ndarray, y_split: np.ndarray, split_name: str):
     X_split_t = torch.tensor(X_split, dtype=torch.float32).to(device)
 
@@ -118,7 +138,7 @@ def evaluate_split(X_split: np.ndarray, y_split: np.ndarray, split_name: str):
 
     y_pred_real = target_scaler.inverse_transform(y_pred_scaled)
     y_true_real = target_scaler.inverse_transform(y_split)
-    mae = np.mean(np.abs(y_pred_real - y_true_real))
+    mae  = np.mean(np.abs(y_pred_real - y_true_real))
     rmse = np.sqrt(np.mean((y_pred_real - y_true_real) ** 2))
 
     print(f"  {split_name} MAE  : {mae:,.2f} 元")
@@ -157,6 +177,42 @@ beat_moving_avg = test_mae < ma_mae
 print(f"  Naive 7d MAE       : {naive_mae:,.2f}")
 print(f"  Moving Avg 30d MAE : {ma_mae:,.2f}")
 print(f"  GRU Test MAE       : {test_mae:,.2f}  {'✅ 贏過 baseline' if beat_moving_avg else '❌ 輸給 baseline'}")
+
+
+# ─────────────────────────────────────────
+# 6b. 相對誤差指標（SMAPE、Per-user NMAE）
+# ─────────────────────────────────────────
+print("\n📐 計算相對誤差指標...")
+
+INPUT_DAYS = 30
+FEATURE_COLS_PREPROCESS = [
+    "daily_expense", "expense_7d_mean", "expense_30d_sum",
+    "has_expense", "has_income", "net_30d_sum", "txn_30d_sum",
+]
+TARGET_COL = "future_expense_7d_sum"
+
+# 重建 val/test 各樣本對應的 user_id（與 preprocess_personal.py 切法一致）
+val_user_ids, test_user_ids = [], []
+for user_id in df["user_id"].unique():
+    u = df[df["user_id"] == user_id].reset_index(drop=True)
+    u = u.dropna(subset=[TARGET_COL])
+    n_windows = len(u) - INPUT_DAYS
+    if n_windows <= 0:
+        continue
+    t_end = int(n_windows * 0.70)
+    v_end = int(n_windows * 0.85)
+    val_user_ids.extend([user_id]  * (v_end - t_end))
+    test_user_ids.extend([user_id] * (n_windows - v_end))
+
+val_smape   = smape(y_val_true_real,  y_val_pred_real)
+test_smape  = smape(y_test_true_real, y_test_pred_real)
+val_nmae    = per_user_nmae(y_val_true_real,  y_val_pred_real,  val_user_ids)
+test_nmae   = per_user_nmae(y_test_true_real, y_test_pred_real, test_user_ids)
+
+print(f"  Val  SMAPE          : {val_smape:.2f}%")
+print(f"  Test SMAPE          : {test_smape:.2f}%")
+print(f"  Val  Per-user NMAE  : {val_nmae:.2f}%")
+print(f"  Test Per-user NMAE  : {test_nmae:.2f}%")
 
 
 # ─────────────────────────────────────────
@@ -255,17 +311,21 @@ test_predictions_df.to_csv(test_predictions_path, index=False)
 # 10. 儲存 metrics JSON
 # ─────────────────────────────────────────
 metrics = {
-    "model_name"        : "gru_transfer_v1",
-    "val_mae"           : round(float(val_mae), 6),
-    "val_rmse"          : round(float(val_rmse), 6),
-    "test_mae"          : round(float(test_mae), 6),
-    "test_rmse"         : round(float(test_rmse), 6),
-    "naive_7d_mae"      : round(float(naive_mae), 6),
-    "naive_7d_rmse"     : round(float(naive_rmse), 6),
-    "moving_avg_30d_mae": round(float(ma_mae), 6),
-    "moving_avg_30d_rmse": round(float(ma_rmse), 6),
-    "beat_moving_avg"   : bool(beat_moving_avg),
-    "timestamp"         : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    "model_name"           : "gru_transfer_v1",
+    "val_mae"              : round(float(val_mae), 6),
+    "val_rmse"             : round(float(val_rmse), 6),
+    "val_smape"            : round(val_smape, 4),
+    "val_per_user_nmae"    : round(val_nmae, 4),
+    "test_mae"             : round(float(test_mae), 6),
+    "test_rmse"            : round(float(test_rmse), 6),
+    "test_smape"           : round(test_smape, 4),
+    "test_per_user_nmae"   : round(test_nmae, 4),
+    "naive_7d_mae"         : round(float(naive_mae), 6),
+    "naive_7d_rmse"        : round(float(naive_rmse), 6),
+    "moving_avg_30d_mae"   : round(float(ma_mae), 6),
+    "moving_avg_30d_rmse"  : round(float(ma_rmse), 6),
+    "beat_moving_avg"      : bool(beat_moving_avg),
+    "timestamp"            : datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
 }
 metrics_path = f"{ARTIFACTS_DIR}/metrics.json"
 with open(metrics_path, "w") as f:
@@ -294,8 +354,12 @@ feature_set      : user_selected_v1
 target_column    : future_expense_7d_sum
 val_mae          : {val_mae:,.6f}
 val_rmse         : {val_rmse:,.6f}
+val_smape        : {val_smape:.2f}%
+val_per_user_nmae: {val_nmae:.2f}%
 test_mae         : {test_mae:,.6f}
 test_rmse        : {test_rmse:,.6f}
+test_smape       : {test_smape:.2f}%
+test_per_user_nmae: {test_nmae:.2f}%
 
 Dataset Sizes
   train_rows     : {X_train.shape[0]}
