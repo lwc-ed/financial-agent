@@ -34,6 +34,43 @@ FEATURE_COLS = [
 ]
 TARGET_COL = "future_expense_7d_sum"
 
+
+def fit_clipping_and_scalers(X_train: np.ndarray, y_train: np.ndarray):
+    clip_values = {
+        col: float(np.percentile(X_train[:, :, idx], 95))
+        for idx, col in enumerate(FEATURE_COLS)
+    }
+    clip_values[TARGET_COL] = float(np.percentile(y_train[:, 0], 95))
+
+    X_train_clipped = X_train.copy()
+    for idx, col in enumerate(FEATURE_COLS):
+        X_train_clipped[:, :, idx] = np.clip(X_train_clipped[:, :, idx], None, clip_values[col])
+    y_train_clipped = np.clip(y_train.copy(), None, clip_values[TARGET_COL])
+
+    feature_scaler = StandardScaler()
+    target_scaler = StandardScaler()
+    feature_scaler.fit(X_train_clipped.reshape(-1, len(FEATURE_COLS)))
+    target_scaler.fit(y_train_clipped)
+
+    return clip_values, feature_scaler, target_scaler
+
+
+def transform_split(
+    X_split: np.ndarray,
+    y_split: np.ndarray,
+    clip_values: dict,
+    feature_scaler: StandardScaler,
+    target_scaler: StandardScaler,
+):
+    X_out = X_split.copy()
+    for idx, col in enumerate(FEATURE_COLS):
+        X_out[:, :, idx] = np.clip(X_out[:, :, idx], None, clip_values[col])
+    y_out = np.clip(y_split.copy(), None, clip_values[TARGET_COL])
+
+    X_out = feature_scaler.transform(X_out.reshape(-1, len(FEATURE_COLS))).reshape(X_out.shape)
+    y_out = target_scaler.transform(y_out)
+    return X_out.astype(np.float32), y_out.astype(np.float32)
+
 # ─────────────────────────────────────────
 # 1. 讀取並彙整 Walmart 週資料
 # ─────────────────────────────────────────
@@ -112,29 +149,7 @@ print(f"  計算完後：{before} → {len(daily)} 筆")
 
 
 # ─────────────────────────────────────────
-# 4. Winsorization（P95）
-# ─────────────────────────────────────────
-print("\n✂️  Winsorization（P95）...")
-for col in FEATURE_COLS + [TARGET_COL]:
-    p95     = daily[col].quantile(0.95)
-    clipped = (daily[col] > p95).sum()
-    daily[col] = daily[col].clip(upper=p95)
-    if clipped > 0:
-        print(f"  {col}: 壓縮 {clipped} 筆（上限 {p95:,.0f}）")
-
-
-# ─────────────────────────────────────────
-# 5. 標準化
-# ─────────────────────────────────────────
-print("\n📐 標準化...")
-feature_scaler = StandardScaler()
-target_scaler  = StandardScaler()
-daily[FEATURE_COLS]  = feature_scaler.fit_transform(daily[FEATURE_COLS])
-daily[[TARGET_COL]]  = target_scaler.fit_transform(daily[[TARGET_COL]])
-
-
-# ─────────────────────────────────────────
-# 6. 滑動視窗
+# 4. 滑動視窗（先保留原始值，避免前處理洩漏）
 # ─────────────────────────────────────────
 print(f"\n🪟 建立滑動視窗（INPUT_DAYS={INPUT_DAYS}）...")
 X_list, y_list = [], []
@@ -155,16 +170,38 @@ print(f"  y shape : {y.shape}")
 
 
 # ─────────────────────────────────────────
-# 7. 切割
+# 5. 切割（70/15/15）
 # ─────────────────────────────────────────
-split_idx      = int(len(X) * 0.8)
-X_train, X_val = X[:split_idx], X[split_idx:]
-y_train, y_val = y[:split_idx], y[split_idx:]
-print(f"\n✂️  訓練集 : {X_train.shape}  驗證集 : {X_val.shape}")
+train_end = int(len(X) * 0.70)
+val_end   = int(len(X) * 0.85)
+
+X_train, X_val, X_test = X[:train_end], X[train_end:val_end], X[val_end:]
+y_train, y_val, y_test = y[:train_end], y[train_end:val_end], y[val_end:]
+
+print(
+    f"\n✂️  訓練集 : {X_train.shape}"
+    f"  驗證集 : {X_val.shape}"
+    f"  測試集 : {X_test.shape}"
+)
 
 
 # ─────────────────────────────────────────
-# 8. 儲存
+# 6. 只用 train 擬合 Winsorization / Scaler，並套到 val/test
+# ─────────────────────────────────────────
+print("\n✂️  Winsorization（P95, train only）...")
+clip_values, feature_scaler, target_scaler = fit_clipping_and_scalers(X_train, y_train)
+for col in FEATURE_COLS + [TARGET_COL]:
+    print(f"  {col}: 上限 {clip_values[col]:,.4f}")
+
+print("\n📐 標準化（fit on train only）...")
+X_train, y_train = transform_split(X_train, y_train, clip_values, feature_scaler, target_scaler)
+X_val, y_val = transform_split(X_val, y_val, clip_values, feature_scaler, target_scaler)
+X_test, y_test = transform_split(X_test, y_test, clip_values, feature_scaler, target_scaler)
+print("  完成")
+
+
+# ─────────────────────────────────────────
+# 7. 儲存
 # ─────────────────────────────────────────
 print(f"\n💾 儲存至 {ARTIFACTS_DIR}/...")
 
@@ -172,6 +209,8 @@ np.save(f"{ARTIFACTS_DIR}/walmart_X_train.npy", X_train)
 np.save(f"{ARTIFACTS_DIR}/walmart_y_train.npy", y_train)
 np.save(f"{ARTIFACTS_DIR}/walmart_X_val.npy",   X_val)
 np.save(f"{ARTIFACTS_DIR}/walmart_y_val.npy",   y_val)
+np.save(f"{ARTIFACTS_DIR}/walmart_X_test.npy",  X_test)
+np.save(f"{ARTIFACTS_DIR}/walmart_y_test.npy",  y_test)
 
 with open(f"{ARTIFACTS_DIR}/walmart_feature_scaler.pkl", "wb") as f:
     pickle.dump(feature_scaler, f)
@@ -180,7 +219,7 @@ with open(f"{ARTIFACTS_DIR}/walmart_target_scaler.pkl", "wb") as f:
 
 daily.to_csv(f"{ARTIFACTS_DIR}/walmart_daily_processed.csv", index=False)
 
-print("  ✅ walmart_X_train / y_train / X_val / y_val")
+print("  ✅ walmart_X_train / y_train / X_val / y_val / X_test / y_test")
 print("  ✅ walmart_feature_scaler.pkl")
 print("  ✅ walmart_target_scaler.pkl")
 print("  ✅ walmart_daily_processed.csv")

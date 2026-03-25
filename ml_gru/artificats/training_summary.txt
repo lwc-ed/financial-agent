@@ -5,12 +5,15 @@ Training Run Summary — GRU Transfer Learning
 model_name       : gru_transfer_v1
 feature_set      : user_selected_v1
 target_column    : future_expense_7d_sum
-val_mae          : 1,329.257690
-val_rmse         : 2,626.351074
+val_mae          : 6,100.800781
+val_rmse         : 7,635.019531
+test_mae         : 1,069.894653
+test_rmse        : 1,748.384277
 
 Dataset Sizes
-  train_rows     : 4657
-  val_rows       : 1165
+  train_rows     : 4075
+  val_rows       : 873
+  test_rows      : 874
   input_days     : 30
   feature_count  : 7
 
@@ -41,6 +44,7 @@ Artifacts
   pretrain_model   : artificats/pretrain_gru.pth
   feature_scaler   : artificats/personal_feature_scaler.pkl
   target_scaler    : artificats/personal_target_scaler.pkl
-  predictions_csv  : artificats/predictions_val.csv
+  val_predictions_csv : artificats/predictions_val.csv
+  test_predictions_csv: artificats/predictions_test.csv
   metrics_json     : artificats/metrics.json
 =======================================================

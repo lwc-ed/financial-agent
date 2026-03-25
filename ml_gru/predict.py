@@ -2,8 +2,8 @@
 步驟五：預測 + 風險評估 + Training Run Summary
 ================================
 功能：
-  1. 載入 finetune 好的模型，對驗證集做預測
-  2. 計算 MAE / RMSE，對比 baseline
+  1. 載入 finetune 好的模型，對驗證集與測試集做預測
+  2. 計算 Val/Test MAE / RMSE，對比 baseline
   3. 示範單一使用者的風險評估
   4. 輸出 Training Run Summary（對齊 HGBR 格式）
   5. 儲存 predictions CSV 和 metrics JSON
@@ -88,39 +88,46 @@ print(f"  ✅ 模型載入完成（best epoch: {checkpoint['epoch']}）")
 
 
 # ─────────────────────────────────────────
-# 4. 載入驗證集資料
+# 4. 載入資料
 # ─────────────────────────────────────────
-print("\n📂 載入驗證集...")
+print("\n📂 載入 train / val / test...")
 
 X_val = np.load(f"{ARTIFACTS_DIR}/personal_X_val.npy")
 y_val = np.load(f"{ARTIFACTS_DIR}/personal_y_val.npy")
+X_test = np.load(f"{ARTIFACTS_DIR}/personal_X_test.npy")
+y_test = np.load(f"{ARTIFACTS_DIR}/personal_y_test.npy")
 X_train = np.load(f"{ARTIFACTS_DIR}/personal_X_train.npy")
 y_train = np.load(f"{ARTIFACTS_DIR}/personal_y_train.npy")
 
 print(f"  訓練集 : {X_train.shape[0]} 筆")
 print(f"  驗證集 : {X_val.shape[0]} 筆")
+print(f"  測試集 : {X_test.shape[0]} 筆")
 
 
 # ─────────────────────────────────────────
-# 5. 對驗證集做預測
+# 5. 對驗證集 / 測試集做預測
 # ─────────────────────────────────────────
-print("\n🔮 預測驗證集...")
+print("\n🔮 預測驗證集與測試集...")
 
-X_val_t = torch.tensor(X_val, dtype=torch.float32).to(device)
 
-with torch.no_grad():
-    y_pred_scaled = model(X_val_t).cpu().numpy()   # 標準化的預測值
+def evaluate_split(X_split: np.ndarray, y_split: np.ndarray, split_name: str):
+    X_split_t = torch.tensor(X_split, dtype=torch.float32).to(device)
 
-# 反轉標準化 → 真實金額
-y_pred_real = target_scaler.inverse_transform(y_pred_scaled)
-y_true_real = target_scaler.inverse_transform(y_val)
+    with torch.no_grad():
+        y_pred_scaled = model(X_split_t).cpu().numpy()
 
-# 計算 MAE / RMSE
-mae  = np.mean(np.abs(y_pred_real - y_true_real))
-rmse = np.sqrt(np.mean((y_pred_real - y_true_real) ** 2))
+    y_pred_real = target_scaler.inverse_transform(y_pred_scaled)
+    y_true_real = target_scaler.inverse_transform(y_split)
+    mae = np.mean(np.abs(y_pred_real - y_true_real))
+    rmse = np.sqrt(np.mean((y_pred_real - y_true_real) ** 2))
 
-print(f"  MAE  : {mae:,.2f} 元")
-print(f"  RMSE : {rmse:,.2f} 元")
+    print(f"  {split_name} MAE  : {mae:,.2f} 元")
+    print(f"  {split_name} RMSE : {rmse:,.2f} 元")
+    return y_pred_real, y_true_real, mae, rmse
+
+
+y_val_pred_real, y_val_true_real, val_mae, val_rmse = evaluate_split(X_val, y_val, "Val")
+y_test_pred_real, y_test_true_real, test_mae, test_rmse = evaluate_split(X_test, y_test, "Test")
 
 
 # ─────────────────────────────────────────
@@ -146,10 +153,10 @@ df["moving_avg_30d_x7"] = df.groupby("user_id")["daily_expense"].transform(
 ma_mae  = (df["moving_avg_30d_x7"] - df["future_expense_7d_sum"]).abs().mean()
 ma_rmse = ((df["moving_avg_30d_x7"] - df["future_expense_7d_sum"]) ** 2).mean() ** 0.5
 
-beat_moving_avg = mae < ma_mae
+beat_moving_avg = test_mae < ma_mae
 print(f"  Naive 7d MAE       : {naive_mae:,.2f}")
 print(f"  Moving Avg 30d MAE : {ma_mae:,.2f}")
-print(f"  GRU MAE            : {mae:,.2f}  {'✅ 贏過 baseline' if beat_moving_avg else '❌ 輸給 baseline'}")
+print(f"  GRU Test MAE       : {test_mae:,.2f}  {'✅ 贏過 baseline' if beat_moving_avg else '❌ 輸給 baseline'}")
 
 
 # ─────────────────────────────────────────
@@ -205,7 +212,7 @@ print("📱 風險評估示範")
 print("=" * 55)
 
 # 用驗證集第一筆做示範
-sample_input   = X_val_t[0:1]
+sample_input = torch.tensor(X_test[0:1], dtype=torch.float32).to(device)
 with torch.no_grad():
     sample_pred_scaled = model(sample_input).cpu().numpy()
 sample_pred_real = float(target_scaler.inverse_transform(sample_pred_scaled)[0][0])
@@ -225,14 +232,23 @@ print(f"  建議               : {result['advice']}")
 # ─────────────────────────────────────────
 # 9. 儲存 predictions CSV
 # ─────────────────────────────────────────
-predictions_df = pd.DataFrame({
-    "y_true" : y_true_real.flatten(),
-    "y_pred" : y_pred_real.flatten(),
-    "error"  : (y_pred_real - y_true_real).flatten(),
-    "abs_error": np.abs(y_pred_real - y_true_real).flatten(),
+val_predictions_df = pd.DataFrame({
+    "y_true": y_val_true_real.flatten(),
+    "y_pred": y_val_pred_real.flatten(),
+    "error": (y_val_pred_real - y_val_true_real).flatten(),
+    "abs_error": np.abs(y_val_pred_real - y_val_true_real).flatten(),
 })
-predictions_path = f"{ARTIFACTS_DIR}/predictions_val.csv"
-predictions_df.to_csv(predictions_path, index=False)
+val_predictions_path = f"{ARTIFACTS_DIR}/predictions_val.csv"
+val_predictions_df.to_csv(val_predictions_path, index=False)
+
+test_predictions_df = pd.DataFrame({
+    "y_true": y_test_true_real.flatten(),
+    "y_pred": y_test_pred_real.flatten(),
+    "error": (y_test_pred_real - y_test_true_real).flatten(),
+    "abs_error": np.abs(y_test_pred_real - y_test_true_real).flatten(),
+})
+test_predictions_path = f"{ARTIFACTS_DIR}/predictions_test.csv"
+test_predictions_df.to_csv(test_predictions_path, index=False)
 
 
 # ─────────────────────────────────────────
@@ -240,8 +256,10 @@ predictions_df.to_csv(predictions_path, index=False)
 # ─────────────────────────────────────────
 metrics = {
     "model_name"        : "gru_transfer_v1",
-    "val_mae"           : round(float(mae), 6),
-    "val_rmse"          : round(float(rmse), 6),
+    "val_mae"           : round(float(val_mae), 6),
+    "val_rmse"          : round(float(val_rmse), 6),
+    "test_mae"          : round(float(test_mae), 6),
+    "test_rmse"         : round(float(test_rmse), 6),
     "naive_7d_mae"      : round(float(naive_mae), 6),
     "naive_7d_rmse"     : round(float(naive_rmse), 6),
     "moving_avg_30d_mae": round(float(ma_mae), 6),
@@ -274,12 +292,15 @@ Training Run Summary — GRU Transfer Learning
 model_name       : gru_transfer_v1
 feature_set      : user_selected_v1
 target_column    : future_expense_7d_sum
-val_mae          : {mae:,.6f}
-val_rmse         : {rmse:,.6f}
+val_mae          : {val_mae:,.6f}
+val_rmse         : {val_rmse:,.6f}
+test_mae         : {test_mae:,.6f}
+test_rmse        : {test_rmse:,.6f}
 
 Dataset Sizes
   train_rows     : {X_train.shape[0]}
   val_rows       : {X_val.shape[0]}
+  test_rows      : {X_test.shape[0]}
   input_days     : {X_val.shape[1]}
   feature_count  : {X_val.shape[2]}
 
@@ -303,7 +324,8 @@ Artifacts
   pretrain_model   : {ARTIFACTS_DIR}/pretrain_gru.pth
   feature_scaler   : {ARTIFACTS_DIR}/personal_feature_scaler.pkl
   target_scaler    : {ARTIFACTS_DIR}/personal_target_scaler.pkl
-  predictions_csv  : {predictions_path}
+  val_predictions_csv : {val_predictions_path}
+  test_predictions_csv: {test_predictions_path}
   metrics_json     : {metrics_path}
 {'=' * 55}
 """
@@ -316,5 +338,6 @@ with open(summary_path, "w", encoding="utf-8") as f:
     f.write(summary)
 
 print(f"📄 Summary 已儲存至：{summary_path}")
-print(f"📊 Predictions 已儲存至：{predictions_path}")
+print(f"📊 Val Predictions 已儲存至：{val_predictions_path}")
+print(f"📊 Test Predictions 已儲存至：{test_predictions_path}")
 print(f"📈 Metrics 已儲存至：{metrics_path}")
