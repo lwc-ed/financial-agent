@@ -1,0 +1,174 @@
+================================================================
+Claude 優化版本 V1 — 檢討報告
+GRU Transfer Learning 個人消費預測
+================================================================
+日期：2026-03-26
+版本：V1（claude_ver1.txt）
+----------------------------------------------------------------
+
+一、本版本改動摘要
+----------------------------------------------------------------
+本次優化針對原始 gru_transfer_v1（以下稱 V0）進行以下六項改動：
+
+  1. 模型容量擴充：hidden_size 64 → 128
+  2. 加入 Temporal Attention Mechanism
+     - 對 GRU 30 天輸出做 softmax attention，取加權和作為 context vector
+     - 替代原先只取最後一個 hidden state 的做法
+     - 搭配 LayerNorm 穩定訓練
+  3. 更深 FC Head：Linear(64,1) → Linear(128,64) + ReLU + Linear(64,1)
+  4. 損失函數：MSELoss → HuberLoss(delta=1.0)
+     - 對消費金額的離群值更穩健
+  5. 移除層凍結策略，改為全量微調（Full Fine-tuning）
+     - 原策略凍結 GRU 第二層的 hidden-to-hidden 權重
+     - V1 解凍所有層，但配合更小 LR (1e-4) 和 Weight Decay 防止過度遺忘
+  6. 優化器與 LR 排程
+     - Adam → AdamW (weight_decay=1e-4)
+     - ReduceLROnPlateau → CosineAnnealingLR
+     - Finetune LR：5e-4 → 1e-4
+
+================================================================
+二、實驗結果
+================================================================
+
+  指標                  V0（原始）       V1（本版本）     變化
+  ─────────────────────────────────────────────────────────
+  Val MAE（元）         4,623.90         4,583.78        ▼ 40.12  (+0.9% 改善)
+  Val RMSE（元）        11,759.70        11,920.75       ▲ 161.05 (-1.4% 退步)
+  Val SMAPE             95.51%           82.59%          ▼ 12.92% 顯著改善 ✅
+  Val Per-user NMAE     220.41%          164.74%         ▼ 55.67% 大幅改善 ✅
+  Test MAE（元）        5,952.55         6,049.68        ▲ 97.13  (-1.6% 退步)
+  Test RMSE（元）       14,905.89        15,861.62       ▲ 955.73 (-6.4% 退步)
+  Test SMAPE            90.18%           78.44%          ▼ 11.74% 顯著改善 ✅
+  Test Per-user NMAE    139.68%          138.14%         ▼ 1.55%  微幅改善
+
+  Baseline 比較（Test MAE）
+  ─────────────────────────────────────────────────────────
+  Naive 7d sum MAE      8,130.20         —               V1 仍贏過 baseline
+  Moving Avg 30d MAE    7,019.18         —               V1 仍贏過 baseline
+
+================================================================
+三、分析與檢討
+================================================================
+
+【正面發現】
+
+  1. SMAPE 大幅改善（Val: -12.9%、Test: -11.7%）
+     HuberLoss + Attention 的組合讓模型在相對誤差上表現更好。
+     這代表模型對「零花費日」或「極小消費日」的處理改善了：
+     SMAPE 對分母接近 0 的情況非常敏感，V1 的預測分布更接近真實值。
+
+  2. Val Per-user NMAE 大幅改善（220% → 164%）
+     Temporal Attention 讓模型能聚焦於更重要的時間點，
+     減少了對高消費日的過度放大效應，
+     使每個 user 個別的相對誤差更均衡。
+
+【問題發現】
+
+  1. Test MAE 微幅退步（+97 元，+1.6%）
+     這是最主要的問題。Finetune 在第 5 epoch 即達到最佳 val_loss，
+     之後完全無法改善，早停在 epoch 35。
+     Early stopping 在 epoch 5 達到最佳，說明模型在個人資料上的
+     「遷移能力」尚未被充分利用——可能在 pretrain 階段，
+     Walmart 零售資料與個人記帳資料的分布差距太大，
+     導致模型從 Walmart knowledge 往個人模式遷移的過程過快過猛，
+     只做了 5 epoch 就開始 overfitting。
+
+  2. Test RMSE 明顯退步（+955 元，+6.4%）
+     RMSE 對大誤差更敏感，代表 V1 在某些高消費日的預測失誤更大。
+     HuberLoss 雖然對極端離群值更穩健，但也可能讓模型
+     在大消費日（離群值）的敏感度降低，反映在 RMSE 的上升。
+
+  3. Finetune 收斂過快（best at epoch 5）
+     LR=1e-4 + CosineAnnealingLR 理論上應讓訓練更穩定，
+     但 4067 個訓練樣本對 160K 參數的全量微調仍嫌不足，
+     即使有 weight_decay，過擬合仍然在 epoch 5 後就開始。
+     原因：hidden_size 從 64 擴大到 128 使參數量從 ~7 萬增加到 ~16 萬，
+     對小型個人資料集（16 users）而言是過度參數化（over-parameterized）。
+
+================================================================
+四、根本原因分析
+================================================================
+
+V1 的核心問題是「容量增大 vs 資料量不足」的矛盾：
+
+  模型參數量：  V0 ~7 萬  →  V1 ~16 萬（+128%）
+  訓練樣本數：  4,067（不變）
+  參數/樣本比：V0 ≈ 1:58  →  V1 ≈ 1:25
+
+  在 16 個 user、每 user 平均約 254 筆訓練樣本的情況下，
+  模型容量大幅增加卻沒有對應的資料量支撐，
+  是導致 Test MAE/RMSE 無法改善甚至退步的根本原因。
+
+  Attention Mechanism 和更深的 FC Head 雖然在理論上更有表達力，
+  但在資料不足的情況下，這些額外參數很容易記住訓練資料的分布，
+  卻無法泛化到測試集。
+
+================================================================
+五、V2 改進方向
+================================================================
+
+  基於以上分析，下一版本（V2）計劃以下調整：
+
+  1. 【架構】回調容量至合適大小
+     - hidden_size 回到 64 或最多 96（減少過擬合風險）
+     - 保留 Temporal Attention（相對誤差確實改善）
+     - FC Head 保持兩層但縮小（64 → 32 → 1）
+     - 模型目標：參數量 < 80K，維持 SMAPE 改善的同時降低 MAE
+
+  2. 【正則化】更強的防止過擬合機制
+     - Dropout 提高至 0.4（finetune 阶段）
+     - 增加 L2 weight_decay 至 5e-4
+     - 考慮加入 Stochastic Depth（隨機跳過部分 GRU 層）
+
+  3. 【損失函數】混合損失設計
+     - 試驗 α * HuberLoss + (1-α) * MSELoss 組合
+     - HuberLoss 改善 SMAPE，MSELoss 維持 RMSE 表現
+     - 或試驗對數空間預測（log1p 轉換 target）
+
+  4. 【凍結策略】Gradual Unfreezing
+     - 先訓練只開放 Attention + FC 層（5 epochs）
+     - 再逐步解凍 GRU 各層（類似 ULMFiT 策略）
+     - 避免 5 epoch 就過擬合的問題
+
+  5. 【資料增強】個人資料擴增
+     - 對訓練資料加入 Gaussian noise（μ=0, σ=0.01）
+     - 隨機 mask 部分時間步（類似 dropout in sequence）
+     - 提高小資料集的資料多樣性
+
+================================================================
+六、結論
+================================================================
+
+  V1 優化成功改善了相對誤差指標（SMAPE -12%, Per-user NMAE -55%），
+  代表 Temporal Attention + HuberLoss 的組合是有效的方向。
+
+  然而 Test MAE（絕對誤差）小幅退步，核心原因是模型參數量
+  大幅增加但個人資料量不足，導致過擬合。
+
+  V2 將在「保留 Attention 優勢」的基礎上，
+  縮小模型容量並加強正則化，目標是讓 SMAPE 和 MAE 雙雙改善。
+
+  目前 V1 的最佳表現：
+  ✅ Test SMAPE 78.44%（vs baseline V0 90.18%）
+  ✅ Val Per-user NMAE 164.74%（vs baseline V0 220.41%）
+  ⚠️  Test MAE 6,049 元（vs baseline V0 5,952 元，微幅退步）
+
+================================================================
+七、檔案清單
+================================================================
+
+  新增模型 artifacts：
+    artificats/pretrain_gru_v1.pth       - V1 pretrain 最佳權重
+    artificats/finetune_gru_v1.pth       - V1 finetune 最佳權重
+    artificats/metrics_v1.json           - 完整指標記錄
+    artificats/predictions_val_v1.csv    - 驗證集預測結果
+    artificats/predictions_test_v1.csv   - 測試集預測結果
+    artificats/training_summary_v1.txt   - Training Run Summary
+
+  新增腳本：
+    ml_gru/pretrain_gru_v1.py            - V1 pretrain 腳本
+    ml_gru/finetune_gru_v1.py            - V1 finetune 腳本
+    ml_gru/predict_v1.py                 - V1 評估腳本
+    ml_gru/run_pipeline_v1.sh            - V1 完整 pipeline
+
+================================================================

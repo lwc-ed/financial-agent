@@ -223,3 +223,118 @@ cd /Users/liweichen/financial-agent/ml_gru
 - 如果要改 preprocessing，優先確認有沒有破壞 train / val / test 的切分一致性
 - 如果要改 relative metric，先確認 `predict.py` 裡的公式與業務定義一致
 - 如果要重新比較版本，請固定同一份 `features_all.csv`、同一組 split 邏輯，再看 metrics
+
+---
+
+## Claude 優化實驗紀錄（V0 → V5）
+
+以下為 Claude 對 GRU 模型進行的迭代優化實驗，共 6 個版本，每版均保留對應的 `.pth` 權重與 `claude_verN.txt` 檢討報告。
+
+### Baseline 比較基準
+
+| 方法 | Test MAE |
+|------|----------|
+| Naive 7d Sum | 8,130 元 |
+| Moving Avg 30d | 7,019 元 |
+
+### 各版本實驗結果
+
+| 版本 | 關鍵改動 | Val MAE | Test MAE | Test RMSE | Test SMAPE | Test NMAE |
+|------|---------|--------:|--------:|----------:|-----------:|----------:|
+| **V0**（原始基準） | 原始 GRU，hidden=64，MSELoss，Adam，部分凍結 | 4,624 | 5,953 | 14,906 | 90.18% | 139.68% |
+| **V1** | GRUWithAttention，hidden=128，HuberLoss，AdamW，100 epochs | 4,584 | 6,050 | 15,862 | 78.44% | 138.14% |
+| **V2** | hidden=64（減少過擬合），dropout=0.4，Gradual Unfreezing，CosineAnnealingLR | 4,303 | 6,259 | 15,855 | 83.92% | 410.02% |
+| **V3** | Log1p 目標轉換，Gaussian 輸入噪聲增強（σ=0.02），複用 V2 pretrain | 4,476 | 6,347 | 17,265 | 91.63% | 61.40% |
+| **V4** | LLRD（層別學習率衰減），混合損失（0.7×Huber+0.3×MSE），CosineAnnealingWarmRestarts | 4,541 | **5,773** | 14,513 | 82.23% | 396.20% |
+| **V5** | 3 模型 Ensemble（seeds 42/123/777），Log1p+Noise+LLRD，Per-user 偏差修正 | 4,360 | 5,821 | 15,299 | **69.82%** | **60.84%** |
+
+### 各指標最佳版本
+
+| 指標 | 最佳版本 | 數值 | vs V0 改善幅度 |
+|------|---------|------|--------------|
+| Test MAE（絕對誤差最小） | **V4** | 5,773 元 | ▼ 3.0% |
+| Test SMAPE（相對誤差最小） | **V5** | 69.82% | ▼ 22.6 pp |
+| Test NMAE（跨用戶標準化誤差最小） | **V5** | 60.84% | ▼ 56.4 pp |
+| Val MAE（驗證集最低） | **V2** | 4,303 元 | ▼ 7.0% |
+
+### 各版本技術摘要
+
+#### V0：原始基準
+- 架構：標準 GRU（hidden=64, layers=2, dropout=0.2）
+- 訓練：MSELoss、Adam（lr=5e-4）、部分凍結（weight_hh_l1）
+- 問題：SMAPE 高達 90%，NMAE 不穩定
+
+#### V1：Attention + 擴容
+- **新增**：Temporal Attention（softmax over hidden states）、LayerNorm、fc1→fc2 兩層輸出頭
+- **新增**：hidden 從 64 擴至 128，HuberLoss，AdamW
+- **結果**：SMAPE 大幅改善（90% → 78%），但 hidden=128 參數量 160K 對 4067 筆訓練資料仍過大，導致 early stop 在第 5 epoch
+- **檔案**：`pretrain_gru_v1.py`、`finetune_gru_v1.py`、`predict_v1.py`
+
+#### V2：縮容 + Gradual Unfreezing
+- **新增**：hidden 從 128 縮回 64，dropout 0.3→0.4，weight_decay 1e-4→5e-4
+- **新增**：Gradual Unfreezing（ULMFiT 風格）：Phase 1 凍結 GRU 60 epochs → Phase 2 全量微調 140 epochs
+- **結果**：Val MAE 最低（4,303），但 Test NMAE 異常飆升至 410%（Val/Test 分佈差距問題）
+- **檔案**：`pretrain_gru_v2.py`、`finetune_gru_v2.py`、`predict_v2.py`
+
+#### V3：Log1p 目標轉換 + 噪聲增強
+- **新增**：對 `y` 做 log1p 轉換再 StandardScaler，預測時 inverse（expm1）
+- **新增**：訓練時對 `X` 加入 Gaussian 噪聲（σ=0.02）作為資料增強
+- **結果**：NMAE 大幅改善（410% → 61%，最接近 V5 水準），但 SMAPE 惡化至 91%（log 空間誤差放大效應）
+- **檔案**：`finetune_gru_v3.py`、`predict_v3.py`、`artificats/log_target_scaler_v3.pkl`
+
+#### V4：LLRD + 混合損失 + WarmRestarts
+- **新增**：Layer-wise Learning Rate Decay：GRU L0=5e-6、GRU L1=1e-5、Attention=3e-5、FC=1e-4
+- **新增**：混合損失 = 0.7×HuberLoss + 0.3×MSELoss
+- **新增**：CosineAnnealingWarmRestarts（T_0=40, T_mult=2）幫助跳出局部最優
+- **結果**：Test MAE 全版本最低（5,773），RMSE 也最低（14,513）
+- **檔案**：`finetune_gru_v4.py`、`predict_v4.py`
+
+#### V5：3-Seed Ensemble + Per-user 偏差修正
+- **新增**：3 個模型獨立訓練（seeds 42/123/777），預測結果在 real space 平均
+- **整合**：每個 seed 各自使用 Log1p + Noise + Gradual Unfreezing + LLRD（V3+V4 技術組合）
+- **新增**：Per-user 偏差修正：用 val set 計算每位用戶的中位數誤差，預測時扣除
+- **偏差修正效果**：Test MAE 6,776 → 5,821（改善 14%）
+- **結果**：SMAPE（69.82%）與 NMAE（60.84%）全版本最佳
+- **檔案**：`finetune_gru_v5.py`、`predict_v5.py`、`artificats/log_target_scaler_v5.pkl`、`artificats/finetune_gru_v5_seed{42,123,777}.pth`
+
+### 如何使用特定版本
+
+```bash
+cd /Users/liweichen/financial-agent/ml_gru
+
+# 跑 V4（MAE 最佳）
+VIRTUAL_ENV="/Users/liweichen/financial-agent/.venv" bash -c "
+  source $VIRTUAL_ENV/bin/activate
+  python finetune_gru_v4.py && python predict_v4.py
+"
+
+# 跑 V5（SMAPE/NMAE 最佳，Ensemble）
+VIRTUAL_ENV="/Users/liweichen/financial-agent/.venv" bash -c "
+  source $VIRTUAL_ENV/bin/activate
+  python finetune_gru_v5.py && python predict_v5.py
+"
+```
+
+### 已保存的模型檔案
+
+| 檔案 | 說明 |
+|------|------|
+| `artificats/pretrain_gru_v1.pth` | V1 Walmart pretrain（hidden=128） |
+| `artificats/pretrain_gru_v2.pth` | V2 Walmart pretrain（hidden=64，V3/V4/V5 共用） |
+| `artificats/finetune_gru_v1.pth` | V1 finetune 權重 |
+| `artificats/finetune_gru_v2.pth` | V2 finetune 權重 |
+| `artificats/finetune_gru_v3.pth` | V3 finetune 權重（log1p 空間） |
+| `artificats/finetune_gru_v4.pth` | V4 finetune 權重（Test MAE 最佳） |
+| `artificats/finetune_gru_v5_seed42.pth` | V5 Ensemble seed 42 |
+| `artificats/finetune_gru_v5_seed123.pth` | V5 Ensemble seed 123 |
+| `artificats/finetune_gru_v5_seed777.pth` | V5 Ensemble seed 777 |
+
+### 各版本檢討報告
+
+每版訓練完畢後，Claude 會生成對應的文字檢討報告：
+
+- `claude_ver1.txt`：V1 實驗分析
+- `claude_ver2.txt`：V2 實驗分析
+- `claude_ver3.txt`：V3 實驗分析
+- `claude_ver4.txt`：V4 實驗分析
+- `claude_ver5.txt`：V5 實驗分析

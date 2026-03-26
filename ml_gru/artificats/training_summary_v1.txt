@@ -1,0 +1,64 @@
+
+============================================================
+Training Run Summary — GRU Transfer Learning V1 Enhanced
+============================================================
+model_name        : gru_transfer_v1_enhanced
+architecture      : GRUWithAttention (hidden=128, layers=2)
+version           : v1
+feature_set       : user_selected_v1
+target_column     : future_expense_7d_sum
+val_mae           : 4,583.782227
+val_rmse          : 11,920.750000
+val_smape         : 82.59%
+val_per_user_nmae : 164.74%
+test_mae          : 6,049.681641
+test_rmse         : 15,861.622070
+test_smape        : 78.44%
+test_per_user_nmae: 138.14%
+
+V0 vs V1 Comparison
+  test_mae  V0=5952.552246  →  V1=6,049.68
+  test_smape V0=90.1819%  →  V1=78.44%
+
+Dataset Sizes
+  train_rows    : 4067
+  val_rows      : 873
+  test_rows     : 882
+  input_days    : 30
+  feature_count : 7
+
+V1 Architecture Changes
+  - hidden_size     : 64 → 128
+  - attention       : None → Temporal Attention (softmax over seq)
+  - fc_head         : Linear(64,1) → Linear(128,64) + ReLU + Linear(64,1)
+  - layer_norm      : added after attention pooling
+  - loss_function   : MSELoss → HuberLoss(delta=1.0)
+  - freeze_strategy : partial freeze → full fine-tuning
+  - optimizer       : Adam → AdamW(weight_decay=1e-4)
+  - lr_scheduler    : ReduceLROnPlateau → CosineAnnealingLR
+  - learning_rate   : 5e-4 → 1e-4
+  - epochs          : 150 → 200 (patience 20 → 30)
+
+Selected Features
+  - daily_expense
+  - expense_7d_mean
+  - expense_30d_sum
+  - has_expense
+  - has_income
+  - net_30d_sum
+  - txn_30d_sum
+
+Baselines
+  naive_7d_sum mae         : 8,130.198974
+  naive_7d_sum rmse        : 23,669.372811
+  moving_avg_30d_x7 mae    : 7,019.182884
+  moving_avg_30d_x7 rmse   : 19,089.005327
+  beat_moving_avg_30d_x7   : True
+
+Artifacts
+  pretrain_model  : artificats/pretrain_gru_v1.pth
+  finetune_model  : artificats/finetune_gru_v1.pth
+  metrics_json    : artificats/metrics_v1.json
+  val_predictions : artificats/predictions_val_v1.csv
+  test_predictions: artificats/predictions_test_v1.csv
+============================================================

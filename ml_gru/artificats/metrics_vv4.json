@@ -1,0 +1,18 @@
+{
+  "model_name": "gru_vv4",
+  "version": "v4",
+  "val_mae": 4540.976074,
+  "val_rmse": 10998.545898,
+  "val_smape": 83.1351,
+  "val_per_user_nmae": 198.3392,
+  "test_mae": 5773.404297,
+  "test_rmse": 14512.863281,
+  "test_smape": 82.2296,
+  "test_per_user_nmae": 396.1984,
+  "naive_7d_mae": 8130.198974,
+  "naive_7d_rmse": 23669.372811,
+  "moving_avg_30d_mae": 7019.182884,
+  "moving_avg_30d_rmse": 19089.005327,
+  "beat_moving_avg": true,
+  "timestamp": "2026-03-26 01:38:42"
+}
