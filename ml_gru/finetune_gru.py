@@ -10,13 +10,15 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 import pickle
 import os
+from sklearn.metrics import mean_absolute_error
 
 ARTIFACTS_DIR       = "artificats"
 PERSONAL_INPUT_SIZE = 7     # 更新：7個特徵，跟 pretrain 完全一樣！
 BATCH_SIZE          = 16
 EPOCHS              = 150
-LEARNING_RATE       = 0.0005
-PATIENCE            = 20
+LEARNING_RATE       = 0.0003
+PATIENCE            = 15
+WEIGHT_DECAY        = 1e-4
 
 if torch.backends.mps.is_available():
     device = torch.device("mps")
@@ -35,6 +37,9 @@ y_val   = np.load(f"{ARTIFACTS_DIR}/personal_y_val.npy")
 
 print(f"  X_train : {X_train.shape}")
 print(f"  X_val   : {X_val.shape}")
+
+with open(f"{ARTIFACTS_DIR}/personal_target_scaler.pkl", "rb") as f:
+    target_scaler = pickle.load(f)
 
 X_train_t = torch.tensor(X_train, dtype=torch.float32)
 y_train_t = torch.tensor(y_train, dtype=torch.float32)
@@ -82,36 +87,33 @@ print("  ✅ 全部 10 個權重層成功繼承")
 
 
 # ─────────────────────────────────────────
-# 凍結策略：只凍結第二層 GRU 的 hidden-to-hidden 權重
-# 讓第一層和 fc 層 finetune 個人消費模式
+# 凍結策略：全部參數都允許調整
+# 讓模型能完整適應個人資料分布
 # ─────────────────────────────────────────
 print("\n🔒 凍結策略...")
 for name, param in model.named_parameters():
-    if "weight_hh_l1" in name or "bias_hh_l1" in name:
-        param.requires_grad = False
-        print(f"  🔒 凍結: {name}")
-    else:
-        param.requires_grad = True
-        print(f"  🔓 訓練: {name}")
+    param.requires_grad = True
+    print(f"  🔓 訓練: {name}")
 
 trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
 total     = sum(p.numel() for p in model.parameters())
 print(f"\n  可訓練參數: {trainable:,} / {total:,} ({trainable/total*100:.1f}%)")
 
-criterion = nn.MSELoss()
-optimizer = torch.optim.Adam(
+criterion = nn.SmoothL1Loss(beta=0.5)
+optimizer = torch.optim.AdamW(
     filter(lambda p: p.requires_grad, model.parameters()),
-    lr=LEARNING_RATE
+    lr=LEARNING_RATE,
+    weight_decay=WEIGHT_DECAY,
 )
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=7)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=5)
 
 print("\n🚀 開始 Finetune...")
 print("=" * 65)
 
-best_val_loss    = float("inf")
+best_val_mae     = float("inf")
 patience_counter = 0
 best_model_path  = f"{ARTIFACTS_DIR}/finetune_gru.pth"
-train_losses, val_losses = [], []
+train_losses, val_maes = [], []
 
 for epoch in range(1, EPOCHS + 1):
     model.train()
@@ -128,26 +130,38 @@ for epoch in range(1, EPOCHS + 1):
 
     model.eval()
     val_loss = 0.0
+    val_preds_scaled = []
+    val_targets_scaled = []
     with torch.no_grad():
         for X_b, y_b in val_loader:
             X_b, y_b = X_b.to(device), y_b.to(device)
-            val_loss += criterion(model(X_b), y_b).item()
+            preds = model(X_b)
+            val_loss += criterion(preds, y_b).item()
+            val_preds_scaled.append(preds.cpu().numpy())
+            val_targets_scaled.append(y_b.cpu().numpy())
     val_loss /= len(val_loader)
+    val_preds_real = target_scaler.inverse_transform(np.vstack(val_preds_scaled))
+    val_targets_real = target_scaler.inverse_transform(np.vstack(val_targets_scaled))
+    val_mae = mean_absolute_error(val_targets_real, val_preds_real)
 
-    scheduler.step(val_loss)
+    scheduler.step(val_mae)
     train_losses.append(train_loss)
-    val_losses.append(val_loss)
+    val_maes.append(val_mae)
 
     lr = optimizer.param_groups[0]["lr"]
-    print(f"  Epoch {epoch:3d}/{EPOCHS} | Train: {train_loss:.6f} | Val: {val_loss:.6f} | LR: {lr:.6f}")
+    print(
+        f"  Epoch {epoch:3d}/{EPOCHS} | TrainLoss: {train_loss:.6f} "
+        f"| ValLoss: {val_loss:.6f} | ValMAE: {val_mae:,.2f} | LR: {lr:.6f}"
+    )
 
-    if val_loss < best_val_loss:
-        best_val_loss    = val_loss
+    if val_mae < best_val_mae:
+        best_val_mae     = val_mae
         patience_counter = 0
         torch.save({
             "epoch"      : epoch,
             "model_state": model.state_dict(),
-            "val_loss"   : best_val_loss,
+            "val_loss"   : val_loss,
+            "val_mae"    : best_val_mae,
             "hyperparams": {
                 "input_size" : PERSONAL_INPUT_SIZE,
                 "hidden_size": hp["hidden_size"],
@@ -156,7 +170,7 @@ for epoch in range(1, EPOCHS + 1):
                 "dropout"    : hp["dropout"],
             }
         }, best_model_path)
-        print(f"             ✅ 儲存最佳模型（val_loss={best_val_loss:.6f}）")
+        print(f"             ✅ 儲存最佳模型（val_mae={best_val_mae:,.2f}）")
     else:
         patience_counter += 1
         if patience_counter >= PATIENCE:
@@ -164,9 +178,9 @@ for epoch in range(1, EPOCHS + 1):
             break
 
 print("=" * 65)
-print(f"\n🎉 Finetune 完成！最佳 Val Loss：{best_val_loss:.6f}")
+print(f"\n🎉 Finetune 完成！最佳 Val MAE：{best_val_mae:,.2f}")
 
 with open(f"{ARTIFACTS_DIR}/finetune_history.pkl", "wb") as f:
-    pickle.dump({"train_loss": train_losses, "val_loss": val_losses}, f)
+    pickle.dump({"train_loss": train_losses, "val_mae": val_maes}, f)
 
 print("\n下一步：執行 predict.py")

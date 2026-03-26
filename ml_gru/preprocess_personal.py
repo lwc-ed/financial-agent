@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 ARTIFACTS_DIR = "artificats"
 FEATURES_PATH = "features_all.csv"   # 你已經做好的特徵檔
 INPUT_DAYS    = 30
-USER_CLIP_PERCENTILE = 95
+USER_CLIP_PERCENTILE = 99
 
 FEATURE_COLS = [
     "daily_expense",
@@ -32,7 +32,6 @@ def fit_user_clip_values(X_user_train: np.ndarray, y_user_train: np.ndarray):
         col: float(np.percentile(X_user_train[:, :, idx], USER_CLIP_PERCENTILE))
         for idx, col in enumerate(FEATURE_COLS)
     }
-    clip_values[TARGET_COL] = float(np.percentile(y_user_train[:, 0], USER_CLIP_PERCENTILE))
     return clip_values
 
 
@@ -40,8 +39,7 @@ def apply_user_clipping(X_split: np.ndarray, y_split: np.ndarray, clip_values: d
     X_out = X_split.copy()
     for idx, col in enumerate(FEATURE_COLS):
         X_out[:, :, idx] = np.clip(X_out[:, :, idx], None, clip_values[col])
-    y_out = np.clip(y_split.copy(), None, clip_values[TARGET_COL])
-    return X_out.astype(np.float32), y_out.astype(np.float32)
+    return X_out.astype(np.float32), y_split.astype(np.float32)
 
 
 def standardize_split(
@@ -76,7 +74,7 @@ X_val_list,   y_val_list   = [], []
 X_test_list,  y_test_list  = [], []
 train_user_ids, val_user_ids, test_user_ids = [], [], []
 user_clip_map = {}
-clip_counts = {col: 0 for col in FEATURE_COLS + [TARGET_COL]}
+clip_counts = {col: 0 for col in FEATURE_COLS}
 
 for user_id in df["user_id"].unique():
     u            = df[df["user_id"] == user_id].reset_index(drop=True)
@@ -112,12 +110,6 @@ for user_id in df["user_id"].unique():
             clip_counts[col] += int((X_val_user[:, :, idx] > clip_values[col]).sum())
         if len(X_test_user) > 0:
             clip_counts[col] += int((X_test_user[:, :, idx] > clip_values[col]).sum())
-    clip_counts[TARGET_COL] += int((y_train_user[:, 0] > clip_values[TARGET_COL]).sum())
-    if len(y_val_user) > 0:
-        clip_counts[TARGET_COL] += int((y_val_user[:, 0] > clip_values[TARGET_COL]).sum())
-    if len(y_test_user) > 0:
-        clip_counts[TARGET_COL] += int((y_test_user[:, 0] > clip_values[TARGET_COL]).sum())
-
     X_train_user, y_train_user = apply_user_clipping(X_train_user, y_train_user, clip_values)
     X_val_user, y_val_user     = apply_user_clipping(X_val_user, y_val_user, clip_values)
     X_test_user, y_test_user   = apply_user_clipping(X_test_user, y_test_user, clip_values)
@@ -156,7 +148,7 @@ print(
 # ─────────────────────────────────────────
 print(f"\n✂️  Per-user Winsorization（P{USER_CLIP_PERCENTILE}, train only）...")
 print(f"  套用 user 門檻數 : {len(user_clip_map)}")
-for col in FEATURE_COLS + [TARGET_COL]:
+for col in FEATURE_COLS:
     print(f"  {col}: 被截斷值數量 {clip_counts[col]:,}")
 
 print("\n📐 標準化（fit on train only）...")
