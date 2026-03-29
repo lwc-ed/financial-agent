@@ -1,0 +1,29 @@
+Random Forest Feature Importance Report
+========================================
+這份報告顯示了模型在預測「未來7天花費」時，最看重哪些歷史線索。
+
+expense_30d_sum           0.4152
+net_30d_sum               0.1780
+expense_30d_mean          0.1132
+net_7d_sum                0.0436
+expense_trend             0.0335
+month                     0.0334
+txn_30d_sum               0.0310
+txn_7d_sum                0.0267
+day                       0.0245
+days_to_end_of_month      0.0238
+expense_7d_30d_ratio      0.0156
+expense_7d_sum            0.0120
+expense_7d_mean           0.0116
+daily_net                 0.0092
+daily_expense             0.0071
+txn_count                 0.0042
+dow                       0.0037
+is_summer_vacation        0.0035
+expense_txn_count         0.0028
+is_winter_vacation        0.0026
+daily_income              0.0021
+income_txn_count          0.0017
+has_income                0.0005
+is_weekend                0.0003
+has_expense               0.0001
