@@ -88,8 +88,10 @@ test_smape = smape(y_test_true, y_test_pred)
 val_nmae   = per_user_nmae(y_val_true,  y_val_pred,  val_user_ids)
 test_nmae  = per_user_nmae(y_test_true, y_test_pred, test_user_ids)
 
+EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
 df = pd.read_csv("features_all.csv")
 df["date"] = pd.to_datetime(df["date"])
+df = df[~df["user_id"].isin(EXCLUDE_USERS)].reset_index(drop=True)
 df = df.sort_values(["user_id", "date"]).reset_index(drop=True)
 df["naive_7d"] = df.groupby("user_id")["daily_expense"].transform(lambda x: x.rolling(7, min_periods=1).sum())
 df["ma_30d_x7"] = df.groupby("user_id")["daily_expense"].transform(lambda x: x.rolling(30, min_periods=1).mean()) * 7

@@ -5,19 +5,19 @@ Training Run Summary — GRU Transfer Learning
 model_name       : gru_transfer_v1
 feature_set      : user_selected_v1
 target_column    : future_expense_7d_sum
-val_mae          : 5,764.490234
-val_rmse         : 19,596.269531
-val_smape        : 86.17%
-val_per_user_nmae: 138.05%
-test_mae         : 5,916.525879
-test_rmse        : 15,721.783203
-test_smape       : 81.08%
-test_per_user_nmae: 119.58%
+val_mae          : 793.221924
+val_rmse         : 1,197.475586
+val_smape        : 90.86%
+val_per_user_nmae: 88.24%
+test_mae         : 802.844727
+test_rmse        : 1,226.732544
+test_smape       : 82.91%
+test_per_user_nmae: 127.19%
 
 Dataset Sizes
-  train_rows     : 4067
-  val_rows       : 873
-  test_rows      : 882
+  train_rows     : 2960
+  val_rows       : 635
+  test_rows      : 642
   input_days     : 30
   feature_count  : 7
 
@@ -31,10 +31,10 @@ Selected Features
   - txn_30d_sum
 
 Baselines
-  naive_7d_sum mae          : 8,130.198974
-  naive_7d_sum rmse         : 23,669.372811
-  moving_avg_30d_x7 mae     : 7,019.182884
-  moving_avg_30d_x7 rmse    : 19,089.005327
+  naive_7d_sum mae          : 989.764615
+  naive_7d_sum rmse         : 1,649.280634
+  moving_avg_30d_x7 mae     : 926.367527
+  moving_avg_30d_x7 rmse    : 1,425.732313
   beat_moving_avg_30d_x7    : True
 
 Risk Thresholds

@@ -7,23 +7,23 @@ architecture      : GRUWithAttention (hidden=128, layers=2)
 version           : v1
 feature_set       : user_selected_v1
 target_column     : future_expense_7d_sum
-val_mae           : 4,583.782227
-val_rmse          : 11,920.750000
-val_smape         : 82.59%
-val_per_user_nmae : 164.74%
-test_mae          : 6,049.681641
-test_rmse         : 15,861.622070
-test_smape        : 78.44%
-test_per_user_nmae: 138.14%
+val_mae           : 825.064880
+val_rmse          : 1,214.256470
+val_smape         : 87.23%
+val_per_user_nmae : 106.34%
+test_mae          : 813.079468
+test_rmse         : 1,245.222290
+test_smape        : 80.80%
+test_per_user_nmae: 169.52%
 
 V0 vs V1 Comparison
-  test_mae  V0=5952.552246  →  V1=6,049.68
-  test_smape V0=90.1819%  →  V1=78.44%
+  test_mae  V0=802.844727  →  V1=813.08
+  test_smape V0=82.912%  →  V1=80.80%
 
 Dataset Sizes
-  train_rows    : 4067
-  val_rows      : 873
-  test_rows     : 882
+  train_rows    : 2960
+  val_rows      : 635
+  test_rows     : 642
   input_days    : 30
   feature_count : 7
 
@@ -49,10 +49,10 @@ Selected Features
   - txn_30d_sum
 
 Baselines
-  naive_7d_sum mae         : 8,130.198974
-  naive_7d_sum rmse        : 23,669.372811
-  moving_avg_30d_x7 mae    : 7,019.182884
-  moving_avg_30d_x7 rmse   : 19,089.005327
+  naive_7d_sum mae         : 989.764615
+  naive_7d_sum rmse        : 1,649.280634
+  moving_avg_30d_x7 mae    : 926.367527
+  moving_avg_30d_x7 rmse   : 1,425.732313
   beat_moving_avg_30d_x7   : True
 
 Artifacts

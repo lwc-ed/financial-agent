@@ -18,10 +18,17 @@ fi
 cd "${SCRIPT_DIR}"
 echo "Using Python: ${PYTHON_BIN}"
 
+echo "╔══════════════════════════════════════════════════════╗"
+echo "║  V2 pretrain                       ║"
+echo "╚══════════════════════════════════════════════════════╝"
+python pretrain_gru_v2.py
+
+
 echo ""
 echo "╔══════════════════════════════════════════════════════╗"
 echo "║  V2 predict（模型已訓練完畢）                        ║"
 echo "╚══════════════════════════════════════════════════════╝"
+"${PYTHON_BIN}" finetune_gru_v2.py
 "${PYTHON_BIN}" predict_v2.py
 
 echo ""

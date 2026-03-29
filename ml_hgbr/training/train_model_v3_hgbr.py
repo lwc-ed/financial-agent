@@ -12,7 +12,7 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-ML_DIR = ROOT_DIR / "ml"
+ML_DIR = Path(__file__).resolve().parents[1]
 ARTIFACT_DIR = ML_DIR / "artifacts"
 DEFAULT_TRAIN_PATH = ARTIFACT_DIR / "features_train.parquet"
 DEFAULT_VAL_PATH = ARTIFACT_DIR / "features_val.parquet"

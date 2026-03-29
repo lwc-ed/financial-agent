@@ -5,12 +5,12 @@ Training Run Summary — LSTM Transfer Learning
 model_name       : lstm_transfer_v1
 feature_set      : user_selected_v1
 target_column    : future_expense_7d_sum
-val_mae          : 1,442.344238
-val_rmse         : 2,999.615967
+val_mae          : 1,065.113159
+val_rmse         : 1,217.555542
 
 Dataset Sizes
-  train_rows     : 4657
-  val_rows       : 1165
+  train_rows     : 3389
+  val_rows       : 848
   input_days     : 30
   feature_count  : 7
 

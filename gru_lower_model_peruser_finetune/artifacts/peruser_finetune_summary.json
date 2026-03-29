@@ -1,0 +1,102 @@
+{
+  "timestamp": "2026-03-29 02:50:54",
+  "avg_test_mae": 775.47,
+  "user_metrics": {
+    "user1": {
+      "n_train": 65,
+      "n_val": 14,
+      "n_test": 15,
+      "phase1_val_loss": 0.303666,
+      "phase2_val_loss": 0.300921,
+      "test_mae": 515.74
+    },
+    "user10": {
+      "n_train": 285,
+      "n_val": 61,
+      "n_test": 62,
+      "phase1_val_loss": 0.546469,
+      "phase2_val_loss": 0.586909,
+      "test_mae": 820.97
+    },
+    "user11": {
+      "n_train": 226,
+      "n_val": 49,
+      "n_test": 49,
+      "phase1_val_loss": 0.160977,
+      "phase2_val_loss": 0.161968,
+      "test_mae": 651.58
+    },
+    "user12": {
+      "n_train": 226,
+      "n_val": 48,
+      "n_test": 49,
+      "phase1_val_loss": 0.198219,
+      "phase2_val_loss": 0.185293,
+      "test_mae": 547.25
+    },
+    "user13": {
+      "n_train": 347,
+      "n_val": 75,
+      "n_test": 75,
+      "phase1_val_loss": 0.335906,
+      "phase2_val_loss": 0.324963,
+      "test_mae": 1318.5
+    },
+    "user15": {
+      "n_train": 306,
+      "n_val": 66,
+      "n_test": 66,
+      "phase1_val_loss": 0.105327,
+      "phase2_val_loss": 0.108326,
+      "test_mae": 572.22
+    },
+    "user16": {
+      "n_train": 247,
+      "n_val": 53,
+      "n_test": 53,
+      "phase1_val_loss": 0.509847,
+      "phase2_val_loss": 0.510513,
+      "test_mae": 1055.71
+    },
+    "user2": {
+      "n_train": 230,
+      "n_val": 49,
+      "n_test": 50,
+      "phase1_val_loss": 0.243745,
+      "phase2_val_loss": 0.241125,
+      "test_mae": 707.99
+    },
+    "user3": {
+      "n_train": 229,
+      "n_val": 49,
+      "n_test": 50,
+      "phase1_val_loss": 0.822264,
+      "phase2_val_loss": 0.823348,
+      "test_mae": 618.7
+    },
+    "user7": {
+      "n_train": 237,
+      "n_val": 51,
+      "n_test": 51,
+      "phase1_val_loss": 0.727916,
+      "phase2_val_loss": 0.720803,
+      "test_mae": 986.57
+    },
+    "user8": {
+      "n_train": 230,
+      "n_val": 49,
+      "n_test": 50,
+      "phase1_val_loss": 0.168123,
+      "phase2_val_loss": 0.178445,
+      "test_mae": 1376.13
+    },
+    "user9": {
+      "n_train": 332,
+      "n_val": 71,
+      "n_test": 72,
+      "phase1_val_loss": 0.172106,
+      "phase2_val_loss": 0.139688,
+      "test_mae": 134.27
+    }
+  }
+}

@@ -24,12 +24,15 @@ FEATURE_COLS = [
 TARGET_COL = "future_expense_7d_sum"
 
 print("📂 讀取 features_all.csv...")
+EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
+
 df = pd.read_csv(FEATURES_PATH)
 df["date"] = pd.to_datetime(df["date"])
+df = df[~df["user_id"].isin(EXCLUDE_USERS)].reset_index(drop=True)
 df = df.sort_values(["user_id", "date"]).reset_index(drop=True)
 
 print(f"  總筆數   : {len(df)}")
-print(f"  使用者數 : {df['user_id'].nunique()}")
+print(f"  使用者數 : {df['user_id'].nunique()}  (排除 {EXCLUDE_USERS})")
 print(f"  缺值     : {df[FEATURE_COLS + [TARGET_COL]].isnull().sum().sum()}")
 
 print("\n✂️  Winsorization（P95）...")

@@ -44,6 +44,9 @@ def add_rolling_features(g: pd.DataFrame) -> pd.DataFrame:
 def main():
     df = pd.read_parquet(IN_PATH)
     df["date"] = pd.to_datetime(df["date"])
+    EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
+    df = df[~df["user_id"].isin(EXCLUDE_USERS)].reset_index(drop=True)
+    print(f"  使用者數: {df['user_id'].nunique()}  (排除 {EXCLUDE_USERS})")
 
     # 季節/假期特徵（近似）：以月份標記寒暑假
     # 你可依研究情境調整月份範圍

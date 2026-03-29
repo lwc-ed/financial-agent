@@ -6,9 +6,8 @@ import numpy as np
 import pandas as pd
 
 
-ROOT_DIR = Path(__file__).resolve().parents[2]
-ML_DIR = ROOT_DIR / "ml"
-ARTIFACT_DIR = ML_DIR / "artifacts"
+ROOT_DIR = Path(__file__).resolve().parents[1]
+ARTIFACT_DIR = ROOT_DIR / "artifacts"
 DEFAULT_LEDGER_PATH = ARTIFACT_DIR / "daily_ledger_all.parquet"
 DEFAULT_FEATURES_PATH = ARTIFACT_DIR / "features_all.parquet"
 DEFAULT_MIN_DAYS_PER_MONTH = 20 #調整活躍天數

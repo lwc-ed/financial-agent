@@ -1,11 +1,11 @@
 {
   "model_name": "lstm_transfer_v1",
-  "val_mae": 1442.344238,
-  "val_rmse": 2999.615967,
+  "val_mae": 1065.113159,
+  "val_rmse": 1217.555542,
   "naive_7d_mae": 8130.198974,
   "naive_7d_rmse": 23669.372811,
   "moving_avg_30d_mae": 7019.182884,
   "moving_avg_30d_rmse": 19089.005327,
   "beat_moving_avg": true,
-  "timestamp": "2026-03-21 01:54:58"
+  "timestamp": "2026-03-29 02:54:59"
 }

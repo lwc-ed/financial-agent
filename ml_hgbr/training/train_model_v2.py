@@ -18,10 +18,10 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error
 
 # 專案路徑設定
 # ROOT_DIR: 專案根目錄
-# ML_DIR: ml 資料夾
+# ML_DIR: ml_hgbr 資料夾
 # ARTIFACT_DIR: 模型輸出、特徵檔、報表存放位置
 ROOT_DIR = Path(__file__).resolve().parents[2]
-ML_DIR = ROOT_DIR / "ml"
+ML_DIR = Path(__file__).resolve().parents[1]
 ARTIFACT_DIR = ML_DIR / "artifacts"
 DEFAULT_TRAIN_PATH = ARTIFACT_DIR / "features_train.parquet"
 DEFAULT_VAL_PATH = ARTIFACT_DIR / "features_val.parquet"

@@ -157,8 +157,10 @@ y_test_pred_real, y_test_true_real, test_mae, test_rmse = evaluate_split(X_test,
 # ─────────────────────────────────────────
 print("\n📊 計算 Baseline...")
 
+EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
 df = pd.read_csv("features_all.csv")
 df["date"] = pd.to_datetime(df["date"])
+df = df[~df["user_id"].isin(EXCLUDE_USERS)].reset_index(drop=True)
 df = df.sort_values(["user_id", "date"]).reset_index(drop=True)
 
 # Naive：用過去 7 天加總當預測

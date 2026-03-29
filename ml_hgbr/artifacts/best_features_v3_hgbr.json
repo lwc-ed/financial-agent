@@ -1,18 +1,20 @@
 {
   "model_name": "hgbr_v3_hgbr",
-  "trial_id": 395,
+  "trial_id": 409,
   "target_column": "future_expense_7d_sum",
-  "feature_count": 5,
+  "feature_count": 7,
   "feature_columns": [
+    "expense_30d_mean",
     "expense_30d_sum",
-    "expense_trend",
-    "income_txn_count",
-    "is_weekend",
-    "net_30d_sum"
+    "expense_7d_30d_ratio",
+    "is_winter_vacation",
+    "net_30d_sum",
+    "txn_7d_sum",
+    "txn_count"
   ],
-  "best_val_metric": 3359.229672604098,
-  "best_val_rmse": 11517.234022526229,
-  "iterations": 91,
+  "best_val_metric": 682.084435144722,
+  "best_val_rmse": 941.4754551141517,
+  "iterations": 106,
   "config": {
     "loss": "squared_error",
     "learning_rate": 0.05,

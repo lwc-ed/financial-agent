@@ -1,30 +1,32 @@
 {
   "model_name": "hgbr_v3_hgbr",
   "target_column": "future_expense_7d_sum",
-  "trial_id": 395,
+  "trial_id": 409,
   "feature_columns": [
+    "expense_30d_mean",
     "expense_30d_sum",
-    "expense_trend",
-    "income_txn_count",
-    "is_weekend",
-    "net_30d_sum"
+    "expense_7d_30d_ratio",
+    "is_winter_vacation",
+    "net_30d_sum",
+    "txn_7d_sum",
+    "txn_count"
   ],
-  "best_val_metric": 3359.229672604098,
-  "best_val_rmse": 11517.234022526229,
-  "test_mae": 1254.3852934530607,
-  "test_rmse": 1990.742001616517,
+  "best_val_metric": 682.084435144722,
+  "best_val_rmse": 941.4754551141517,
+  "test_mae": 881.5352340220553,
+  "test_rmse": 1312.7961608647963,
   "baseline_mae": {
-    "naive_7d_sum": 1746.2757568359375,
-    "moving_avg_30d_x7": 1780.7589111328125
+    "naive_7d_sum": 1430.7886962890625,
+    "moving_avg_30d_x7": 1091.896728515625
   },
   "baseline_rmse": {
-    "naive_7d_sum": 2391.1794161041116,
-    "moving_avg_30d_x7": 4408.610665504497
+    "naive_7d_sum": 1977.6084673160155,
+    "moving_avg_30d_x7": 1553.3394670837408
   },
   "beat_moving_avg_30d_x7": true,
-  "train_rows": 1583,
-  "val_rows": 608,
-  "test_rows": 671,
+  "train_rows": 1218,
+  "val_rows": 486,
+  "test_rows": 530,
   "feature_pool_count": 25,
   "searched_subsets": 1000
 }

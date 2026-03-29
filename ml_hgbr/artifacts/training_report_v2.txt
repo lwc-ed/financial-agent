@@ -2,14 +2,14 @@ Training Run Summary V2
 model_name: hgbr_v2
 feature_set: user_selected_v1
 target_column: future_expense_7d_sum
-best_val_metric: 3312.456294
-test_mae: 1246.117172
-test_rmse: 1999.624137
+best_val_metric: 714.135993
+test_mae: 888.748816
+test_rmse: 1300.577483
 
 Dataset Sizes
-train_rows: 1583
-val_rows: 608
-test_rows: 671
+train_rows: 1218
+val_rows: 486
+test_rows: 530
 feature_count: 7
 
 Selected Features
@@ -22,16 +22,16 @@ Selected Features
 - txn_30d_sum
 
 Baselines
-naive_7d_sum mae: 1746.275757
-naive_7d_sum rmse: 2391.179416
-moving_avg_30d_x7 mae: 1780.758911
-moving_avg_30d_x7 rmse: 4408.610666
+naive_7d_sum mae: 1430.788696
+naive_7d_sum rmse: 1977.608467
+moving_avg_30d_x7 mae: 1091.896729
+moving_avg_30d_x7 rmse: 1553.339467
 
 beat_moving_avg_30d_x7: True
 
 Artifacts
-best_model: /Users/liweichen/financial-agent/ml/artifacts/best_hgbr_model_v2.pkl
-history_csv: /Users/liweichen/financial-agent/ml/artifacts/training_history_v2.csv
-predictions_csv: /Users/liweichen/financial-agent/ml/artifacts/predictions_test_v2.csv
-metrics_json: /Users/liweichen/financial-agent/ml/artifacts/test_metrics_v2.json
-selected_features_json: /Users/liweichen/financial-agent/ml/artifacts/selected_features_v2.json
+best_model: /Users/liweichen/financial-agent/ml_hgbr/artifacts/best_hgbr_model_v2.pkl
+history_csv: /Users/liweichen/financial-agent/ml_hgbr/artifacts/training_history_v2.csv
+predictions_csv: /Users/liweichen/financial-agent/ml_hgbr/artifacts/predictions_test_v2.csv
+metrics_json: /Users/liweichen/financial-agent/ml_hgbr/artifacts/test_metrics_v2.json
+selected_features_json: /Users/liweichen/financial-agent/ml_hgbr/artifacts/selected_features_v2.json

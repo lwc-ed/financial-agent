@@ -7,7 +7,7 @@ import pandas as pd
 
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-ML_DIR = ROOT_DIR / "ml"
+ML_DIR = Path(__file__).resolve().parents[1]
 ARTIFACT_DIR = ML_DIR / "artifacts"
 DEFAULT_LEDGER_PATH = ARTIFACT_DIR / "daily_ledger_all.parquet"
 DEFAULT_FEATURES_PATH = ARTIFACT_DIR / "features_all.parquet"
