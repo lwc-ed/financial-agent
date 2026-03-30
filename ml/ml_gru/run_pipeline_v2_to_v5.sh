@@ -21,7 +21,7 @@ echo "Using Python: ${PYTHON_BIN}"
 echo "╔══════════════════════════════════════════════════════╗"
 echo "║  V2 pretrain                       ║"
 echo "╚══════════════════════════════════════════════════════╝"
-python pretrain_gru_v2.py
+"${PYTHON_BIN}" pretrain_gru_v2.py
 
 
 echo ""

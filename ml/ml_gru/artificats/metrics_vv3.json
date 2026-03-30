@@ -1,18 +1,18 @@
 {
   "model_name": "gru_vv3_log1p",
   "version": "v3",
-  "val_mae": 911.393311,
-  "val_rmse": 1401.405151,
-  "val_smape": 105.1335,
-  "val_per_user_nmae": 94.112,
-  "test_mae": 885.095764,
-  "test_rmse": 1375.358765,
-  "test_smape": 93.5781,
-  "test_per_user_nmae": 61.223,
+  "val_mae": 868.961426,
+  "val_rmse": 1332.724243,
+  "val_smape": 101.5896,
+  "val_per_user_nmae": 83.7697,
+  "test_mae": 851.677307,
+  "test_rmse": 1346.602417,
+  "test_smape": 91.0632,
+  "test_per_user_nmae": 58.3608,
   "naive_7d_mae": 989.764615,
   "naive_7d_rmse": 1649.280634,
   "moving_avg_30d_mae": 926.367527,
   "moving_avg_30d_rmse": 1425.732313,
   "beat_moving_avg": true,
-  "timestamp": "2026-03-29 14:32:45"
+  "timestamp": "2026-03-30 15:12:22"
 }

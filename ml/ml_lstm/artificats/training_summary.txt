@@ -1,20 +1,41 @@
 
-=======================================================
+============================================================
 Training Run Summary — LSTM Transfer Learning
-=======================================================
-model_name       : lstm_transfer_v1
-feature_set      : user_selected_v1
-target_column    : future_expense_7d_sum
-val_mae          : 1,065.113159
-val_rmse         : 1,217.555542
+============================================================
+model_name        : lstm_transfer_v1
+target_column     : future_expense_7d_sum
+data_split        : per-user 70 / 15 / 15（時序切割）
+excluded_users    : ['user4', 'user5', 'user6', 'user14']
+timestamp         : 2026-03-30 13:26:37
 
+────────────────────────────────────────────────────────────
+Validation Set
+────────────────────────────────────────────────────────────
+  val_mae          :   1,042.1617
+  val_rmse         :   1,620.9261
+  val_smape        :        85.80 %
+  val_per_user_nmae:        73.33 %
+
+────────────────────────────────────────────────────────────
+Test Set（最終評估）
+────────────────────────────────────────────────────────────
+  test_mae         :     874.3771
+  test_rmse        :   1,166.0591
+  test_smape       :        75.15 %
+  test_per_user_nmae:     411.48 %
+
+────────────────────────────────────────────────────────────
 Dataset Sizes
-  train_rows     : 3389
-  val_rows       : 848
-  input_days     : 30
-  feature_count  : 7
+────────────────────────────────────────────────────────────
+  train_rows       : 2852
+  val_rows         : 683
+  test_rows        : 702
+  input_days       : 30
+  feature_count    : 7
 
+────────────────────────────────────────────────────────────
 Selected Features
+────────────────────────────────────────────────────────────
   - daily_expense
   - expense_7d_mean
   - expense_30d_sum
@@ -22,24 +43,32 @@ Selected Features
   - has_income
   - net_30d_sum
   - txn_30d_sum
+
+────────────────────────────────────────────────────────────
 Baselines
-  naive_7d_sum mae          : 8,130.198974
-  naive_7d_sum rmse         : 23,669.372811
-  moving_avg_30d_x7 mae     : 7,019.182884
-  moving_avg_30d_x7 rmse    : 19,089.005327
+────────────────────────────────────────────────────────────
+  naive_7d_sum mae          :     989.7646
+  naive_7d_sum rmse         :   1,649.2806
+  moving_avg_30d_x7 mae     :     926.3675
+  moving_avg_30d_x7 rmse    :   1,425.7323
   beat_moving_avg_30d_x7    : True
 
+────────────────────────────────────────────────────────────
 Risk Thresholds
+────────────────────────────────────────────────────────────
   🟢 安全  : 預測消費 < 餘額 30%
   🟡 注意  : 預測消費 < 餘額 50%
   🟠 警告  : 預測消費 < 餘額 80%
   🔴 危險  : 預測消費 ≥ 餘額 80%
 
+────────────────────────────────────────────────────────────
 Artifacts
-  finetune_model   : artificats/finetune_lstm.pth
-  pretrain_model   : artificats/pretrain_lstm.pth
-  feature_scaler   : artificats/personal_feature_scaler.pkl
-  target_scaler    : artificats/personal_target_scaler.pkl
-  predictions_csv  : artificats/predictions_val.csv
-  metrics_json     : artificats/metrics.json
-=======================================================
+────────────────────────────────────────────────────────────
+  finetune_model    : artificats/finetune_lstm.pth
+  pretrain_model    : artificats/pretrain_lstm.pth
+  feature_scaler    : artificats/personal_feature_scaler.pkl
+  target_scaler     : artificats/personal_target_scaler.pkl
+  predictions_test  : artificats/predictions_test.csv
+  predictions_val   : artificats/predictions_val.csv
+  metrics_json      : artificats/metrics.json
+============================================================

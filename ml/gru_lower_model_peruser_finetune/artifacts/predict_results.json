@@ -1,95 +1,95 @@
 {
-  "timestamp": "2026-03-29 02:50:58",
+  "timestamp": "2026-03-30 14:33:56",
   "baselines": {
     "naive_7d_mae": 8130.2,
     "moving_avg_mae": 7019.18
   },
   "overall_metrics": {
     "Global SmallGRU": {
-      "test_mae": 826.39,
-      "test_rmse": 1173.62,
-      "test_smape": 78.6899,
-      "test_nmae": 188.172
+      "test_mae": 829.11,
+      "test_rmse": 1148.15,
+      "test_smape": 76.8015,
+      "test_nmae": 264.2928
     },
     "Per-user Fine-tuned": {
-      "test_mae": 786.77,
-      "test_rmse": 1160.26,
-      "test_smape": 78.9076,
-      "test_nmae": 87.8543
+      "test_mae": 796.87,
+      "test_rmse": 1150.04,
+      "test_smape": 78.9363,
+      "test_nmae": 171.7967
     }
   },
   "per_user_detail": {
     "user1": {
       "n_test": 15,
-      "global_mae": 637.25,
-      "finetuned_mae": 515.74,
-      "improvement": 121.52
+      "global_mae": 639.71,
+      "finetuned_mae": 494.71,
+      "improvement": 145.0
     },
     "user10": {
       "n_test": 62,
-      "global_mae": 724.64,
-      "finetuned_mae": 820.97,
-      "improvement": -96.33
+      "global_mae": 663.65,
+      "finetuned_mae": 766.56,
+      "improvement": -102.91
     },
     "user11": {
       "n_test": 49,
-      "global_mae": 684.51,
-      "finetuned_mae": 651.58,
-      "improvement": 32.93
+      "global_mae": 728.06,
+      "finetuned_mae": 579.91,
+      "improvement": 148.16
     },
     "user12": {
       "n_test": 49,
-      "global_mae": 506.38,
-      "finetuned_mae": 547.25,
-      "improvement": -40.87
+      "global_mae": 540.21,
+      "finetuned_mae": 739.68,
+      "improvement": -199.47
     },
     "user13": {
       "n_test": 75,
-      "global_mae": 1337.02,
-      "finetuned_mae": 1318.5,
-      "improvement": 18.52
+      "global_mae": 1296.64,
+      "finetuned_mae": 1301.53,
+      "improvement": -4.89
     },
     "user15": {
       "n_test": 66,
-      "global_mae": 617.23,
-      "finetuned_mae": 572.22,
-      "improvement": 45.01
+      "global_mae": 585.64,
+      "finetuned_mae": 547.81,
+      "improvement": 37.83
     },
     "user16": {
       "n_test": 53,
-      "global_mae": 1058.57,
-      "finetuned_mae": 1055.71,
-      "improvement": 2.87
+      "global_mae": 935.89,
+      "finetuned_mae": 929.13,
+      "improvement": 6.76
     },
     "user2": {
       "n_test": 50,
-      "global_mae": 789.11,
-      "finetuned_mae": 707.99,
-      "improvement": 81.12
+      "global_mae": 787.76,
+      "finetuned_mae": 727.65,
+      "improvement": 60.11
     },
     "user3": {
       "n_test": 50,
-      "global_mae": 646.11,
-      "finetuned_mae": 618.7,
-      "improvement": 27.42
+      "global_mae": 643.13,
+      "finetuned_mae": 550.94,
+      "improvement": 92.19
     },
     "user7": {
       "n_test": 51,
-      "global_mae": 921.86,
-      "finetuned_mae": 986.57,
-      "improvement": -64.71
+      "global_mae": 976.2,
+      "finetuned_mae": 1024.52,
+      "improvement": -48.32
     },
     "user8": {
       "n_test": 50,
-      "global_mae": 1382.79,
-      "finetuned_mae": 1376.13,
-      "improvement": 6.66
+      "global_mae": 1239.75,
+      "finetuned_mae": 1267.95,
+      "improvement": -28.2
     },
     "user9": {
       "n_test": 72,
-      "global_mae": 453.72,
-      "finetuned_mae": 134.27,
-      "improvement": 319.45
+      "global_mae": 702.49,
+      "finetuned_mae": 408.18,
+      "improvement": 294.31
     }
   }
 }

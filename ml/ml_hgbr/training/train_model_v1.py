@@ -103,6 +103,18 @@ def compute_regression_metrics(actual: np.ndarray, prediction: np.ndarray) -> di
     }
 
 
+def per_user_nmae(y_true: np.ndarray, y_pred: np.ndarray, user_ids: np.ndarray) -> float:
+    """每個 user 的 MAE ÷ 該 user y_true 均值，再對所有 user 取平均（%）"""
+    y_true, y_pred = y_true.flatten(), y_pred.flatten()
+    nmae_list = []
+    for u in np.unique(user_ids):
+        mask = user_ids == u
+        mean_u = y_true[mask].mean()
+        if mean_u > 0:
+            nmae_list.append(np.mean(np.abs(y_pred[mask] - y_true[mask])) / mean_u * 100)
+    return float(np.mean(nmae_list))
+
+
 def compute_target_distribution(y: np.ndarray) -> dict[str, float]:
     return {
         "mean": float(np.mean(y)),
@@ -427,6 +439,7 @@ def build_training_report(metrics: dict, output_paths: dict[str, Path], beat_mes
         f"best_val_metric: {metrics['best_val_metric']:.6f}",
         f"test_mae: {metrics['test_mae']:.6f}",
         f"test_rmse: {metrics['test_rmse']:.6f}",
+        f"test_per_user_nmae: {metrics['test_per_user_nmae']:.4f} %",
         "",
         "Baselines",
         f"naive_7d_sum mae: {baseline_naive['mae']:.6f}",
@@ -542,6 +555,9 @@ def main() -> None:
     naive_metrics = compute_regression_metrics(y_test, naive_predictions)
     moving_avg_metrics = compute_regression_metrics(y_test, moving_avg_predictions)
 
+    test_user_ids = test_df["user_id"].to_numpy()
+    test_nmae = per_user_nmae(y_test, model_predictions, test_user_ids)
+
     metric_rows = [
         {"model_name": "mlp", "mae": candidate_test_metrics["mlp"]["mae"], "rmse": candidate_test_metrics["mlp"]["rmse"]},
         {"model_name": "hgbr", "mae": candidate_test_metrics["hgbr"]["mae"], "rmse": candidate_test_metrics["hgbr"]["rmse"]},
@@ -610,6 +626,7 @@ def main() -> None:
         "best_val_metric": float(best_candidate["best_val_metric"]),
         "test_mae": float(model_metrics["mae"]),
         "test_rmse": float(model_metrics["rmse"]),
+        "test_per_user_nmae": round(test_nmae, 4),
         "baseline_mae": {
             "naive_7d_sum": float(naive_metrics["mae"]),
             "moving_avg_30d_x7": float(moving_avg_metrics["mae"]),

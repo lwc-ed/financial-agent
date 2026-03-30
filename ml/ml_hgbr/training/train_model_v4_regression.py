@@ -108,6 +108,18 @@ def compute_regression_metrics(actual: np.ndarray, prediction: np.ndarray) -> di
     }
 
 
+def per_user_nmae(y_true: np.ndarray, y_pred: np.ndarray, user_ids: np.ndarray) -> float:
+    """每個 user 的 MAE ÷ 該 user y_true 均值，再對所有 user 取平均（%）"""
+    y_true, y_pred = y_true.flatten(), y_pred.flatten()
+    nmae_list = []
+    for u in np.unique(user_ids):
+        mask = user_ids == u
+        mean_u = y_true[mask].mean()
+        if mean_u > 0:
+            nmae_list.append(np.mean(np.abs(y_pred[mask] - y_true[mask])) / mean_u * 100)
+    return float(np.mean(nmae_list))
+
+
 def fit_mlp(
     x_train: np.ndarray,
     y_train: np.ndarray,
@@ -290,6 +302,9 @@ def main() -> None:
     naive_metrics = compute_regression_metrics(y_test, naive_predictions)
     moving_avg_metrics = compute_regression_metrics(y_test, moving_avg_predictions)
 
+    test_user_ids = test_df["user_id"].to_numpy()
+    test_nmae = per_user_nmae(y_test, test_predictions, test_user_ids)
+
     print("== Model v4_regression Final Evaluation ==")
     print(f"best_trial_id={best_result['trial_id']}")
     print(f"best_val_mae={best_result['val_metrics']['mae']:.6f}")
@@ -325,6 +340,7 @@ def main() -> None:
         "best_val_rmse": float(best_result["val_metrics"]["rmse"]),
         "test_mae": float(model_metrics["mae"]),
         "test_rmse": float(model_metrics["rmse"]),
+        "test_per_user_nmae": round(test_nmae, 4),
         "baseline_mae": {
             "naive_7d_sum": float(naive_metrics["mae"]),
             "moving_avg_30d_x7": float(moving_avg_metrics["mae"]),
@@ -367,6 +383,7 @@ def main() -> None:
         f"best_val_rmse: {best_result['val_metrics']['rmse']:.6f}",
         f"test_mae: {model_metrics['mae']:.6f}",
         f"test_rmse: {model_metrics['rmse']:.6f}",
+        f"test_per_user_nmae: {test_nmae:.4f} %",
         "",
         "Dataset Sizes",
         f"train_rows: {len(train_df)}",
