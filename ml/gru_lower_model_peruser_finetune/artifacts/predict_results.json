@@ -1,0 +1,95 @@
+{
+  "timestamp": "2026-03-30 14:33:56",
+  "baselines": {
+    "naive_7d_mae": 8130.2,
+    "moving_avg_mae": 7019.18
+  },
+  "overall_metrics": {
+    "Global SmallGRU": {
+      "test_mae": 829.11,
+      "test_rmse": 1148.15,
+      "test_smape": 76.8015,
+      "test_nmae": 264.2928
+    },
+    "Per-user Fine-tuned": {
+      "test_mae": 796.87,
+      "test_rmse": 1150.04,
+      "test_smape": 78.9363,
+      "test_nmae": 171.7967
+    }
+  },
+  "per_user_detail": {
+    "user1": {
+      "n_test": 15,
+      "global_mae": 639.71,
+      "finetuned_mae": 494.71,
+      "improvement": 145.0
+    },
+    "user10": {
+      "n_test": 62,
+      "global_mae": 663.65,
+      "finetuned_mae": 766.56,
+      "improvement": -102.91
+    },
+    "user11": {
+      "n_test": 49,
+      "global_mae": 728.06,
+      "finetuned_mae": 579.91,
+      "improvement": 148.16
+    },
+    "user12": {
+      "n_test": 49,
+      "global_mae": 540.21,
+      "finetuned_mae": 739.68,
+      "improvement": -199.47
+    },
+    "user13": {
+      "n_test": 75,
+      "global_mae": 1296.64,
+      "finetuned_mae": 1301.53,
+      "improvement": -4.89
+    },
+    "user15": {
+      "n_test": 66,
+      "global_mae": 585.64,
+      "finetuned_mae": 547.81,
+      "improvement": 37.83
+    },
+    "user16": {
+      "n_test": 53,
+      "global_mae": 935.89,
+      "finetuned_mae": 929.13,
+      "improvement": 6.76
+    },
+    "user2": {
+      "n_test": 50,
+      "global_mae": 787.76,
+      "finetuned_mae": 727.65,
+      "improvement": 60.11
+    },
+    "user3": {
+      "n_test": 50,
+      "global_mae": 643.13,
+      "finetuned_mae": 550.94,
+      "improvement": 92.19
+    },
+    "user7": {
+      "n_test": 51,
+      "global_mae": 976.2,
+      "finetuned_mae": 1024.52,
+      "improvement": -48.32
+    },
+    "user8": {
+      "n_test": 50,
+      "global_mae": 1239.75,
+      "finetuned_mae": 1267.95,
+      "improvement": -28.2
+    },
+    "user9": {
+      "n_test": 72,
+      "global_mae": 702.49,
+      "finetuned_mae": 408.18,
+      "improvement": 294.31
+    }
+  }
+}
