@@ -11,14 +11,14 @@
 
 ### 🔹 1. Test Metrics（主要評估）
 
-| Model | Test MAE ↓ | Test RMSE ↓ | Test SMAPE ↓ | Per-user NMAE ↓ | Notes |
+| Model | Test MAE ↓ | Test RMSE ↓ | Val MAE | Val RMSE | Notes |
 |------|-----------|------------|--------------|----------------|------|
-| v0 (baseline transfer) | 842.21 | 1291.91 | 85.66% | 112.00% | Stable baseline |
-| v1 (enhanced) | 874.96 | 1279.94 | 85.16% | 132.09% | No improvement |
-| v2 | **822.82 ⭐** | **1183.05 ⭐** | 79.21% | 168.52% ❌ | Best overall accuracy |
-| v3 (log1p) | 910.09 ❌ | 1365.71 ❌ | 88.68% ❌ | 60.33% | Log transform failed |
-| v4 | 846.74 | 1211.90 | 79.42% | 208.24% ❌ | Unstable |
-| v5 (ensemble + bias) | 851.48 | 1265.93 | **69.04% ⭐** | **59.45% ⭐** | Best personalization |
+| v0 (baseline transfer) | 842.21 | 1291.91 | 813.14 | 1221.99 | Stable baseline |
+| v1 (enhanced) | 874.96 | 1279.94 | 837.69 | 1212.27 | No improvement |
+| v2 | **822.82 ⭐** | **1183.05 ⭐** | 861.55 | 1216.41 | Best overall accuracy |
+| v3 (log1p) | 910.09 ❌ | 1365.71 ❌ | 910.02 | 1360.37 | Log transform failed |
+| v4 | 846.74 | 1211.90 | 877.62 | 1229.30 | Unstable |
+| v5 (ensemble + bias) | 851.48 | 1265.93 | **770.02 ⭐** | 1203.94 | Best personalization |
 
 ---
 
