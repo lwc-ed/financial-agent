@@ -5,45 +5,42 @@
 
 模型表現需達成以下要求：
 - 優於 baseline
-- 優於原本的 GRU + finetune 結果
+- 優於原本的 GRU + finetune 結果(如下表)
 
-下面是整理成 README 可直接貼的「數據比較表 + 重點摘要」版本（乾淨、可讀性高、方便你們討論）：
+## 📊 GRU Model Experiment Results
 
-⸻
+### 🔹 1. Test Metrics（主要評估）
 
-📊 GRU 實驗結果總覽（v0 ~ v5）
+| Model | Test MAE ↓ | Test RMSE ↓ | Test SMAPE ↓ | Per-user NMAE ↓ | Notes |
+|------|-----------|------------|--------------|----------------|------|
+| v0 (baseline transfer) | 842.21 | 1291.91 | 85.66% | 112.00% | Stable baseline |
+| v1 (enhanced) | 874.96 | 1279.94 | 85.16% | 132.09% | No improvement |
+| v2 | **822.82 ⭐** | **1183.05 ⭐** | 79.21% | 168.52% ❌ | Best overall accuracy |
+| v3 (log1p) | 910.09 ❌ | 1365.71 ❌ | 88.68% ❌ | 60.33% | Log transform failed |
+| v4 | 846.74 | 1211.90 | 79.42% | 208.24% ❌ | Unstable |
+| v5 (ensemble + bias) | 851.48 | 1265.93 | **69.04% ⭐** | **59.45% ⭐** | Best personalization |
 
-🔹 1. Test Metrics 比較（主要評估）
+---
 
-Model	Test MAE ↓	Test RMSE ↓	Test SMAPE ↓	Per-user NMAE ↓	備註
-v0 (baseline transfer)	842.21	1291.91	85.66%	112.00%	穩定 baseline
-v1 (enhanced)	874.96	1279.94	85.16%	132.09%	未改善
-v2	822.82 ⭐	1183.05 ⭐	79.21%	168.52% ❌	整體最佳
-v3 (log1p)	910.09 ❌	1365.71 ❌	88.68% ❌	60.33%	log 失敗
-v4	846.74	1211.90	79.42%	208.24% ❌	不穩定
-v5 (ensemble + bias)	851.48	1265.93	69.04% ⭐	59.45% ⭐	個人化最佳
+### 🔹 2. Validation Metrics（參考）
 
+| Model | Val MAE | Val RMSE | Val SMAPE | Val per-user NMAE |
+|------|--------|---------|----------|------------------|
+| v0 | 813.14 | 1221.99 | 91.61% | 92.01% |
+| v1 | 837.69 | 1212.27 | 90.36% | 88.38% |
+| v2 | 861.55 | 1216.41 | 87.64% | 105.92% |
+| v3 | 910.02 | 1360.37 | 105.01% | 86.41% |
+| v4 | 877.62 | 1229.30 | 87.61% | 121.30% |
+| v5 | **770.02 ⭐** | 1203.94 | **81.76% ⭐** | **70.99% ⭐** |
 
-⸻
+---
 
-🔹 2. Validation Metrics（參考）
+### 🔹 3. Baseline Comparison
 
-Model	Val MAE	Val RMSE	Val SMAPE	Val per-user NMAE
-v0	813.14	1221.99	91.61%	92.01%
-v1	837.69	1212.27	90.36%	88.38%
-v2	861.55	1216.41	87.64%	105.92%
-v3	910.02	1360.37	105.01%	86.41%
-v4	877.62	1229.30	87.61%	121.30%
-v5	770.02 ⭐	1203.94	81.76% ⭐	70.99% ⭐
-
-
-🔹 3. Baseline 比較
-
-Method	MAE	RMSE
-naive_7d	989.76	1649.28
-moving_avg_30d	926.37	1425.73
-
-
+| Method | MAE | RMSE |
+|-------|-----|------|
+| naive_7d | 989.76 | 1649.28 |
+| moving_avg_30d | 926.37 | 1425.73 |
 
 ---
 
