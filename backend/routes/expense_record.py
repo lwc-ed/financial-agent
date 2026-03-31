@@ -58,7 +58,7 @@ def save_expense():
     if not category:
         return jsonify({"status": "error", "message": "category 必填"}), 400
     if amount is None or amount <= 0:
-        return jsonify({"status": "error", "message": "amount 必須是正整數（可接受 120、$1,200、120元）"}), 400
+        return jsonify({"status": "error", "message": "amount 必須是正整數"}), 400
     if tx_type not in ("支出", "收入"):
         return jsonify({"status": "error", "message": "type 只能是 '支出' 或 '收入'"}), 400
 

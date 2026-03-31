@@ -2,215 +2,765 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>理財小幫手 Dashboard</title>
+  <title>理財小幫手 - 專業報表版</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- LIFF SDK -->
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <!-- Tailwind -->
+  
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Chart.js -->
+  <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#10b981', // Emerald 600
+            secondary: '#3b82f6', // Blue 500
+            expense: '#ef4444', // Red 500
+          },
+          borderRadius: {
+            '3xl': '1.5rem',
+            '4xl': '2rem',
+          }
+        }
+      }
+    }
+  </script>
 
   <style>
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont; }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { 
+      font-family: 'Inter', system-ui, -apple-system, sans-serif; 
+      background-color: #f1f5f9;
+      color: #1e293b;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .tab-active { color: #10b981; border-bottom: 3px solid #10b981; }
+    .tab-inactive { color: #94a3b8; }
+
     .page { display: none; }
     .page.active { display: block; }
-    .tab-active { color: #059669; }
+
+    .fade-in { animation: fadeIn 0.3s ease-out; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .card {
+      background: white;
+      border-radius: 1.5rem;
+      border: 1px solid #f1f5f9;
+      box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    }
   </style>
 </head>
 
-<body class="bg-slate-200 min-h-screen flex justify-center">
+<body class="min-h-screen flex justify-center">
 
-<div class="w-full max-w-md bg-white min-h-screen shadow-xl flex flex-col">
+<div class="w-full max-w-md bg-white min-h-screen shadow-2xl flex flex-col relative overflow-hidden">
 
   <!-- Header -->
-  <header class="px-5 py-4 border-b flex justify-between items-center">
-    <h1
-      class="font-bold text-lg cursor-pointer"
-      onclick="showPage('home')"
-    >
+  <header id="app-header" class="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-30">
+    <h1 class="font-bold text-xl tracking-tight text-emerald-600 flex items-center gap-2 cursor-pointer" onclick="showSection('home')">
+      <i data-lucide="wallet" class="w-6 h-6"></i>
       理財小幫手
     </h1>
-    <button onclick="toggleDrawer(true)">☰</button>
+    <div class="flex items-center gap-2">
+      <button onclick="toggleDrawer(true)" class="p-2 hover:bg-slate-50 rounded-full transition-colors">
+        <i data-lucide="menu" class="w-6 h-6 text-slate-600"></i>
+      </button>
+    </div>
   </header>
 
   <!-- Side Drawer -->
-  <div id="drawer-overlay" class="hidden fixed inset-0 bg-black/40" onclick="toggleDrawer(false)"></div>
-  <div id="side-drawer" class="fixed top-0 right-[-100%] w-64 h-full bg-white shadow transition-all">
-    <div class="p-6 bg-emerald-600 text-white">
-      <p id="drawer-user-name" class="font-bold">---</p>
-      <p id="drawer-user-id" class="text-xs opacity-80 break-all"></p>
+  <div id="drawer-overlay" class="hidden fixed inset-0 bg-slate-900/40 z-40 backdrop-blur-sm transition-opacity" onclick="toggleDrawer(false)"></div>
+  <div id="side-drawer" class="fixed top-0 right-[-100%] w-72 h-full bg-white shadow-2xl z-50 flex flex-col transition-all duration-300 ease-in-out">
+    <div class="p-8 bg-emerald-600 text-white">
+      <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
+        <i data-lucide="user" class="w-8 h-8"></i>
+      </div>
+      <p class="font-bold text-xl">測試用戶</p>
+      <p class="text-sm opacity-70">U_LOCAL_TEST</p>
     </div>
-    <div class="p-4 space-y-2">
-      <button
-        onclick="toggleDrawer(false); showPage('saving')"
-        class="w-full text-left px-3 py-2 rounded hover:bg-slate-100 text-slate-700"
-      >
-        💰 儲蓄挑戰
+    <div class="p-4 flex-1">
+      <button onclick="showSection('home')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors mb-2 text-emerald-700 bg-emerald-50" data-section="home">
+        <i data-lucide="trending-up" class="w-5 h-5"></i> 資產總覽
+      </button>
+      <button onclick="showSection('report')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors mb-2 text-slate-600 hover:bg-slate-50" data-section="report">
+        <i data-lucide="bar-chart-3" class="w-5 h-5"></i> 每月報表
+      </button>
+      <button onclick="showSection('saving')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors text-slate-600 hover:bg-slate-50" data-section="saving">
+        <i data-lucide="target" class="w-5 h-5"></i> 儲蓄挑戰
       </button>
     </div>
   </div>
 
-  <!-- Main -->
-  <main class="flex-1 p-5 space-y-4 overflow-y-auto">
-
-    <section id="page-home" class="page active">
-      <p id="hi-user" class="text-xs text-slate-500 mb-2"></p>
-
-      <h2 class="text-xl font-bold mb-2">資產總覽</h2>
-
-      <div class="bg-emerald-600 text-white rounded-xl p-4 mb-4">
-        <p class="text-xs opacity-80">總資產</p>
-        <p id="display-balance" class="text-2xl font-bold">$0</p>
+  <!-- Main Content Area -->
+  <main id="main-content" class="flex-1 overflow-y-auto no-scrollbar pb-24">
+    
+    <!-- Section: Home (Asset Overview) -->
+    <section id="section-home" class="page active fade-in p-6 space-y-6">
+      <div class="flex flex-col gap-1">
+        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">歡迎回來</span>
+        <h2 class="text-2xl font-bold text-slate-800">資產總覽</h2>
       </div>
 
-      <div class="h-40 bg-slate-100 rounded p-2">
-        <canvas id="mainChart"></canvas>
+      <div class="bg-emerald-600 rounded-3xl p-8 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
+        <div class="relative z-10">
+          <p class="text-sm opacity-80 mb-1">總資產估值</p>
+          <p id="home-balance" class="text-4xl font-bold tracking-tight">$0</p>
+        </div>
+        <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+      </div>
+
+      <div class="card p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="font-semibold text-slate-700 flex items-center gap-2">
+            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i> 資產趨勢
+          </h3>
+          <span class="text-xs text-slate-400">最近 7 天</span>
+        </div>
+        <div class="h-48 w-full">
+          <canvas id="home-trend-chart"></canvas>
+        </div>
       </div>
     </section>
 
-    <section id="page-saving" class="page">
-      <h2 class="text-xl font-bold mb-2">儲蓄挑戰</h2>
+    <!-- Section: Report (Monthly Report - The new feature) -->
+    <section id="section-report" class="page fade-in">
+      <!-- Report Header -->
+      <div class="px-6 pt-4 pb-2 space-y-4 sticky top-0 bg-white z-20">
+        <div class="flex justify-center items-center gap-6 text-sm font-bold text-slate-600">
+          <button onclick="changeMonth(-1)" class="p-1 hover:text-emerald-600 transition-colors">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+          </button>
+          <span id="report-month-display">2026/02/01 — 2026/02/28</span>
+          <button onclick="changeMonth(1)" class="p-1 hover:text-emerald-600 transition-colors">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
+        </div>
 
-      <!-- 寵物挑戰列表 -->
-      <div id="saving-pet-list" class="grid grid-cols-1 gap-4">
-        <!-- JS 會動態插入寵物卡片 -->
+        <div class="flex justify-between px-2 pt-2 border-b border-slate-100 text-xs font-bold tracking-wider overflow-x-auto no-scrollbar">
+          <button onclick="setTab('overview')" id="tab-overview" class="pb-2 px-3 tab-active whitespace-nowrap">總覽</button>
+          <button onclick="setTab('details')" id="tab-details" class="pb-2 px-3 tab-inactive whitespace-nowrap">明細</button>
+          <button onclick="setTab('category')" id="tab-category" class="pb-2 px-3 tab-inactive whitespace-nowrap">類別</button>
+          <button onclick="setTab('ranking')" id="tab-ranking" class="pb-2 px-3 tab-inactive whitespace-nowrap">排行</button>
+          <button class="pb-2 px-3 tab-inactive whitespace-nowrap">帳戶</button>
+        </div>
       </div>
 
-
+      <div id="report-content" class="p-6">
+        <!-- Tab content injected here -->
+      </div>
     </section>
 
-    <!-- Floating Add Button -->
-    <button
-      id="fab-add-wishlist"
-      onclick="openWishlistPicker()"
-      class="hidden fixed bottom-6 right-6 w-14 h-14 rounded-full
-             bg-emerald-600 text-white text-3xl
-             shadow-lg flex items-center justify-center"
-    >
-      +
-    </button>
-
-    <!-- Wishlist Picker Modal -->
-    <div
-      id="wishlist-modal"
-      class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-    >
-      <div class="bg-white w-80 rounded-xl p-4">
-        <h3 class="font-bold mb-2">選擇願望清單項目</h3>
-
-        <select
-          id="wishlist-select"
-          class="w-full border rounded px-2 py-1"
-        >
-          <option>載入中...</option>
-        </select>
-
-        <div class="flex justify-end mt-4 space-x-2">
-          <button
-            onclick="closeWishlistPicker()"
-            class="px-3 py-1 text-sm"
-          >取消</button>
-          <button
-            onclick="confirmCreateChallenge()"
-            class="px-3 py-1 text-sm bg-emerald-600 text-white rounded"
-          >
-            確定
-          </button>
+    <!-- Section: Saving (Pet Challenges) -->
+    <section id="section-saving" class="page fade-in p-6 space-y-6">
+      <div class="flex justify-between items-end">
+        <div class="flex flex-col gap-1">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">夢想清單</span>
+          <h2 class="text-2xl font-bold text-slate-800">儲蓄挑戰</h2>
         </div>
+        <button onclick="openModal('wishlist-modal')" class="bg-emerald-600 text-white p-2 rounded-xl shadow-lg shadow-emerald-100">
+          <i data-lucide="plus" class="w-6 h-6"></i>
+        </button>
       </div>
-    </div>
-    <!-- Pet Selection Modal -->
-    <div
-      id="pet-modal"
-      class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50"
-    >
-      <div class="bg-white rounded-xl w-80 p-4">
-        <h3 class="font-bold mb-3 text-center">選擇你的夥伴</h3>
-
-        <div
-          id="pet-option-grid"
-          class="grid grid-cols-4 gap-3 mb-4"
-        >
-          <!-- JS 會動態插入寵物選項 -->
-        </div>
-
-        <div class="flex justify-end gap-2">
-          <button
-            onclick="closePetPickerModal()"
-            class="px-3 py-1 text-sm rounded border"
-          >
-            取消
-          </button>
-          <button
-            onclick="confirmPetSelection()"
-            class="px-3 py-1 text-sm bg-emerald-600 text-white rounded"
-          >
-            確定
-          </button>
-        </div>
+      <div id="challenge-list" class="grid grid-cols-1 gap-4">
+        <!-- Challenges injected here -->
       </div>
-    </div>
-
-    <!-- Pet Interaction Modal -->
-    <div
-      id="pet-interact-modal"
-      class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50 pointer-events-auto"
-    >
-      <div class="bg-white rounded-xl w-80 p-4 pointer-events-auto">
-        <h3 id="pet-title" class="font-bold text-center mb-2"></h3>
-
-        <p id="pet-stage" class="text-center text-sm text-slate-500 mb-2"></p>
-
-        <div class="h-32 bg-slate-100 rounded flex items-center justify-center mb-3">
-          <div id="pet-animation"></div>
-        </div>
-
-        <div class="text-sm mb-2">
-          <p>目前：$<span id="pet-current"></span></p>
-          <p>目標：$<span id="pet-target"></span></p>
-        </div>
-
-        <div class="w-full bg-slate-200 rounded h-2 mb-3">
-          <div
-            id="pet-progress"
-            class="bg-emerald-600 h-2 rounded"
-            style="width: 0%"
-          ></div>
-        </div>
-
-        <input
-          id="feed-input"
-          type="number"
-          placeholder="存入金額"
-          class="w-full border rounded px-2 py-1 mb-3"
-        />
-
-        <div class="flex justify-end gap-2">
-          <button
-            type="button"
-            onclick="closePetModal()"
-            class="text-sm"
-          >
-            取消
-          </button>
-          <button
-            onclick="feedPet()"
-            class="bg-emerald-600 text-white text-sm px-3 py-1 rounded"
-          >
-            餵食
-          </button>
-        </div>
-      </div>
-    </div>
-
+    </section>
 
   </main>
 
+  <!-- Bottom Navigation -->
+  <nav class="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-100 px-8 py-3 flex justify-between items-center z-40">
+    <button onclick="showSection('home')" id="nav-home" class="text-emerald-600">
+      <i data-lucide="wallet" class="w-6 h-6"></i>
+    </button>
+    <button onclick="showSection('saving')" id="nav-saving" class="text-slate-400 hover:text-emerald-600">
+      <i data-lucide="piggy-bank" class="w-6 h-6"></i>
+    </button>
+    <div class="relative -top-6">
+      <button onclick="openModal('record-modal')" class="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-lg shadow-emerald-200 transform active:scale-90 transition-transform">
+        <i data-lucide="plus" class="w-8 h-8"></i>
+      </button>
+    </div>
+    <button onclick="showSection('report')" id="nav-report" class="text-slate-400 hover:text-emerald-600">
+      <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+    </button>
+    <button class="text-slate-400 hover:text-emerald-600">
+      <i data-lucide="settings-2" class="w-6 h-6"></i>
+    </button>
+  </nav>
+
+  <!-- Modals -->
+  <div id="modal-overlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60]" onclick="closeModals()"></div>
+  
+  <!-- Add Record Modal -->
+  <div id="record-modal" class="hidden fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-white rounded-t-[2.5rem] p-8 z-[70] shadow-2xl fade-in">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="text-xl font-bold text-slate-800">新增紀錄</h3>
+      <button onclick="closeModals()" class="text-slate-400"><i data-lucide="x" class="w-6 h-6"></i></button>
+    </div>
+    <div class="space-y-4">
+      <div class="flex bg-slate-100 rounded-2xl p-1">
+        <button onclick="setRecordType('expense')" id="btn-expense" class="flex-1 py-2 rounded-xl text-sm font-bold bg-white shadow-sm text-red-600">支出</button>
+        <button onclick="setRecordType('income')" id="btn-income" class="flex-1 py-2 rounded-xl text-sm font-bold text-slate-400">收入</button>
+      </div>
+      <select id="record-category" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-4 text-sm outline-none text-slate-700 font-medium"></select>
+      <input type="number" id="record-amount" placeholder="金額" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-4 text-xl outline-none font-bold text-slate-800">
+      <input type="text" id="record-note" placeholder="備註" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-4 text-sm outline-none text-slate-700">
+      <input type="date" id="record-date" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-4 text-sm outline-none text-slate-700">
+      <button onclick="saveRecord()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold text-lg mt-4 shadow-lg shadow-emerald-100">儲存紀錄</button>
+    </div>
+  </div>
+
+  <!-- Wishlist Modal -->
+  <div id="wishlist-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-xs bg-white rounded-3xl p-6 z-[70] shadow-2xl">
+    <h3 class="text-xl font-bold text-slate-800 mb-4">選擇願望清單</h3>
+    <div id="wishlist-options" class="space-y-3 mb-6"></div>
+    <div class="flex gap-3">
+      <button onclick="closeModals()" class="flex-1 py-3 text-slate-400 font-medium">取消</button>
+      <button onclick="confirmWishlist()" class="flex-2 bg-emerald-600 text-white py-3 rounded-xl font-bold">下一步</button>
+    </div>
+  </div>
+
+  <!-- Pet Modal -->
+  <div id="pet-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-xs bg-white rounded-3xl p-6 z-[70] shadow-2xl">
+    <h3 class="text-xl font-bold text-slate-800 mb-2 text-center">選擇你的夥伴</h3>
+    <p class="text-xs text-slate-400 text-center mb-6">牠將陪伴你一起達成儲蓄目標</p>
+    <div id="pet-options" class="grid grid-cols-4 gap-3 mb-8"></div>
+    <div class="flex gap-3">
+      <button onclick="closeModals()" class="flex-1 py-3 text-slate-400 font-medium">取消</button>
+      <button onclick="createChallenge()" class="flex-2 bg-emerald-600 text-white py-3 rounded-xl font-bold">開始挑戰</button>
+    </div>
+  </div>
+
+  <!-- Feed Modal -->
+  <div id="feed-modal" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-xs bg-white rounded-3xl p-8 z-[70] shadow-2xl">
+    <div class="text-center mb-6">
+      <h3 id="feed-title" class="text-xl font-bold text-slate-800">挑戰名稱</h3>
+      <p id="feed-status" class="text-xs text-slate-400">努力儲蓄中...</p>
+    </div>
+    <div class="aspect-square bg-slate-50 rounded-3xl flex items-center justify-center mb-6 text-7xl" id="feed-emoji">🐱</div>
+    <div class="space-y-4 mb-8">
+      <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+        <div id="feed-progress-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
+      </div>
+      <div class="flex justify-between text-xs text-slate-400 font-medium">
+        <span id="feed-current">$0</span>
+        <span id="feed-target">$0</span>
+      </div>
+    </div>
+    <input type="number" id="feed-amount" placeholder="輸入金額" class="w-full bg-slate-50 border-none rounded-2xl py-4 px-6 text-center font-bold mb-4 outline-none text-slate-800">
+    <button onclick="confirmFeed()" class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-bold shadow-lg shadow-emerald-100">餵食夥伴</button>
+  </div>
+
 </div>
 
-<script type="module" src="/static/js/app.js"></script>
+<script>
+  // --- State ---
+  let state = {
+    section: 'home',
+    tab: 'overview',
+    month: new Date(),
+    balance: 50000,
+    records: JSON.parse(localStorage.getItem('records')) || [
+      { id: '1', date: '2026-02-22', category: '晚餐', amount: 63, type: 'expense', note: '披薩' },
+      { id: '2', date: '2026-02-22', category: '宵夜', amount: 31, type: 'expense', note: '串燒' },
+      { id: '3', date: '2026-02-23', category: '午餐', amount: 110, type: 'expense', note: '漢堡' },
+      { id: '4', date: '2026-02-23', category: '晚餐', amount: 85, type: 'expense', note: '義大利麵' },
+      { id: '5', date: '2026-02-23', category: '飲料', amount: 26, type: 'expense', note: '綠茶' },
+      { id: '6', date: '2026-02-24', category: '午餐', amount: 110, type: 'expense', note: '便當' },
+      { id: '7', date: '2026-02-25', category: '薪資', amount: 50000, type: 'income', note: '月薪' }
+    ],
+    challenges: JSON.parse(localStorage.getItem('challenges')) || [],
+    recordType: 'expense',
+    selectedWishlist: null,
+    selectedPet: 'cat',
+    activeChallengeId: null
+  };
+
+  const CATEGORIES = {
+    expense: ['午餐', '晚餐', '宵夜', '飲料', '交通', '購物', '娛樂', '醫療', '房租', '水電', '通訊', '學習', '社交', '其他'],
+    income: ['薪資', '獎金', '投資', '兼職', '租金', '其他']
+  };
+
+  const WISHLIST = [
+    { id: '1', name: '新款 iPhone', price: 35000 },
+    { id: '2', name: '日本旅遊', price: 50000 },
+    { id: '3', name: 'PS5 遊戲機', price: 17500 }
+  ];
+
+  const PETS = [
+    { id: 'cat', emoji: '🐱' }, { id: 'dog', emoji: '🐶' }, { id: 'rabbit', emoji: '🐰' }, { id: 'hamster', emoji: '🐹' },
+    { id: 'fox', emoji: '🦊' }, { id: 'panda', emoji: '🐼' }, { id: 'koala', emoji: '🐨' }, { id: 'tiger', emoji: '🐯' }
+  ];
+
+  const CHART_COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316'];
+
+  let homeTrendChart, reportDoughnut, reportTrend;
+
+  // --- Navigation ---
+  function showSection(sectionId) {
+    state.section = sectionId;
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`section-${sectionId}`).classList.add('active');
+    
+    // Update Nav Icons
+    document.querySelectorAll('nav button').forEach(btn => btn.classList.replace('text-emerald-600', 'text-slate-400'));
+    const activeNav = document.getElementById(`nav-${sectionId}`);
+    if(activeNav) activeNav.classList.replace('text-slate-400', 'text-emerald-600');
+
+    // Update Drawer
+    document.querySelectorAll('.nav-btn').forEach(b => {
+      b.classList.remove('bg-emerald-50', 'text-emerald-700');
+      b.classList.add('text-slate-600', 'hover:bg-slate-50');
+      if(b.dataset.section === sectionId) {
+        b.classList.add('bg-emerald-50', 'text-emerald-700');
+        b.classList.remove('text-slate-600', 'hover:bg-slate-50');
+      }
+    });
+
+    toggleDrawer(false);
+    render();
+  }
+
+  function setTab(tabId) {
+    state.tab = tabId;
+    document.querySelectorAll('#section-report button[id^="tab-"]').forEach(el => {
+      el.classList.remove('tab-active');
+      el.classList.add('tab-inactive');
+    });
+    document.getElementById(`tab-${tabId}`).classList.add('tab-active');
+    document.getElementById(`tab-${tabId}`).classList.remove('tab-inactive');
+    renderReportContent();
+  }
+
+  function toggleDrawer(open) {
+    const drawer = document.getElementById('side-drawer');
+    const overlay = document.getElementById('drawer-overlay');
+    if(open) {
+      drawer.style.right = '0';
+      overlay.classList.remove('hidden');
+    } else {
+      drawer.style.right = '-100%';
+      overlay.classList.add('hidden');
+    }
+  }
+
+  function changeMonth(delta) {
+    state.month.setMonth(state.month.getMonth() + delta);
+    render();
+  }
+
+  // --- Modals ---
+  function openModal(id) {
+    document.getElementById('modal-overlay').classList.remove('hidden');
+    document.getElementById(id).classList.remove('hidden');
+    if(id === 'wishlist-modal') renderWishlistOptions();
+    if(id === 'pet-modal') renderPetOptions();
+    if(id === 'record-modal') {
+      document.getElementById('record-date').value = new Date().toISOString().split('T')[0];
+      setRecordType('expense');
+    }
+  }
+
+  function closeModals() {
+    document.getElementById('modal-overlay').classList.add('hidden');
+    document.querySelectorAll('[id$="-modal"]').forEach(m => m.classList.add('hidden'));
+  }
+
+  // --- Records ---
+  function setRecordType(type) {
+    state.recordType = type;
+    const btnExp = document.getElementById('btn-expense');
+    const btnInc = document.getElementById('btn-income');
+    const select = document.getElementById('record-category');
+    
+    if(type === 'expense') {
+      btnExp.className = "flex-1 py-2 rounded-xl text-sm font-bold bg-white shadow-sm text-red-600";
+      btnInc.className = "flex-1 py-2 rounded-xl text-sm font-bold text-slate-400";
+      select.innerHTML = CATEGORIES.expense.map(c => `<option>${c}</option>`).join('');
+    } else {
+      btnInc.className = "flex-1 py-2 rounded-xl text-sm font-bold bg-white shadow-sm text-emerald-600";
+      btnExp.className = "flex-1 py-2 rounded-xl text-sm font-bold text-slate-400";
+      select.innerHTML = CATEGORIES.income.map(c => `<option>${c}</option>`).join('');
+    }
+  }
+
+  function saveRecord() {
+    const amount = Number(document.getElementById('record-amount').value);
+    if(!amount) return;
+    const record = {
+      id: Date.now().toString(),
+      type: state.recordType,
+      category: document.getElementById('record-category').value,
+      amount: amount,
+      note: document.getElementById('record-note').value,
+      date: document.getElementById('record-date').value
+    };
+    state.records.unshift(record);
+    localStorage.setItem('records', JSON.stringify(state.records));
+    closeModals();
+    render();
+  }
+
+  // --- Challenges ---
+  function renderWishlistOptions() {
+    const container = document.getElementById('wishlist-options');
+    container.innerHTML = WISHLIST.map(item => `
+      <button onclick="state.selectedWishlist='${item.id}'; renderWishlistOptions()" class="w-full p-4 rounded-2xl border text-left transition-all ${state.selectedWishlist === item.id ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/20' : 'border-slate-100'}">
+        <p class="font-bold text-slate-700">${item.name}</p>
+        <p class="text-xs text-slate-400">$${item.price.toLocaleString()}</p>
+      </button>
+    `).join('');
+  }
+
+  function confirmWishlist() {
+    if(!state.selectedWishlist) return;
+    document.getElementById('wishlist-modal').classList.add('hidden');
+    openModal('pet-modal');
+  }
+
+  function renderPetOptions() {
+    const container = document.getElementById('pet-options');
+    container.innerHTML = PETS.map(pet => `
+      <button onclick="state.selectedPet='${pet.id}'; renderPetOptions()" class="aspect-square rounded-2xl flex items-center justify-center text-2xl transition-all ${state.selectedPet === pet.id ? 'bg-emerald-100 ring-2 ring-emerald-500 scale-110' : 'bg-slate-50'}">
+        ${pet.emoji}
+      </button>
+    `).join('');
+  }
+
+  function createChallenge() {
+    const wish = WISHLIST.find(w => w.id === state.selectedWishlist);
+    const pet = PETS.find(p => p.id === state.selectedPet);
+    state.challenges.push({
+      id: Date.now().toString(),
+      name: wish.name,
+      target: wish.price,
+      current: 0,
+      pet: pet.id,
+      emoji: pet.emoji
+    });
+    localStorage.setItem('challenges', JSON.stringify(state.challenges));
+    closeModals();
+    showSection('saving');
+  }
+
+  function openFeed(id) {
+    state.activeChallengeId = id;
+    const c = state.challenges.find(ch => ch.id === id);
+    document.getElementById('feed-title').innerText = c.name;
+    document.getElementById('feed-emoji').innerText = c.emoji;
+    document.getElementById('feed-target').innerText = '$' + c.target.toLocaleString();
+    document.getElementById('feed-current').innerText = '$' + c.current.toLocaleString();
+    document.getElementById('feed-status').innerText = c.current >= c.target ? '已達成目標！' : '努力儲蓄中...';
+    document.getElementById('feed-progress-bar').style.width = (c.current / c.target * 100) + '%';
+    openModal('feed-modal');
+  }
+
+  function confirmFeed() {
+    const amount = Number(document.getElementById('feed-amount').value);
+    if(!amount) return;
+    const c = state.challenges.find(ch => ch.id === state.activeChallengeId);
+    c.current = Math.min(c.target, c.current + amount);
+    localStorage.setItem('challenges', JSON.stringify(state.challenges));
+    closeModals();
+    render();
+    document.getElementById('feed-amount').value = '';
+  }
+
+  // --- Main Rendering ---
+  function render() {
+    // Update Balance
+    const income = state.records.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+    const expense = state.records.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+    const saved = state.challenges.reduce((s, c) => s + c.current, 0);
+    state.balance = 50000 + income - expense - saved;
+    
+    if(state.section === 'home') {
+      document.getElementById('home-balance').innerText = '$' + state.balance.toLocaleString();
+      renderHomeTrend();
+    } else if(state.section === 'report') {
+      renderReportContent();
+    } else if(state.section === 'saving') {
+      renderSavingList();
+    }
+    
+    lucide.createIcons();
+  }
+
+  function renderSavingList() {
+    document.getElementById('challenge-list').innerHTML = state.challenges.map(c => `
+      <div onclick="openFeed('${c.id}')" class="card p-5 hover:shadow-md transition-all cursor-pointer group">
+        <div class="flex items-center gap-4 mb-4">
+          <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-3xl">${c.emoji}</div>
+          <div class="flex-1">
+            <h4 class="font-bold text-slate-800">${c.name}</h4>
+            <p class="text-xs text-slate-400 font-medium">進度：${Math.round(c.current/c.target*100)}%</p>
+          </div>
+          <i data-lucide="chevron-right" class="w-5 h-5 text-slate-300"></i>
+        </div>
+        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+          <div class="bg-emerald-500 h-full" style="width: ${c.current/c.target*100}%"></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function renderReportContent() {
+    const container = document.getElementById('report-content');
+    const monthStr = state.month.toISOString().substring(0, 7);
+    const startOfMonth = new Date(state.month.getFullYear(), state.month.getMonth(), 1);
+    const endOfMonth = new Date(state.month.getFullYear(), state.month.getMonth() + 1, 0);
+    
+    document.getElementById('report-month-display').innerText = 
+      `${formatDate(startOfMonth)} — ${formatDate(endOfMonth)}`;
+
+    const filtered = state.records.filter(r => r.date.startsWith(monthStr));
+    const expenses = filtered.filter(r => r.type === 'expense');
+    const totalExpense = expenses.reduce((s, r) => s + r.amount, 0);
+
+    if(state.tab === 'overview') {
+      container.innerHTML = `
+        <div class="space-y-8">
+          <div class="space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold text-slate-400">支出</span>
+                <span class="bg-red-50 text-red-500 text-[10px] px-2 py-0.5 rounded-full font-bold">${expenses.length}</span>
+              </div>
+              <span class="text-red-500 font-bold text-lg">-$${totalExpense.toLocaleString()}</span>
+            </div>
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+              <div class="bg-red-500 h-full" style="width: 100%"></div>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-center py-6">
+            <h3 class="text-xl font-bold text-slate-800 mb-6">類別佔比</h3>
+            <div class="relative w-56 h-56">
+              <canvas id="report-doughnut"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span class="text-slate-400 text-xs font-bold">總支出</span>
+                <span class="text-slate-800 font-bold text-xl">$${totalExpense.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <h3 class="text-lg font-bold text-slate-800">TOP 3 支出</h3>
+            <div class="space-y-4">
+              ${expenses.sort((a,b) => b.amount - a.amount).slice(0, 3).map(r => `
+                <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+                  <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm">
+                      ${getEmoji(r.category)}
+                    </div>
+                    <span class="font-bold text-slate-700">${r.note || r.category}</span>
+                  </div>
+                  <div class="text-right">
+                    <p class="text-red-500 font-bold">$${r.amount.toLocaleString()}</p>
+                    <span class="text-[10px] bg-white text-slate-400 px-2 py-0.5 rounded-full border border-slate-100">錢包</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      renderDoughnut('report-doughnut', expenses);
+    } else if(state.tab === 'details') {
+      container.innerHTML = `
+        <div class="space-y-6">
+          <div class="card p-6 h-48 w-full">
+            <canvas id="report-trend"></canvas>
+          </div>
+          <div class="space-y-8">
+            ${groupRecordsByDate(expenses).map(group => `
+              <div class="space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+                  <span class="text-xs font-bold text-slate-400">${formatDateFull(group.date)}</span>
+                  <span class="text-xs font-bold text-slate-500">-$${group.total.toLocaleString()}</span>
+                </div>
+                <div class="space-y-6">
+                  ${group.items.map(r => `
+                    <div class="flex justify-between items-center">
+                      <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-xl">
+                          ${getEmoji(r.category)}
+                        </div>
+                        <span class="font-bold text-slate-700">${r.note || r.category}</span>
+                      </div>
+                      <div class="text-right">
+                        <p class="text-red-500 font-bold">$${r.amount.toLocaleString()}</p>
+                        <span class="text-[10px] bg-slate-50 text-slate-400 px-2 py-0.5 rounded-full border border-slate-100">錢包</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      renderTrendChart('report-trend', expenses);
+    } else if(state.tab === 'category') {
+      const catTotals = getCategoryTotals(expenses);
+      container.innerHTML = `
+        <div class="space-y-8">
+          <div class="flex flex-col items-center py-6">
+            <div class="relative w-64 h-64">
+              <canvas id="report-doughnut-large"></canvas>
+              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                <span class="text-slate-800 font-bold text-3xl">$${totalExpense.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-6">
+            ${catTotals.map(c => `
+              <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+                <div class="flex items-center gap-4">
+                  <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm">
+                    ${getEmoji(c.name)}
+                  </div>
+                  <span class="font-bold text-slate-700">${c.name} (${c.count})</span>
+                </div>
+                <span class="text-red-500 font-bold">$${c.value.toLocaleString()}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+      renderDoughnut('report-doughnut-large', expenses, true);
+    } else if(state.tab === 'ranking') {
+      container.innerHTML = `
+        <div class="space-y-6">
+          ${expenses.sort((a,b) => b.amount - a.amount).map(r => `
+            <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm">
+                  ${getEmoji(r.category)}
+                </div>
+                <span class="font-bold text-slate-700">${r.note || r.category}</span>
+              </div>
+              <div class="text-right">
+                <p class="text-red-500 font-bold">$${r.amount.toLocaleString()}</p>
+                <span class="text-[10px] bg-white text-slate-400 px-2 py-0.5 rounded-full border border-slate-100">錢包</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+  }
+
+  // --- Helpers ---
+  function formatDate(date) { return date.toISOString().split('T')[0].replace(/-/g, '/'); }
+  function formatDateFull(dateStr) {
+    const d = new Date(dateStr);
+    const dayNames = ['週日', '週一', '週二', '週三', '週四', '週五', '週六'];
+    return `${dateStr.replace(/-/g, '/')} ${dayNames[d.getDay()]}`;
+  }
+  function getEmoji(cat) {
+    const map = { '午餐': '🍔', '晚餐': '🍕', '宵夜': '🍜', '飲料': '🍹', '交通': '🚌', '購物': '🛍️', '娛樂': '🎮', '醫療': '🏥', '其他': '✨' };
+    return map[cat] || '✨';
+  }
+  function groupRecordsByDate(records) {
+    const groups = {};
+    records.forEach(r => {
+      if(!groups[r.date]) groups[r.date] = { date: r.date, items: [], total: 0 };
+      groups[r.date].items.push(r);
+      groups[r.date].total += r.amount;
+    });
+    return Object.values(groups).sort((a,b) => b.date.localeCompare(a.date));
+  }
+  function getCategoryTotals(records) {
+    const cats = {};
+    records.forEach(r => {
+      if(!cats[r.category]) cats[r.category] = { name: r.category, value: 0, count: 0 };
+      cats[r.category].value += r.amount;
+      cats[r.category].count++;
+    });
+    return Object.values(cats).sort((a,b) => b.value - a.value);
+  }
+
+  // --- Charts ---
+  function renderHomeTrend() {
+    const ctx = document.getElementById('home-trend-chart').getContext('2d');
+    if(homeTrendChart) homeTrendChart.destroy();
+    const labels = Array.from({length: 7}, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() - (6 - i));
+      return (d.getMonth() + 1) + '/' + d.getDate();
+    });
+    homeTrendChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: [45000, 46000, 45500, 48000, 49000, 49500, state.balance],
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true, tension: 0.4, pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { size: 10 } } } }
+      }
+    });
+  }
+
+  function renderDoughnut(id, records, showLabels = false) {
+    const ctx = document.getElementById(id).getContext('2d');
+    const totals = getCategoryTotals(records);
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: totals.map(t => t.name),
+        datasets: [{ data: totals.map(t => t.value), backgroundColor: CHART_COLORS, borderWidth: 0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '75%',
+        plugins: { legend: { display: false } }
+      }
+    });
+  }
+
+  function renderTrendChart(id, records) {
+    const ctx = document.getElementById(id).getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['W6', 'W7', 'W8', 'W9'],
+        datasets: [{
+          data: [0, 0, 0, records.reduce((s,r) => s+r.amount, 0)],
+          borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true, tension: 0.4, pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { font: { size: 10 } } },
+          x: { grid: { display: false }, ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+
+  window.onload = () => { render(); lucide.createIcons(); };
+</script>
 
 </body>
 </html>
