@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-DATA_DIR = "wallmart"
+DATA_DIR = "../wallmart"
 ARTIFACTS_DIR = "artificats"
 INPUT_DAYS = 30
 

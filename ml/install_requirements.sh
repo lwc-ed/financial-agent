@@ -7,4 +7,6 @@ pip install -r ./ml_gru/requirements.txt
 pip install -r ./ml_gru_nopretrain/requirements.txt
 pip install -r ./ml_hgbr/requirements.txt
 pip install -r ./ml_lstm/requirements.txt
+pip install -r ./ml_rf/requirements.txt
+pip install -r ./ml_XGboost/requirements.txt
 

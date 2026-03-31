@@ -46,7 +46,7 @@ import numpy as np
 import pandas as pd
 
 BASE_DIR = Path(__file__).resolve().parents[1]
-RAW_PATH = BASE_DIR / "data" / "raw_transactions_user2.xlsx"
+RAW_PATH = BASE_DIR.parent / "data" / "raw_transactions_user2.xlsx"
 OUT_PARQUET = BASE_DIR / "artifacts" / "daily_ledger_user2.parquet"
 OUT_CSV = BASE_DIR / "artifacts" / "daily_ledger_user2.csv"
 

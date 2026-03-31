@@ -12,6 +12,7 @@ from datetime import datetime
 ARTIFACTS_DIR  = "artificats"
 VERSION        = "v5"
 ENSEMBLE_SEEDS = [42, 123, 777]
+RESULT_PATH    = "result_v5.txt"
 
 if torch.backends.mps.is_available():  device = torch.device("mps")
 elif torch.cuda.is_available():        device = torch.device("cuda")
@@ -212,8 +213,35 @@ metrics = {
 with open(f"{ARTIFACTS_DIR}/metrics_v{VERSION}.json", "w") as f:
     json.dump(metrics, f, indent=2)
 
+test_pred_path = f"{ARTIFACTS_DIR}/predictions_test_{VERSION}.csv"
 pd.DataFrame({"y_true": y_test_true.flatten(), "y_pred": y_test_pred_corrected.flatten(),
               "abs_error": np.abs(y_test_pred_corrected - y_test_true).flatten()}).to_csv(
-    f"{ARTIFACTS_DIR}/predictions_test_v{VERSION}.csv", index=False)
+    test_pred_path, index=False)
 
-print(f"\n✅ V{VERSION} metrics 已儲存：{ARTIFACTS_DIR}/metrics_v{VERSION}.json")
+metrics_path = f"{ARTIFACTS_DIR}/metrics_{VERSION}.json"
+result_text = f"""GRU Predict Result
+model_name: gru_{VERSION}_ensemble_bias
+version: {VERSION}
+ensemble_seeds: {ENSEMBLE_SEEDS}
+val_mae: {val_mae:,.6f}
+val_rmse: {val_rmse:,.6f}
+val_smape: {val_smape:.2f}%
+val_per_user_nmae: {val_nmae:.2f}%
+test_mae: {test_mae:,.6f}
+test_rmse: {test_rmse:,.6f}
+test_smape: {test_smape:.2f}%
+test_per_user_nmae: {test_nmae:.2f}%
+test_mae_before_bias_correction: {test_mae_raw:,.6f}
+naive_7d_mae: {naive_mae:,.6f}
+naive_7d_rmse: {naive_rmse:,.6f}
+moving_avg_30d_mae: {ma_mae:,.6f}
+moving_avg_30d_rmse: {ma_rmse:,.6f}
+beat_moving_avg: {test_mae < ma_mae}
+metrics_json: {metrics_path}
+test_predictions_csv: {test_pred_path}
+"""
+with open(RESULT_PATH, "w", encoding="utf-8") as f:
+    f.write(result_text)
+
+print(f"\n✅ V{VERSION} metrics 已儲存：{metrics_path}")
+print(f"📝 V{VERSION} Result 已儲存：{RESULT_PATH}")
