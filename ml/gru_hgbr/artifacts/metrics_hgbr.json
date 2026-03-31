@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-30 14:30:25",
+  "timestamp": "2026-03-31 14:37:58",
   "embedding_dim": 64,
   "flat_feature_dim": 22,
   "combined_dim": 86,
@@ -18,16 +18,16 @@
       "n_iter": 1000
     },
     "HGBR_emb_and_flat": {
-      "val_mae": 95.42,
-      "val_rmse": 276.95,
-      "val_smape": 53.6279,
-      "val_nmae": 11.5411,
-      "test_mae": 876.62,
-      "test_rmse": 1273.24,
-      "test_smape": 80.8406,
-      "test_nmae": 213.2146,
+      "val_mae": 78.81,
+      "val_rmse": 234.02,
+      "val_smape": 52.735,
+      "val_nmae": 9.9056,
+      "test_mae": 938.03,
+      "test_rmse": 1342.45,
+      "test_smape": 80.7916,
+      "test_nmae": 284.761,
       "n_features": 86,
-      "n_iter": 1000
+      "n_iter": 956
     }
   },
   "embedding_helps": true

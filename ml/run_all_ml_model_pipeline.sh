@@ -24,4 +24,10 @@ bash "$SCRIPT_DIR/ml_hgbr/run_training_expanding_window_version.sh"
 echo "Step 6: run ml_lstm"
 bash "$SCRIPT_DIR/ml_lstm/run_pipeline.sh"
 
+echo "Step 7: run ml_rf"
+bash "$SCRIPT_DIR/ml_rf/run_pipeline.sh"
+
+echo "Step 8: run ml_XGboost"
+bash "$SCRIPT_DIR/ml_XGboost/run_pipeline.sh
+
 echo "Pipeline done"

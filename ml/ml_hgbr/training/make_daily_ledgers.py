@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 import numpy as np
 
-DATA_DIR = Path("data")
+DATA_DIR = Path("../data")
 OUT_DIR = Path("artifacts")
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
