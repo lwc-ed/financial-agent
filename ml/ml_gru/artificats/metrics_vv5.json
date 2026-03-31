@@ -1,0 +1,24 @@
+{
+  "model_name": "gru_vv5_ensemble_bias",
+  "version": "v5",
+  "ensemble_seeds": [
+    42,
+    123,
+    777
+  ],
+  "val_mae": 754.59436,
+  "val_rmse": 1181.096313,
+  "val_smape": 81.71,
+  "val_per_user_nmae": 77.7356,
+  "test_mae": 830.629883,
+  "test_rmse": 1297.315796,
+  "test_smape": 70.0695,
+  "test_per_user_nmae": 58.3436,
+  "test_mae_before_bias_correction": 897.663757,
+  "naive_7d_mae": 989.764615,
+  "naive_7d_rmse": 1649.280634,
+  "moving_avg_30d_mae": 926.367527,
+  "moving_avg_30d_rmse": 1425.732313,
+  "beat_moving_avg": true,
+  "timestamp": "2026-03-30 15:44:30"
+}

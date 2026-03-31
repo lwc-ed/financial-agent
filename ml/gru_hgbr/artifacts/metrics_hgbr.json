@@ -1,0 +1,34 @@
+{
+  "timestamp": "2026-03-30 14:30:25",
+  "embedding_dim": 64,
+  "flat_feature_dim": 22,
+  "combined_dim": 86,
+  "gru_source": "finetune_gru_v4.pth",
+  "models": {
+    "HGBR_flat_only": {
+      "val_mae": 168.11,
+      "val_rmse": 327.48,
+      "val_smape": 58.6651,
+      "val_nmae": 24.8558,
+      "test_mae": 994.36,
+      "test_rmse": 1372.49,
+      "test_smape": 82.8523,
+      "test_nmae": 186.1416,
+      "n_features": 22,
+      "n_iter": 1000
+    },
+    "HGBR_emb_and_flat": {
+      "val_mae": 95.42,
+      "val_rmse": 276.95,
+      "val_smape": 53.6279,
+      "val_nmae": 11.5411,
+      "test_mae": 876.62,
+      "test_rmse": 1273.24,
+      "test_smape": 80.8406,
+      "test_nmae": 213.2146,
+      "n_features": 86,
+      "n_iter": 1000
+    }
+  },
+  "embedding_helps": true
+}

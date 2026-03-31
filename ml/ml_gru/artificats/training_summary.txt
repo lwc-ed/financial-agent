@@ -1,0 +1,54 @@
+
+=======================================================
+Training Run Summary — GRU Transfer Learning
+=======================================================
+model_name       : gru_transfer_v1
+feature_set      : user_selected_v1
+target_column    : future_expense_7d_sum
+val_mae          : 800.297363
+val_rmse         : 1,199.979492
+val_smape        : 87.64%
+val_per_user_nmae: 84.05%
+test_mae         : 837.896057
+test_rmse        : 1,257.547729
+test_smape       : 80.99%
+test_per_user_nmae: 143.94%
+
+Dataset Sizes
+  train_rows     : 2960
+  val_rows       : 635
+  test_rows      : 642
+  input_days     : 30
+  feature_count  : 7
+
+Selected Features
+  - daily_expense
+  - expense_7d_mean
+  - expense_30d_sum
+  - has_expense
+  - has_income
+  - net_30d_sum
+  - txn_30d_sum
+
+Baselines
+  naive_7d_sum mae          : 989.764615
+  naive_7d_sum rmse         : 1,649.280634
+  moving_avg_30d_x7 mae     : 926.367527
+  moving_avg_30d_x7 rmse    : 1,425.732313
+  beat_moving_avg_30d_x7    : True
+
+Risk Thresholds
+  🟢 安全  : 預測消費 < 餘額 30%
+  🟡 注意  : 預測消費 < 餘額 50%
+  🟠 警告  : 預測消費 < 餘額 80%
+  🔴 危險  : 預測消費 ≥ 餘額 80%
+
+Artifacts
+  finetune_model   : artificats/finetune_gru.pth
+  pretrain_model   : artificats/pretrain_gru.pth
+  feature_scaler   : artificats/personal_feature_scaler.pkl
+  target_scaler    : artificats/personal_target_scaler.pkl
+  val_predictions_csv : artificats/predictions_val.csv
+  test_predictions_csv: artificats/predictions_test.csv
+  metrics_json     : artificats/metrics.json
+=======================================================
