@@ -1,6 +1,0 @@
-model_name,trial,feature_set,feature_count,iterations,val_mae,val_rmse,learning_rate,max_depth,max_leaf_nodes,min_samples_leaf,l2_regularization
-hgbr_v2,1,user_selected_v1,7,125,3412.852353362025,11553.043858578134,0.03,3.0,15,10,0.0
-hgbr_v2,2,user_selected_v1,7,85,3488.6625808512126,11648.390306298046,0.05,3.0,15,10,0.1
-hgbr_v2,3,user_selected_v1,7,84,3444.0176861373084,11538.154537794402,0.05,4.0,31,8,0.0
-hgbr_v2,4,user_selected_v1,7,61,3383.315753683492,11193.416953809667,0.08,3.0,31,5,0.1
-hgbr_v2,5,user_selected_v1,7,53,3312.456293884264,11284.437134576618,0.1,,15,5,0.0
