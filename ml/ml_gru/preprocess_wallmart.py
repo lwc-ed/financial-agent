@@ -19,7 +19,7 @@ from sklearn.preprocessing import StandardScaler
 # ─────────────────────────────────────────
 # 0. 設定
 # ─────────────────────────────────────────
-DATA_DIR      = "wallmart"
+DATA_DIR      = "../walmart"
 ARTIFACTS_DIR = "artificats"
 INPUT_DAYS    = 30
 

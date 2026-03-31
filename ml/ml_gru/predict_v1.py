@@ -16,6 +16,7 @@ from datetime import datetime
 
 ARTIFACTS_DIR = "artificats"
 VERSION       = "v1"
+RESULT_PATH   = "result_v1.txt"
 
 
 # ─────────────────────────────────────────
@@ -334,5 +335,30 @@ summary_path = f"{ARTIFACTS_DIR}/training_summary_v1.txt"
 with open(summary_path, "w", encoding="utf-8") as f:
     f.write(summary)
 
+result_text = f"""GRU Predict Result
+model_name: gru_transfer_v1_enhanced
+version: {VERSION}
+val_mae: {val_mae:,.6f}
+val_rmse: {val_rmse:,.6f}
+val_smape: {val_smape:.2f}%
+val_per_user_nmae: {val_nmae:.2f}%
+test_mae: {test_mae:,.6f}
+test_rmse: {test_rmse:,.6f}
+test_smape: {test_smape:.2f}%
+test_per_user_nmae: {test_nmae:.2f}%
+naive_7d_mae: {naive_mae:,.6f}
+naive_7d_rmse: {naive_rmse:,.6f}
+moving_avg_30d_mae: {ma_mae:,.6f}
+moving_avg_30d_rmse: {ma_rmse:,.6f}
+beat_moving_avg: {beat_moving_avg}
+metrics_json: {metrics_path}
+val_predictions_csv: {val_pred_path}
+test_predictions_csv: {test_pred_path}
+summary_txt: {summary_path}
+"""
+with open(RESULT_PATH, "w", encoding="utf-8") as f:
+    f.write(result_text)
+
 print(f"📄 V1 Summary 已儲存：{summary_path}")
+print(f"📝 V1 Result 已儲存：{RESULT_PATH}")
 print(f"📊 Metrics 已儲存：{metrics_path}")

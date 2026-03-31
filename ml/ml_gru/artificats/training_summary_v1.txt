@@ -7,18 +7,18 @@ architecture      : GRUWithAttention (hidden=128, layers=2)
 version           : v1
 feature_set       : user_selected_v1
 target_column     : future_expense_7d_sum
-val_mae           : 838.194214
-val_rmse          : 1,244.537231
-val_smape         : 90.05%
-val_per_user_nmae : 119.46%
-test_mae          : 876.507202
-test_rmse         : 1,308.765259
-test_smape        : 83.11%
-test_per_user_nmae: 146.61%
+val_mae           : 837.693298
+val_rmse          : 1,212.269897
+val_smape         : 90.36%
+val_per_user_nmae : 88.38%
+test_mae          : 874.962036
+test_rmse         : 1,279.944824
+test_smape        : 85.16%
+test_per_user_nmae: 132.09%
 
 V0 vs V1 Comparison
-  test_mae  V0=837.896057  →  V1=876.51
-  test_smape V0=80.9937%  →  V1=83.11%
+  test_mae  V0=842.208313  →  V1=874.96
+  test_smape V0=85.6593%  →  V1=85.16%
 
 Dataset Sizes
   train_rows    : 2960

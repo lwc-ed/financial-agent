@@ -1,18 +1,18 @@
 {
   "model_name": "gru_vv2",
   "version": "v2",
-  "val_mae": 844.652283,
-  "val_rmse": 1192.320679,
-  "val_smape": 88.5002,
-  "val_per_user_nmae": 104.9462,
-  "test_mae": 820.080017,
-  "test_rmse": 1229.754028,
-  "test_smape": 80.7717,
-  "test_per_user_nmae": 120.0314,
+  "val_mae": 861.550781,
+  "val_rmse": 1216.407959,
+  "val_smape": 87.6383,
+  "val_per_user_nmae": 105.9191,
+  "test_mae": 822.823792,
+  "test_rmse": 1183.049438,
+  "test_smape": 79.215,
+  "test_per_user_nmae": 168.522,
   "naive_7d_mae": 989.764615,
   "naive_7d_rmse": 1649.280634,
   "moving_avg_30d_mae": 926.367527,
   "moving_avg_30d_rmse": 1425.732313,
   "beat_moving_avg": true,
-  "timestamp": "2026-03-30 15:06:20"
+  "timestamp": "2026-03-31 18:58:42"
 }

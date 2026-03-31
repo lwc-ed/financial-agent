@@ -5,14 +5,14 @@ Training Run Summary — GRU Transfer Learning
 model_name       : gru_transfer_v1
 feature_set      : user_selected_v1
 target_column    : future_expense_7d_sum
-val_mae          : 800.297363
-val_rmse         : 1,199.979492
-val_smape        : 87.64%
-val_per_user_nmae: 84.05%
-test_mae         : 837.896057
-test_rmse        : 1,257.547729
-test_smape       : 80.99%
-test_per_user_nmae: 143.94%
+val_mae          : 813.138367
+val_rmse         : 1,221.992432
+val_smape        : 91.61%
+val_per_user_nmae: 92.01%
+test_mae         : 842.208313
+test_rmse        : 1,291.905884
+test_smape       : 85.66%
+test_per_user_nmae: 112.00%
 
 Dataset Sizes
   train_rows     : 2960

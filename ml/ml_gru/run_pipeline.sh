@@ -7,6 +7,8 @@ PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 if [[ -n "${VIRTUAL_ENV:-}" && -x "${VIRTUAL_ENV}/bin/python" ]]; then
   PYTHON_BIN="${VIRTUAL_ENV}/bin/python"
+elif [[ -x "${SCRIPT_DIR}/venv_ml_gru/bin/python" ]]; then
+  PYTHON_BIN="${SCRIPT_DIR}/venv_ml_gru/bin/python"
 elif [[ -x "${PROJECT_ROOT}/.venv/bin/python" ]]; then
   PYTHON_BIN="${PROJECT_ROOT}/.venv/bin/python"
 else
