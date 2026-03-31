@@ -9,7 +9,7 @@
 
 ## 📊 GRU Model Experiment Results
 
-### 🔹 1. Test Metrics（主要評估）
+### 🔹 1. Evaluation Metrics（主要評估）(表一)
 
 | Model | Test MAE ↓ | Test RMSE ↓ | Val MAE | Val RMSE | Notes |
 |------|-----------|------------|--------------|----------------|------|
@@ -21,21 +21,7 @@
 | v5 (ensemble + bias) | 851.48 | 1265.93 | **770.02 ⭐** | 1203.94 | Best personalization |
 
 ---
-
-### 🔹 2. Validation Metrics（參考）
-
-| Model | Val MAE | Val RMSE | Val SMAPE | Val per-user NMAE |
-|------|--------|---------|----------|------------------|
-| v0 | 813.14 | 1221.99 | 91.61% | 92.01% |
-| v1 | 837.69 | 1212.27 | 90.36% | 88.38% |
-| v2 | 861.55 | 1216.41 | 87.64% | 105.92% |
-| v3 | 910.02 | 1360.37 | 105.01% | 86.41% |
-| v4 | 877.62 | 1229.30 | 87.61% | 121.30% |
-| v5 | **770.02 ⭐** | 1203.94 | **81.76% ⭐** | **70.99% ⭐** |
-
----
-
-### 🔹 3. Baseline Comparison
+### 🔹 2. Baseline Comparison (表二)
 
 | Method | MAE | RMSE |
 |-------|-----|------|
@@ -114,17 +100,3 @@
 - `/ml/ml_lstm/predict.py`
 
 ---
-
-
-
----
-
-## ✅ 總結
-請確保你的資料夾具備：
-- 可重現（reproducible）
-- 有清楚說明（README）
-- 可直接執行（requirements + pipeline）
-
-並且最終結果需：
-👉 明確 outperform baseline
-👉 明確優於原本 GRU + finetune
