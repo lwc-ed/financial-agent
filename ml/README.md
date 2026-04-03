@@ -19,7 +19,7 @@
 | v3 (log1p) | 910.09  | 1365.71  | 910.02 | 1360.37 | Log transform failed |
 | v4 | 846.74 | 1211.90 | 877.62 | 1229.30 | Unstable |
 | v5 (ensemble + bias) | 851.48 | 1265.93 | **770.02 ** | 1203.94 | Best personalization |
-|no pretrain| 836.29 | 1288.63 | 720.03 | 1154.28 | run_nopretrain.sh |
+|v5 (no pretrain)| 836.29 | 1288.63 | 720.03 | 1154.28 | run_nopretrain.sh |
 
 ---
 ### 🔹 2. Baseline Comparison (表二)
