@@ -61,6 +61,12 @@ Walmart 原始資料                    個人原始資料
 - bias correction 最後停用，因為這次實驗觀察到不做 correction 的 test MAE 更低
 
 #### 目前結果
+使用 MMD 衡量 source domain 與 target domain 的分布差距
+- `Before Alignment` MMD: 0.193
+- `After Alignment` MMD: 0.090
+- `MMD reduction %` ≈ 53.34%
+表示兩個資料集在 aligned feature space 中變得更接近
+
 這次 aligned pretrain 的測試結果為：
 - `No Pretrain` Test MAE: `836.29`
 - `Naive TL (V5)` Test MAE: `851.48`
