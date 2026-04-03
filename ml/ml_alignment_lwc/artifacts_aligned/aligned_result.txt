@@ -1,0 +1,29 @@
+GRU Aligned Pretrain Result
+model_name: gru_aligned_pretrain_ensemble_bias
+version: aligned
+pretrained: True (Rolling Z-score Alignment)
+ensemble_seeds: [42, 123, 456, 777, 789, 999, 2024]
+val_mae: 808.423889
+val_rmse: 1189.878784
+val_smape: 87.91%
+val_per_user_nmae: 104.65%
+test_mae: 795.238281
+test_rmse: 1179.409668
+test_smape: 80.21%
+test_per_user_nmae: 150.02%
+bias_correction: none（停用，實驗證明不做 correction 更佳）
+feature_type: rolling_zscore_aligned
+feature_cols: ['zscore_7d', 'zscore_30d', 'pct_change_norm', 'volatility_7d', 'is_above_mean_30d', 'dow_sin', 'dow_cos']
+
+==============================================================
+              方法比較（Test MAE，越低越好）
+==============================================================
+  No Pretrain      : 836.29   <- 基準
+  Naive TL (V5)    : 851.48   <- 有 pretrain 但無 alignment
+  Aligned Pretrain : 795.24   <- 本方法（Rolling Z-score Alignment）
+==============================================================
+  Val MAE:
+    No Pretrain      : 720.03
+    Naive TL (V5)    : 770.02
+    Aligned Pretrain : 808.42
+==============================================================

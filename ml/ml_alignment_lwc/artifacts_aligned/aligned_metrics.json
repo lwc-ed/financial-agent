@@ -1,0 +1,16 @@
+{
+  "val_mae": 808.4238891601562,
+  "val_rmse": 1189.8787841796875,
+  "val_smape": 87.90937805175781,
+  "val_per_user_nmae": 104.65000915527344,
+  "test_mae": 795.23828125,
+  "test_rmse": 1179.40966796875,
+  "test_smape": 80.21483612060547,
+  "test_per_user_nmae": 150.01783752441406,
+  "bias_correction": 0.0,
+  "comparison": {
+    "no_pretrain_test_mae": 836.293152,
+    "naive_tl_test_mae": 851.477722,
+    "aligned_test_mae": 795.23828125
+  }
+}
