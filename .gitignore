@@ -53,5 +53,26 @@ logs/
 # ---- ML Project ----
 ml_XGboost/data/
 ml_XGboost/models/
+# Generated training artifacts under ML pipelines
+ml/**/artifacts/**/*.npy
+ml/**/artifacts/**/*.pth
+ml/**/artifacts/**/*.pkl
+ml/**/artificats/**/*.npy
+ml/**/artificats/**/*.pth
+ml/**/artificats/**/*.pkl
+ml/**/artifacts_aligned/**/*.npy
+ml/**/artifacts_aligned/**/*.pth
+ml/**/artifacts_aligned/**/*.pkl
+ml/**/rf_output/**/*.pkl
+ml/**/models/**/*.pkl
+ml/**/models/**/*.pth
+ml/**/models/**/*.npy
+ml/**/outputs/**/*.npy
+ml/**/outputs/**/*.pth
+ml/**/outputs/**/*.pkl
+ml/**/checkpoints/**/*.npy
+ml/**/checkpoints/**/*.pth
+ml/**/checkpoints/**/*.pkl
+ml/ml_alignment_lwc/artifacts_aligned/metrics_aligned.json
 logs/.claude/
 .claude/
