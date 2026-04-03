@@ -64,7 +64,7 @@ Walmart 原始資料                    個人原始資料
 使用 MMD 衡量 source domain 與 target domain 的分布差距
 - `Before Alignment` MMD: 0.193
 - `After Alignment` MMD: 0.090
-- `MMD reduction %` ≈ 53.34%
+- `MMD reduction ` ≈ 53.34%
 表示兩個資料集在 aligned feature space 中變得更接近
 
 這次 aligned pretrain 的測試結果為：
