@@ -1,0 +1,14 @@
+{
+  "best_combo": [
+    789
+  ],
+  "val_mae": 777.5736083984375,
+  "val_rmse": 1184.3201904296875,
+  "test_mae": 750.6197509765625,
+  "test_rmse": 1172.1553955078125,
+  "test_smape": 81.17015075683594,
+  "test_per_user_nmae": 89.02667236328125,
+  "all_seeds_test_mae": 774.0343627929688,
+  "classmate_test_mae": 743.51,
+  "gap": 7.11
+}
