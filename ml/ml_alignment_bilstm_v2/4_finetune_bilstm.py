@@ -31,7 +31,7 @@ LEARNING_RATE = 3e-4
 PATIENCE      = 20
 WEIGHT_DECAY  = 1e-4
 HUBER_DELTA   = 1.0
-MMD_LAMBDA    = 0.1    # ← 與 pretrain 保持一致，看 scale 後再調
+MMD_LAMBDA    = 1.0    # ← 調整後：MMD 貢獻約 1~2%
 
 SEEDS = [42, 123, 777, 456, 789, 999, 2024,
          0, 7, 13, 21, 100, 314, 1234, 9999]

@@ -54,6 +54,9 @@ logs/
 ml_XGboost/data/
 ml_XGboost/models/
 # Generated training artifacts under ML pipelines
+ml/**/artifacts*/**/*.npy
+ml/**/artifacts*/**/*.pth
+ml/**/artifacts*/**/*.pkl
 ml/**/artifacts/**/*.npy
 ml/**/artifacts/**/*.pth
 ml/**/artifacts/**/*.pkl

@@ -86,9 +86,9 @@ y_val_scaled = np.load(f"{ARTIFACTS_DIR}/personal_aligned_y_val.npy")
 y_val_raw    = target_scaler.inverse_transform(y_val_scaled)
 
 
-def predict_ensemble(X: np.ndarray, seed_list: list) -> np.ndarray:
-    """Ensemble 平均推論"""
-    preds_list = []
+def get_all_preds(X: np.ndarray, seed_list: list) -> dict:
+    """每個 seed 各自推論，回傳 dict {seed: preds}"""
+    all_preds = {}
     for seed in seed_list:
         model_path = f"{ARTIFACTS_DIR}/finetune_aligned_gru_seed{seed}.pth"
         ckpt  = torch.load(model_path, map_location=device)
@@ -99,18 +99,26 @@ def predict_ensemble(X: np.ndarray, seed_list: list) -> np.ndarray:
         X_t = torch.tensor(X, dtype=torch.float32).to(device)
         with torch.no_grad():
             preds = model(X_t).cpu().numpy()
-        preds_list.append(preds)
+        all_preds[seed] = preds
+    return all_preds
 
-    return np.mean(preds_list, axis=0)
+
+def predict_ensemble(X: np.ndarray, seed_list: list) -> np.ndarray:
+    """Ensemble 平均推論"""
+    all_preds = get_all_preds(X, seed_list)
+    return np.mean([all_preds[s] for s in seed_list], axis=0)
 
 
 def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, user_ids: np.ndarray):
-    """計算 MAE, RMSE, SMAPE, per-user NMAE"""
-    mae  = float(np.mean(np.abs(y_true - y_pred)))
-    rmse = float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
+    """計算 MAE, RMSE, MedAE, SMAPE, per-user NMAE"""
+    errors = np.abs(y_true - y_pred)
+
+    mae   = float(np.mean(errors))
+    rmse  = float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
+    medae = float(np.median(errors))   # Median Absolute Error：不受極端值影響
 
     denom = (np.abs(y_true) + np.abs(y_pred)) / 2 + 1e-8
-    smape = float(np.mean(np.abs(y_true - y_pred) / denom) * 100)
+    smape = float(np.mean(errors / denom) * 100)
 
     # Per-user NMAE
     user_nmaes = []
@@ -121,22 +129,44 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, user_ids: np.ndarray
         user_nmaes.append(np.mean(np.abs(yt - yp)) / mean_abs)
     per_user_nmae = float(np.mean(user_nmaes) * 100)
 
-    return {"mae": mae, "rmse": rmse, "smape": smape, "per_user_nmae": per_user_nmae}
+    return {"mae": mae, "rmse": rmse, "medae": medae,
+            "smape": smape, "per_user_nmae": per_user_nmae}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 推論
+# 推論：暴力搜尋最佳 seed 組合（以 val MAE 為準）
 # ─────────────────────────────────────────────────────────────────────────────
-print("\n🔮 Ensemble 推論...")
-val_preds_scaled  = predict_ensemble(X_val,  SEEDS)
-test_preds_scaled = predict_ensemble(X_test, SEEDS)
+print("\n🔮 取得所有 seed 的推論結果...")
+val_preds_all  = get_all_preds(X_val,  SEEDS)
+test_preds_all = get_all_preds(X_test, SEEDS)
+
+print("\n🔍 暴力搜尋最佳 seed 組合（依 val MAE）...")
+from itertools import combinations
+
+best_val_mae   = float("inf")
+best_combo     = SEEDS
+
+for r in range(1, len(SEEDS) + 1):
+    for combo in combinations(SEEDS, r):
+        combo = list(combo)
+        val_scaled_avg  = np.mean([val_preds_all[s]  for s in combo], axis=0)
+        val_preds_combo = target_scaler.inverse_transform(val_scaled_avg)
+        mae = float(np.mean(np.abs(y_val_raw - val_preds_combo)))
+        if mae < best_val_mae:
+            best_val_mae = mae
+            best_combo   = combo
+
+print(f"  最佳 combo: seeds={best_combo}  val MAE={best_val_mae:.2f}")
+
+# 用最佳組合做最終推論
+val_preds_scaled  = np.mean([val_preds_all[s]  for s in best_combo], axis=0)
+test_preds_scaled = np.mean([test_preds_all[s] for s in best_combo], axis=0)
 
 # Inverse transform → 原始金額
 val_preds  = target_scaler.inverse_transform(val_preds_scaled)
 test_preds = target_scaler.inverse_transform(test_preds_scaled)
 
 # Bias Correction 已停用：實驗證明不做 correction 的 test MAE 更低
-# （val bias 無法穩定推廣到 test，做了反而更差）
 bias_before = 0.0
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -146,10 +176,12 @@ print("\n📊 計算評估指標...")
 val_metrics  = compute_metrics(y_val_raw,  val_preds,  val_user_ids)
 test_metrics = compute_metrics(y_test_raw, test_preds, test_user_ids)
 
-print(f"\n  Val  MAE : {val_metrics['mae']:.2f}")
-print(f"  Test MAE : {test_metrics['mae']:.2f}")
-print(f"  Test RMSE: {test_metrics['rmse']:.2f}")
+print(f"\n  Val  MAE  : {val_metrics['mae']:.2f}")
+print(f"  Test MAE  : {test_metrics['mae']:.2f}")
+print(f"  Test RMSE : {test_metrics['rmse']:.2f}")
+print(f"  Test MedAE: {test_metrics['medae']:.2f}  ← 不受極端值影響")
 print(f"  Test SMAPE: {test_metrics['smape']:.2f}%")
+print(f"  💡 若 MAE >> MedAE，代表有少數極端誤差在拉高 MAE")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 載入既有結果做三方比較
@@ -174,18 +206,19 @@ np_val  = existing_results.get('no_pretrain', {}).get('val_mae',  'N/A')
 tl_val  = existing_results.get('naive_tl_v5', {}).get('val_mae',  'N/A')
 
 comparison = f"""
-{'='*62}
-              方法比較（Test MAE，越低越好）
-{'='*62}
-  No Pretrain      : {fmt(np_test)}   <- 基準
-  Naive TL (V5)    : {fmt(tl_test)}   <- 有 pretrain 但無 alignment
-  Aligned Pretrain : {test_metrics['mae']:.2f}   <- 本方法（Rolling Z-score Alignment）
-{'='*62}
+{'='*65}
+           方法比較（Test MAE / MedAE，越低越好）
+{'='*65}
+              MAE     MedAE
+  No Pretrain      : {fmt(np_test):>7}   N/A    <- 基準
+  Naive TL (V5)    : {fmt(tl_test):>7}   N/A    <- 有 pretrain 但無 alignment
+  Aligned Pretrain : {test_metrics['mae']:>7.2f}   {test_metrics['medae']:>5.2f}  <- 本方法（MMD alignment）
+{'='*65}
   Val MAE:
     No Pretrain      : {fmt(np_val)}
     Naive TL (V5)    : {fmt(tl_val)}
     Aligned Pretrain : {val_metrics['mae']:.2f}
-{'='*62}
+{'='*65}
 """
 print(comparison)
 
@@ -194,15 +227,18 @@ print(comparison)
 # ─────────────────────────────────────────────────────────────────────────────
 result_text = f"""GRU Aligned Pretrain Result
 model_name: gru_aligned_pretrain_ensemble_bias
-version: aligned
-pretrained: True (Rolling Z-score Alignment)
-ensemble_seeds: {SEEDS}
+version: aligned_v3 (10 features + MMD loss)
+pretrained: True (Rolling Z-score Alignment + MMD)
+all_seeds: {SEEDS}
+best_combo: {best_combo}
 val_mae: {val_metrics['mae']:.6f}
 val_rmse: {val_metrics['rmse']:.6f}
+val_medae: {val_metrics['medae']:.6f}
 val_smape: {val_metrics['smape']:.2f}%
 val_per_user_nmae: {val_metrics['per_user_nmae']:.2f}%
 test_mae: {test_metrics['mae']:.6f}
 test_rmse: {test_metrics['rmse']:.6f}
+test_medae: {test_metrics['medae']:.6f}
 test_smape: {test_metrics['smape']:.2f}%
 test_per_user_nmae: {test_metrics['per_user_nmae']:.2f}%
 bias_correction: none（停用，實驗證明不做 correction 更佳）
@@ -217,13 +253,16 @@ with open(f"{ARTIFACTS_DIR}/aligned_result.txt", "w") as f:
 metrics_json = {
     "val_mae"             : val_metrics["mae"],
     "val_rmse"            : val_metrics["rmse"],
+    "val_medae"           : val_metrics["medae"],
     "val_smape"           : val_metrics["smape"],
     "val_per_user_nmae"   : val_metrics["per_user_nmae"],
     "test_mae"            : test_metrics["mae"],
     "test_rmse"           : test_metrics["rmse"],
+    "test_medae"          : test_metrics["medae"],
     "test_smape"          : test_metrics["smape"],
     "test_per_user_nmae"  : test_metrics["per_user_nmae"],
     "bias_correction"     : bias_before,
+    "best_combo"          : best_combo,
     "comparison": {
         "no_pretrain_test_mae": existing_results.get("no_pretrain", {}).get("test_mae"),
         "naive_tl_test_mae"   : existing_results.get("naive_tl_v5", {}).get("test_mae"),

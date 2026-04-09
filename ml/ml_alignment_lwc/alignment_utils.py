@@ -19,10 +19,13 @@ EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
 # ── 共用特徵欄位名稱 ─────────────────────────────────────────────────────────
 ALIGNED_FEATURE_COLS = [
     "zscore_7d",
+    "zscore_14d",           # NEW：補中間尺度（7d 與 30d 之間）
     "zscore_30d",
     "pct_change_norm",
     "volatility_7d",
     "is_above_mean_30d",
+    "pct_rank_7d",          # NEW：近 7 天百分位排名（0~1，天然 domain-invariant）
+    "pct_rank_30d",         # NEW：近 30 天百分位排名（0~1，天然 domain-invariant）
     "dow_sin",
     "dow_cos",
 ]
@@ -48,38 +51,52 @@ def compute_aligned_features(series: pd.Series, dates: pd.Series) -> pd.DataFram
     # ── 滾動統計 ──────────────────────────────────────────────────────────────
     roll7_mean  = s.rolling(7,  min_periods=1).mean()
     roll7_std   = s.rolling(7,  min_periods=2).std().fillna(0)
+    roll14_mean = s.rolling(14, min_periods=1).mean()
+    roll14_std  = s.rolling(14, min_periods=2).std().fillna(0)
     roll30_mean = s.rolling(30, min_periods=1).mean()
     roll30_std  = s.rolling(30, min_periods=2).std().fillna(0)
 
     # 1. 7日滾動 Z-score：「今天比最近一週的均值高/低幾個標準差」
     zscore_7d = ((s - roll7_mean) / (roll7_std + eps)).clip(-5, 5).fillna(0)
 
-    # 2. 30日滾動 Z-score：「今天比最近一個月的均值高/低幾個標準差」
+    # 2. 14日滾動 Z-score：補中間尺度訊號（7d 與 30d 之間）
+    zscore_14d = ((s - roll14_mean) / (roll14_std + eps)).clip(-5, 5).fillna(0)
+
+    # 3. 30日滾動 Z-score：「今天比最近一個月的均值高/低幾個標準差」
     zscore_30d = ((s - roll30_mean) / (roll30_std + eps)).clip(-5, 5).fillna(0)
 
-    # 3. 變化率（正規化）：用30日均值當分母，消除尺度影響
+    # 4. 變化率（正規化）：用30日均值當分母，消除尺度影響
     raw_diff = s.diff().fillna(0)
     pct_change_norm = (raw_diff / (roll30_mean + eps)).clip(-3, 3)
 
-    # 4. 7日波動率（變異係數）：捕捉消費穩定/不穩定程度
+    # 5. 7日波動率（變異係數）：捕捉消費穩定/不穩定程度
     volatility_7d = (roll7_std / (roll7_mean + eps)).clip(0, 5)
 
-    # 5. 是否高於30日均值（binary）
+    # 6. 是否高於30日均值（binary）
     is_above_mean_30d = (s > roll30_mean).astype(float)
 
-    # 6 & 7. 星期幾週期編碼（Walmart 週資料展開後也保留此資訊）
+    # 7. 近 7 天百分位排名（0~1）：天然 domain-invariant，不受幣別/尺度影響
+    pct_rank_7d  = s.rolling(7,  min_periods=1).rank(pct=True)
+
+    # 8. 近 30 天百分位排名（0~1）：同上，補捉中長期相對高低
+    pct_rank_30d = s.rolling(30, min_periods=1).rank(pct=True)
+
+    # 9 & 10. 星期幾週期編碼（Walmart 週資料展開後也保留此資訊）
     dow     = d.dt.dayofweek  # 0=Mon, 6=Sun
     dow_sin = np.sin(2 * np.pi * dow / 7)
     dow_cos = np.cos(2 * np.pi * dow / 7)
 
     return pd.DataFrame({
-        "zscore_7d"       : zscore_7d.values,
-        "zscore_30d"      : zscore_30d.values,
-        "pct_change_norm" : pct_change_norm.values,
-        "volatility_7d"   : volatility_7d.values,
+        "zscore_7d"        : zscore_7d.values,
+        "zscore_14d"       : zscore_14d.values,
+        "zscore_30d"       : zscore_30d.values,
+        "pct_change_norm"  : pct_change_norm.values,
+        "volatility_7d"    : volatility_7d.values,
         "is_above_mean_30d": is_above_mean_30d.values,
-        "dow_sin"         : dow_sin.values,
-        "dow_cos"         : dow_cos.values,
+        "pct_rank_7d"      : pct_rank_7d.values,
+        "pct_rank_30d"     : pct_rank_30d.values,
+        "dow_sin"          : dow_sin.values,
+        "dow_cos"          : dow_cos.values,
     })
 
 

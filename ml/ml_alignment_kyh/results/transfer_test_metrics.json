@@ -1,15 +1,15 @@
 [
   {
     "model_name": "base_aligned",
-    "mae": 5810.4921893484225,
-    "rmse": 14979.913264380837,
+    "mae": 3137.3835690661176,
+    "rmse": 8291.2006758236,
     "rows": 615,
     "feature_count": 12
   },
   {
     "model_name": "finetuned_aligned",
-    "mae": 1218.7266855503485,
-    "rmse": 2604.1427233990967,
+    "mae": 1314.1014387053203,
+    "rmse": 3231.1954057807566,
     "rows": 615,
     "feature_count": 12
   }
