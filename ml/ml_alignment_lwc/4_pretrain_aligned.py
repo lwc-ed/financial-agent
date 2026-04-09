@@ -32,7 +32,7 @@ LEARNING_RATE = 0.0001
 PATIENCE      = 20
 WEIGHT_DECAY  = 5e-4
 HUBER_DELTA   = 1.0
-MMD_LAMBDA    = 1.0    # ← 調整後：MMD 貢獻約 1~2%
+MMD_LAMBDA    = 0.1    # ← MMD 固定貢獻 10% 的 HuberLoss（動態 normalize）
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
 if torch.backends.mps.is_available():
@@ -74,12 +74,15 @@ personal_loader = DataLoader(
 
 
 # ── MMD 計算（RBF kernel）─────────────────────────────────────────────────────
-def compute_mmd(x: torch.Tensor, y: torch.Tensor, bandwidth: float = 1.0) -> torch.Tensor:
+def compute_mmd(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
     """
-    Maximum Mean Discrepancy（RBF kernel）
+    Maximum Mean Discrepancy（RBF kernel + Median Heuristic）
     x: source domain representations  (B1, D)
     y: target domain representations  (B2, D)
     回傳純量 MMD²，值越小代表兩個 domain 越接近
+
+    Median Heuristic：用所有點對距離的中位數當 bandwidth，
+    自動適應 representation 的 scale，不需要手動調整。
     """
     n = x.size(0)
     m = y.size(0)
@@ -87,22 +90,22 @@ def compute_mmd(x: torch.Tensor, y: torch.Tensor, bandwidth: float = 1.0) -> tor
     rx = (x ** 2).sum(dim=1, keepdim=True)   # (n, 1)
     ry = (y ** 2).sum(dim=1, keepdim=True)   # (m, 1)
 
-    # ||xi - xj||²  →  kernel(x, x)
     dist_xx = rx + rx.t() - 2 * torch.mm(x, x.t())   # (n, n)
-    K = torch.exp(-0.5 * dist_xx / bandwidth ** 2)
-
-    # ||yi - yj||²  →  kernel(y, y)
     dist_yy = ry + ry.t() - 2 * torch.mm(y, y.t())   # (m, m)
-    L = torch.exp(-0.5 * dist_yy / bandwidth ** 2)
-
-    # ||xi - yj||²  →  kernel(x, y)
     dist_xy = rx + ry.t() - 2 * torch.mm(x, y.t())   # (n, m)
-    P = torch.exp(-0.5 * dist_xy / bandwidth ** 2)
+
+    # Median Heuristic：取所有距離的中位數當 bandwidth
+    all_dist = torch.cat([dist_xx.reshape(-1), dist_yy.reshape(-1), dist_xy.reshape(-1)])
+    bandwidth = all_dist.median().clamp(min=1e-6)
+
+    K = torch.exp(-0.5 * dist_xx / bandwidth)
+    L = torch.exp(-0.5 * dist_yy / bandwidth)
+    P = torch.exp(-0.5 * dist_xy / bandwidth)
 
     mmd = (K.sum() - K.trace()) / (n * (n - 1) + 1e-8) \
         + (L.sum() - L.trace()) / (m * (m - 1) + 1e-8) \
         - 2 * P.mean()
-    return mmd.clamp(min=0)   # 數值穩定，避免浮點誤差出現負值
+    return mmd.clamp(min=0)
 
 
 # ── 模型架構 ──────────────────────────────────────────────────────────────────
@@ -182,7 +185,9 @@ for epoch in range(1, EPOCHS + 1):
         rep_personal = model.encode(X_p)
         mmd_loss     = compute_mmd(rep_walmart, rep_personal)
 
-        total_loss = huber_loss + MMD_LAMBDA * mmd_loss
+        # 動態 normalize：讓 MMD 固定貢獻 MMD_LAMBDA × HuberLoss（不受 scale 影響）
+        mmd_scale  = huber_loss.detach() / (mmd_loss.detach() + 1e-8)
+        total_loss = huber_loss + MMD_LAMBDA * mmd_scale * mmd_loss
         total_loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()

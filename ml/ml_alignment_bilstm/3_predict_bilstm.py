@@ -69,26 +69,30 @@ tp = scaler.inverse_transform(predict(X_test))
 
 # ── 指標計算 ──────────────────────────────────────────────────────────────────
 def metrics(y_true, y_pred, uids):
-    mae   = float(np.mean(np.abs(y_true - y_pred)))
+    errors = np.abs(y_true - y_pred)
+    mae   = float(np.mean(errors))
     rmse  = float(np.sqrt(np.mean((y_true - y_pred) ** 2)))
+    medae = float(np.median(errors))   # Median Absolute Error：不受極端值影響
     denom = (np.abs(y_true) + np.abs(y_pred)) / 2 + 1e-8
-    smape = float(np.mean(np.abs(y_true - y_pred) / denom) * 100)
+    smape = float(np.mean(errors / denom) * 100)
     nmaes = [
         np.mean(np.abs(y_pred[uids==u] - y_true[uids==u])) /
         (np.mean(np.abs(y_true[uids==u])) + 1e-8)
         for u in np.unique(uids)
     ]
-    return {"mae": mae, "rmse": rmse, "smape": smape,
+    return {"mae": mae, "rmse": rmse, "medae": medae, "smape": smape,
             "per_user_nmae": float(np.mean(nmaes) * 100)}
 
 print("\n📊 計算指標...")
 val_m  = metrics(y_val_raw,  vp, val_uids)
 test_m = metrics(y_test_raw, tp, test_uids)
 
-print(f"  Val  MAE : {val_m['mae']:.2f}")
-print(f"  Test MAE : {test_m['mae']:.2f}")
-print(f"  Test RMSE: {test_m['rmse']:.2f}")
+print(f"  Val  MAE  : {val_m['mae']:.2f}")
+print(f"  Test MAE  : {test_m['mae']:.2f}")
+print(f"  Test RMSE : {test_m['rmse']:.2f}")
+print(f"  Test MedAE: {test_m['medae']:.2f}  ← 不受極端值影響")
 print(f"  Test SMAPE: {test_m['smape']:.2f}%")
+print(f"  💡 若 MAE >> MedAE，代表有少數極端誤差在拉高 MAE")
 
 # ── 載入其他方法的結果做四方比較 ──────────────────────────────────────────────
 def load_json(path):
@@ -114,9 +118,11 @@ pretrained    : True（Walmart → Rolling Z-score Aligned Pretrain）
 ensemble_seeds: {SEEDS}
 val_mae       : {val_m['mae']:.6f}
 val_rmse      : {val_m['rmse']:.6f}
+val_medae     : {val_m['medae']:.6f}
 val_smape     : {val_m['smape']:.2f}%
 test_mae      : {test_m['mae']:.6f}
 test_rmse     : {test_m['rmse']:.6f}
+test_medae    : {test_m['medae']:.6f}
 test_smape    : {test_m['smape']:.2f}%
 test_per_user_nmae: {test_m['per_user_nmae']:.2f}%
 feature_cols  : zscore_7d, zscore_30d, pct_change_norm, volatility_7d,
@@ -144,7 +150,9 @@ metrics_path = f"{SAVE_DIR}/bilstm_metrics.json"
 with open(metrics_path, "w") as f:
     json.dump({
         "val_mae": val_m["mae"], "val_rmse": val_m["rmse"],
+        "val_medae": val_m["medae"],
         "test_mae": test_m["mae"], "test_rmse": test_m["rmse"],
+        "test_medae": test_m["medae"],
         "test_smape": test_m["smape"],
         "comparison": {
             "no_pretrain_test_mae"    : np_mae,

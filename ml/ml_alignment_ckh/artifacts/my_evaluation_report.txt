@@ -2,16 +2,19 @@ Bi-LSTM Baseline Result
 model_name: my_bilstm_baseline
 version: v1_independent
 pretrained: False (Trained from scratch)
-test_mae: 743.51
-test_rmse: 1191.23
-test_smape: 79.61%
+test_mae: 745.79
+test_rmse: 1149.51
+test_medae: 449.97
+test_smape: 78.23%
 feature_type: raw_rolling_and_time
 feature_cols: ['daily_expense', 'roll_7d_mean', 'roll_30d_mean', 'dow_sin', 'dow_cos']
 
 ==============================================================
             My Bi-LSTM 獨立作戰結果 (越低越好)
 ==============================================================
-  Test MAE   : 743.51
-  Test RMSE  : 1191.23
-  Test sMAPE : 79.61%
+  Test MAE   : 745.79
+  Test RMSE  : 1149.51
+  Test MedAE : 449.97  ← 不受極端值影響
+  Test sMAPE : 78.23%
 ==============================================================
+  💡 若 MAE >> MedAE，代表有少數極端誤差在拉高 MAE

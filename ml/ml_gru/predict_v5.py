@@ -149,8 +149,10 @@ y_val_pred_corrected  = np.clip(y_val_pred_corrected,  0, None)
 # 計算指標（使用修正後的預測）
 val_mae   = float(np.mean(np.abs(y_val_pred_corrected  - y_val_true)))
 val_rmse  = float(np.sqrt(np.mean((y_val_pred_corrected  - y_val_true)**2)))
+val_medae = float(np.median(np.abs(y_val_pred_corrected  - y_val_true)))
 test_mae  = float(np.mean(np.abs(y_test_pred_corrected - y_test_true)))
 test_rmse = float(np.sqrt(np.mean((y_test_pred_corrected - y_test_true)**2)))
+test_medae = float(np.median(np.abs(y_test_pred_corrected - y_test_true)))
 val_smape  = smape(y_val_true,  y_val_pred_corrected)
 test_smape = smape(y_test_true, y_test_pred_corrected)
 val_nmae   = per_user_nmae(y_val_true,  y_val_pred_corrected,  val_user_ids)
@@ -176,8 +178,9 @@ naive_rmse = float(((df["naive_7d"]  - df["future_expense_7d_sum"])**2).mean()**
 ma_rmse    = float(((df["ma_30d_x7"] - df["future_expense_7d_sum"])**2).mean()**0.5)
 
 print(f"\n{'='*50}  V{VERSION} Results (Ensemble + Bias Correction)  {'='*50}")
-print(f"  Val  MAE : {val_mae:,.2f}  RMSE: {val_rmse:,.2f}  SMAPE: {val_smape:.2f}%  NMAE: {val_nmae:.2f}%")
-print(f"  Test MAE : {test_mae:,.2f}  RMSE: {test_rmse:,.2f}  SMAPE: {test_smape:.2f}%  NMAE: {test_nmae:.2f}%")
+print(f"  Val  MAE : {val_mae:,.2f}  RMSE: {val_rmse:,.2f}  MedAE: {val_medae:,.2f}  SMAPE: {val_smape:.2f}%  NMAE: {val_nmae:.2f}%")
+print(f"  Test MAE : {test_mae:,.2f}  RMSE: {test_rmse:,.2f}  MedAE: {test_medae:,.2f}  SMAPE: {test_smape:.2f}%  NMAE: {test_nmae:.2f}%")
+print(f"  💡 若 MAE >> MedAE，代表有少數極端誤差在拉高 MAE")
 print(f"  Baseline Moving Avg MAE: {ma_mae:,.2f}")
 print(f"  Beat baseline: {test_mae < ma_mae}")
 
@@ -201,8 +204,10 @@ metrics = {
     "model_name": f"gru_v{VERSION}_ensemble_bias", "version": VERSION,
     "ensemble_seeds": ENSEMBLE_SEEDS,
     "val_mae": round(val_mae, 6), "val_rmse": round(val_rmse, 6),
+    "val_medae": round(val_medae, 6),
     "val_smape": round(val_smape, 4), "val_per_user_nmae": round(val_nmae, 4),
     "test_mae": round(test_mae, 6), "test_rmse": round(test_rmse, 6),
+    "test_medae": round(test_medae, 6),
     "test_smape": round(test_smape, 4), "test_per_user_nmae": round(test_nmae, 4),
     "test_mae_before_bias_correction": round(test_mae_raw, 6),
     "naive_7d_mae": round(naive_mae, 6), "naive_7d_rmse": round(naive_rmse, 6),
