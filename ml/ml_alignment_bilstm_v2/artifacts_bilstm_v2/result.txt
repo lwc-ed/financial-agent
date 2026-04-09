@@ -1,0 +1,19 @@
+BiLSTM Aligned v2 Result
+========================
+model       : BiLSTMWithAttention
+features    : 10 aligned features (z-score + pct_rank)
+feature_cols: ['zscore_7d', 'zscore_14d', 'zscore_30d', 'pct_change_norm', 'volatility_7d', 'is_above_mean_30d', 'pct_rank_7d', 'pct_rank_30d', 'dow_sin', 'dow_cos']
+all_seeds   : [0, 7, 13, 21, 42, 100, 123, 314, 456, 777, 789, 999, 1234, 2024, 9999]
+best_combo  : [789]
+
+val_mae          : 777.5736
+val_rmse         : 1184.3202
+test_mae         : 750.6198
+test_rmse        : 1172.1554
+test_smape       : 81.17%
+test_per_user_nmae: 89.03%
+
+all_seeds_test_mae: 774.0344
+
+baseline_classmate: 743.51
+gap               : +7.11
