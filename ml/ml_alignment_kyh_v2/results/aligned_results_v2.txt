@@ -1,12 +1,12 @@
 Model: base_aligned
 Rows: 615
 Feature count: 12
-MAE: 653.2055
-RMSE: 1096.4993
+MAE: 657.4210
+RMSE: 1116.8235
 
 Model: finetuned_aligned
 Rows: 615
 Feature count: 12
-MAE: 458.5543
-RMSE: 726.6130
+MAE: 457.3253
+RMSE: 722.7076
 

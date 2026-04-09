@@ -32,7 +32,7 @@ LEARNING_RATE = 0.0001
 PATIENCE      = 20
 WEIGHT_DECAY  = 5e-4
 HUBER_DELTA   = 1.0
-MMD_LAMBDA    = 0.1    # ← 先設 0.1，觀察 scale 後再調整
+MMD_LAMBDA    = 1.0    # ← 調整後：MMD 貢獻約 1~2%
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
 if torch.backends.mps.is_available():

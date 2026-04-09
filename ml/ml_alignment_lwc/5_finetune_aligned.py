@@ -2,7 +2,9 @@
 Step 5：Aligned Finetune
 =========================
 載入 Aligned Pretrained GRU，在個人 Aligned 資料上做 finetune
-使用 ensemble（7 seeds），與 aligned pretrain 配合
+Loss = HuberLoss + λ * MMD_loss（與 pretrain 保持一致）
+  - 兩個 loss 分開印，方便確認 scale 與 pretrain 是否一致
+使用 ensemble（7 seeds）
 輸出：
   - finetune_aligned_gru_seed{seed}.pth（7個）
 """
@@ -17,18 +19,19 @@ from alignment_utils import ALIGNED_FEATURE_COLS
 
 ARTIFACTS_DIR = "artifacts_aligned"
 
-# ── 超參數（finetune 用較小 LR，避免 catastrophic forgetting）─────────────────
+# ── 超參數 ────────────────────────────────────────────────────────────────────
 INPUT_SIZE    = len(ALIGNED_FEATURE_COLS)
 HIDDEN_SIZE   = 64
 NUM_LAYERS    = 2
 DROPOUT       = 0.4
 OUTPUT_SIZE   = 1
-BATCH_SIZE    = 32        # 個人資料量少，小 batch
+BATCH_SIZE    = 32
 EPOCHS        = 80
-LEARNING_RATE = 3e-4      # 比 pretrain 小（保留 pretrained 知識）
-PATIENCE      = 20        # 個人資料收斂慢，patience 大一點
+LEARNING_RATE = 3e-4
+PATIENCE      = 20
 WEIGHT_DECAY  = 1e-4
 HUBER_DELTA   = 1.0
+MMD_LAMBDA    = 1.0    # ← 調整後：MMD 貢獻約 1~2%
 SEEDS         = [42, 123, 777, 456, 789, 999, 2024]
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
@@ -48,6 +51,44 @@ X_val   = np.load(f"{ARTIFACTS_DIR}/personal_aligned_X_val.npy")
 y_val   = np.load(f"{ARTIFACTS_DIR}/personal_aligned_y_val.npy")
 print(f"  X_train: {X_train.shape}  X_val: {X_val.shape}")
 
+# Walmart 資料（只用 X，不用 label）── 給 MMD 計算用
+print("📂 載入 Walmart 資料（用於 MMD alignment）...")
+X_walmart = np.load(f"{ARTIFACTS_DIR}/walmart_aligned_X_train.npy")
+print(f"  X_walmart: {X_walmart.shape}")
+
+walmart_loader = DataLoader(
+    TensorDataset(torch.tensor(X_walmart, dtype=torch.float32)),
+    batch_size=BATCH_SIZE, shuffle=True
+)
+
+
+# ── MMD 計算（RBF kernel）─────────────────────────────────────────────────────
+def compute_mmd(x: torch.Tensor, y: torch.Tensor, bandwidth: float = 1.0) -> torch.Tensor:
+    """
+    Maximum Mean Discrepancy（RBF kernel）
+    x: source domain representations  (B1, D)
+    y: target domain representations  (B2, D)
+    """
+    n = x.size(0)
+    m = y.size(0)
+
+    rx = (x ** 2).sum(dim=1, keepdim=True)   # (n, 1)
+    ry = (y ** 2).sum(dim=1, keepdim=True)   # (m, 1)
+
+    dist_xx = rx + rx.t() - 2 * torch.mm(x, x.t())   # (n, n)
+    K = torch.exp(-0.5 * dist_xx / bandwidth ** 2)
+
+    dist_yy = ry + ry.t() - 2 * torch.mm(y, y.t())   # (m, m)
+    L = torch.exp(-0.5 * dist_yy / bandwidth ** 2)
+
+    dist_xy = rx + ry.t() - 2 * torch.mm(x, y.t())   # (n, m)
+    P = torch.exp(-0.5 * dist_xy / bandwidth ** 2)
+
+    mmd = (K.sum() - K.trace()) / (n * (n - 1) + 1e-8) \
+        + (L.sum() - L.trace()) / (m * (m - 1) + 1e-8) \
+        - 2 * P.mean()
+    return mmd.clamp(min=0)
+
 
 # ── 模型架構（與 pretrain 完全相同）──────────────────────────────────────────
 class GRUWithAttention(nn.Module):
@@ -63,13 +104,17 @@ class GRUWithAttention(nn.Module):
         self.fc2        = nn.Linear(hidden_size // 2, output_size)
         self.relu       = nn.ReLU()
 
-    def forward(self, x):
+    def encode(self, x) -> torch.Tensor:
+        """回傳 attended hidden representation（用於 MMD）"""
         gru_out, _ = self.gru(x)
         attn_w     = torch.softmax(self.attention(gru_out), dim=1)
         context    = (gru_out * attn_w).sum(dim=1)
-        context    = self.layer_norm(context)
-        out        = self.dropout(context)
-        out        = self.relu(self.fc1(out))
+        return self.layer_norm(context)
+
+    def forward(self, x):
+        context = self.encode(x)
+        out     = self.dropout(context)
+        out     = self.relu(self.fc1(out))
         return self.fc2(out)
 
 
@@ -82,12 +127,14 @@ def load_pretrained_model():
 
 
 # ── Ensemble Finetune ─────────────────────────────────────────────────────────
-print(f"\n🚀 Ensemble Finetune（seeds={SEEDS}）...")
+print(f"\n🚀 Ensemble Finetune（seeds={SEEDS}，MMD_LAMBDA={MMD_LAMBDA}）...")
 
 for seed in SEEDS:
-    print(f"\n{'='*60}")
+    print(f"\n{'='*70}")
     print(f"  Seed {seed}")
-    print(f"{'='*60}")
+    print(f"{'='*70}")
+    print(f"  {'Epoch':>5}  {'HuberLoss':>10}  {'MMD_loss':>10}  {'Total':>10}  {'Val':>10}  {'LR':>8}")
+    print(f"  {'-'*65}")
 
     torch.manual_seed(seed)
     np.random.seed(seed)
@@ -107,22 +154,48 @@ for seed in SEEDS:
         batch_size=BATCH_SIZE, shuffle=False
     )
 
+    walmart_iter     = iter(walmart_loader)
     best_val_loss    = float("inf")
     patience_counter = 0
     save_path        = f"{ARTIFACTS_DIR}/finetune_aligned_gru_seed{seed}.pth"
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
-        train_loss = 0.0
+        epoch_huber = 0.0
+        epoch_mmd   = 0.0
+
         for X_b, y_b in train_loader:
             X_b, y_b = X_b.to(device), y_b.to(device)
+
+            # 取一個 Walmart batch（循環用）
+            try:
+                (X_w,) = next(walmart_iter)
+            except StopIteration:
+                walmart_iter = iter(walmart_loader)
+                (X_w,) = next(walmart_iter)
+            X_w = X_w.to(device)
+
             optimizer.zero_grad()
-            loss = criterion(model(X_b), y_b)
-            loss.backward()
+
+            # Task loss（Huber）
+            huber_loss = criterion(model(X_b), y_b)
+
+            # MMD loss：個人 hidden rep vs Walmart hidden rep
+            rep_personal = model.encode(X_b)
+            rep_walmart  = model.encode(X_w)
+            mmd_loss     = compute_mmd(rep_personal, rep_walmart)
+
+            total_loss = huber_loss + MMD_LAMBDA * mmd_loss
+            total_loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
-            train_loss += loss.item()
-        train_loss /= len(train_loader)
+
+            epoch_huber += huber_loss.item()
+            epoch_mmd   += mmd_loss.item()
+
+        epoch_huber /= len(train_loader)
+        epoch_mmd   /= len(train_loader)
+        epoch_total  = epoch_huber + MMD_LAMBDA * epoch_mmd
 
         model.eval()
         val_loss = 0.0
@@ -133,17 +206,18 @@ for seed in SEEDS:
 
         scheduler.step(val_loss)
         lr = optimizer.param_groups[0]["lr"]
-        print(f"  Epoch {epoch:3d}/{EPOCHS} | Train: {train_loss:.6f} | Val: {val_loss:.6f} | LR: {lr:.6f}")
+        print(f"  {epoch:5d}  {epoch_huber:10.6f}  {epoch_mmd:10.6f}  {epoch_total:10.6f}  {val_loss:10.6f}  {lr:8.6f}")
 
         if val_loss < best_val_loss:
             best_val_loss    = val_loss
             patience_counter = 0
             torch.save({
-                "epoch"       : epoch,
-                "model_state" : model.state_dict(),
-                "val_loss"    : best_val_loss,
-                "seed"        : seed,
-                "version"     : "aligned_finetune",
+                "epoch"      : epoch,
+                "model_state": model.state_dict(),
+                "val_loss"   : best_val_loss,
+                "seed"       : seed,
+                "version"    : "aligned_finetune_mmd",
+                "mmd_lambda" : MMD_LAMBDA,
             }, save_path)
             print(f"             ✅ 儲存（val_loss={best_val_loss:.6f}）")
         else:
@@ -155,4 +229,5 @@ for seed in SEEDS:
     print(f"  Seed {seed} 最佳 Val Loss: {best_val_loss:.6f}")
 
 print(f"\n🎉 Ensemble Finetune 完成！")
+print(f"   💡 觀察各 seed 的 HuberLoss 和 MMD_loss scale，若差距太大請調整 MMD_LAMBDA（目前={MMD_LAMBDA}）")
 print(f"   → 下一步：執行 6_predict_aligned.py")

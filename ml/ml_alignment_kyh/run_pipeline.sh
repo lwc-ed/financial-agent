@@ -16,4 +16,7 @@ python3 finetune_own_aligned.py
 echo "========== STEP 5: test transfer aligned =========="
 python3 test_transfer_aligned.py
 
+echo "========== STEP 6: tiered alert evaluation =========="
+python3 6_tiered_alert.py
+
 echo "========== DONE =========="

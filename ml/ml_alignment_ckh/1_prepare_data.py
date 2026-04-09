@@ -7,10 +7,9 @@ from sklearn.preprocessing import StandardScaler
 
 # ── 1. 路徑設定 ──────────────────────────────────────────────────────────
 # 假設這支程式放在 ml_alignment_ckh/ 底下
-ROOT_DIR = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT_DIR / "data"
+# 直接指向 ml/data/，避免 rglob 找到 .claude/worktrees 裡的重複備份
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
-# 順便加一行印出路徑，方便我們確認它找對地方了：
 print(f"🔍 尋找 Excel 檔案的目標資料夾: {DATA_DIR}")
 
 # 📍 這裡修改了：用 .parent 直接抓到這支程式所在的資料夾 (ml_alignment_ckh)
@@ -39,9 +38,9 @@ def main():
     print("🚀 [Step 1] 開始準備神經網路專用 3D 資料...")
 
     # ── 讀取與彙整原始資料 ───────────────────────────────────────────────
-    # 🔥 直接從專案最頂層 (ROOT_DIR) 往下進行全盤遞迴搜尋 (rglob)
-    all_excel_files = list(ROOT_DIR.rglob("raw_transactions_*.xlsx"))
-    print(f"🔍 全盤搜尋完畢！共找到 {len(all_excel_files)} 個 Excel 檔案。")
+    # 直接在 ml/data/ 搜尋，避免找到 worktrees 裡的重複備份
+    all_excel_files = sorted(DATA_DIR.glob("raw_transactions_*.xlsx"))
+    print(f"🔍 搜尋完畢！共找到 {len(all_excel_files)} 個 Excel 檔案。")
     
     # 加上安全鎖：如果真的沒半個檔案，就印出警告並停止，不要往下跑導致當機
     if len(all_excel_files) == 0:

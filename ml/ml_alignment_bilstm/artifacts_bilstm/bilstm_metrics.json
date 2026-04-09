@@ -1,0 +1,14 @@
+{
+  "val_mae": 817.6986083984375,
+  "val_rmse": 1175.9674072265625,
+  "test_mae": 778.9218139648438,
+  "test_rmse": 1147.4327392578125,
+  "test_smape": 77.40796661376953,
+  "comparison": {
+    "no_pretrain_test_mae": 836.293152,
+    "naive_tl_v5_test_mae": 851.477722,
+    "gru_aligned_test_mae": 795.23828125,
+    "bilstm_aligned_test_mae": 778.9218139648438,
+    "classmate_bilstm_test_mae": 743.51
+  }
+}

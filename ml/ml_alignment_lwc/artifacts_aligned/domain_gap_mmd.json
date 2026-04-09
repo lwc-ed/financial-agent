@@ -1,7 +1,7 @@
 {
   "mmd_original_features": 0.193133,
-  "mmd_aligned_features": 0.090122,
-  "gap_reduction_pct": 53.34,
+  "mmd_aligned_features": 0.087125,
+  "gap_reduction_pct": 54.89,
   "original_feature_names": [
     "daily_expense",
     "expense_7d_mean",
@@ -13,12 +13,15 @@
   ],
   "aligned_feature_names": [
     "zscore_7d",
+    "zscore_14d",
     "zscore_30d",
     "pct_change_norm",
     "volatility_7d",
     "is_above_mean_30d",
+    "pct_rank_7d",
+    "pct_rank_30d",
     "dow_sin",
     "dow_cos"
   ],
-  "conclusion": "Rolling Z-score alignment 將 domain gap（MMD）縮減了 53.3%，說明 aligned 特徵空間中 Walmart 與個人資料的分佈更接近，pretrain 的知識更容易被 finetune 保留。"
+  "conclusion": "Rolling Z-score alignment 將 domain gap（MMD）縮減了 54.9%，說明 aligned 特徵空間中 Walmart 與個人資料的分佈更接近，pretrain 的知識更容易被 finetune 保留。"
 }
