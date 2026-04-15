@@ -8,10 +8,12 @@
   ],
   "val_mae": 770.024414,
   "val_rmse": 1203.938477,
+  "val_medae": 496.968384,
   "val_smape": 81.7582,
   "val_per_user_nmae": 70.9929,
   "test_mae": 851.477722,
   "test_rmse": 1265.92749,
+  "test_medae": 628.613403,
   "test_smape": 69.0375,
   "test_per_user_nmae": 59.4517,
   "test_mae_before_bias_correction": 935.843628,
@@ -20,5 +22,5 @@
   "moving_avg_30d_mae": 926.367527,
   "moving_avg_30d_rmse": 1425.732313,
   "beat_moving_avg": true,
-  "timestamp": "2026-03-31 19:39:18"
+  "timestamp": "2026-04-10 01:05:43"
 }

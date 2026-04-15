@@ -65,9 +65,10 @@ def main():
     predictions_real = target_scaler.inverse_transform(predictions_scaled)
 
     # ── 6. 計算最終誤差 ──────────────────────────────────────────────────
-    mae = mean_absolute_error(y_test_raw, predictions_real)
-    rmse = np.sqrt(mean_squared_error(y_test_raw, predictions_real))
-    
+    mae   = mean_absolute_error(y_test_raw, predictions_real)
+    rmse  = np.sqrt(mean_squared_error(y_test_raw, predictions_real))
+    medae = float(np.median(np.abs(predictions_real - y_test_raw)))   # 不受極端值影響
+
     # 額外幫你算一個 sMAPE (對稱平均絕對百分比誤差)
     smape = np.mean(2.0 * np.abs(predictions_real - y_test_raw) / (np.abs(predictions_real) + np.abs(y_test_raw) + 1e-8)) * 100
 
@@ -78,6 +79,7 @@ version: v1_independent
 pretrained: False (Trained from scratch)
 test_mae: {mae:.2f}
 test_rmse: {rmse:.2f}
+test_medae: {medae:.2f}
 test_smape: {smape:.2f}%
 feature_type: raw_rolling_and_time
 feature_cols: ['daily_expense', 'roll_7d_mean', 'roll_30d_mean', 'dow_sin', 'dow_cos']
@@ -87,8 +89,10 @@ feature_cols: ['daily_expense', 'roll_7d_mean', 'roll_30d_mean', 'dow_sin', 'dow
 ==============================================================
   Test MAE   : {mae:.2f}
   Test RMSE  : {rmse:.2f}
+  Test MedAE : {medae:.2f}  ← 不受極端值影響
   Test sMAPE : {smape:.2f}%
 ==============================================================
+  💡 若 MAE >> MedAE，代表有少數極端誤差在拉高 MAE
 """
 
     # 印在終端機給你馬上看
