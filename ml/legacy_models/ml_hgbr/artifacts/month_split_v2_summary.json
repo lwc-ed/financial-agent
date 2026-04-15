@@ -1,0 +1,44 @@
+{
+  "daily_ledger_path": "/Users/liweichen/financial-agent/ml/artifacts/daily_ledger_all.parquet",
+  "features_path": "/Users/liweichen/financial-agent/ml/artifacts/features_all.parquet",
+  "min_days_per_month": 15,
+  "n_folds": 3,
+  "val_fraction": 0.1,
+  "test_fraction": 0.2,
+  "eligible_user_months": 113,
+  "skipped_users": [
+    "user4",
+    "user5",
+    "user6"
+  ],
+  "fold_stats": {
+    "fold_1": {
+      "train_rows": 852,
+      "val_rows": 238,
+      "train_users": 7,
+      "val_users": 7,
+      "train_months": 24,
+      "val_months": 7
+    },
+    "fold_2": {
+      "train_rows": 1026,
+      "val_rows": 244,
+      "train_users": 8,
+      "val_users": 8,
+      "train_months": 23,
+      "val_months": 8
+    },
+    "fold_3": {
+      "train_rows": 1182,
+      "val_rows": 243,
+      "train_users": 7,
+      "val_users": 7,
+      "train_months": 34,
+      "val_months": 8
+    }
+  },
+  "pretest_rows": 1970,
+  "holdout_test_rows": 489,
+  "holdout_test_users": 13,
+  "holdout_test_months": 14
+}

@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-03-31 14:38:00",
+  "baselines": {
+    "naive_7d_mae": 8130.2,
+    "moving_avg_mae": 7019.18
+  },
+  "models": {
+    "GRU V4 (純 GRU)": {
+      "val_mae": 800.3,
+      "test_mae": 837.9,
+      "test_rmse": 1257.55,
+      "test_smape": 80.9937,
+      "test_nmae": 143.9434
+    },
+    "HGBR (flat only)": {
+      "val_mae": 168.11,
+      "test_mae": 994.36,
+      "test_rmse": 1372.49,
+      "test_smape": 82.8523,
+      "test_nmae": 186.1416
+    },
+    "HGBR (emb + flat)": {
+      "val_mae": 78.81,
+      "test_mae": 938.03,
+      "test_rmse": 1342.45,
+      "test_smape": 80.7916,
+      "test_nmae": 284.761
+    }
+  }
+}

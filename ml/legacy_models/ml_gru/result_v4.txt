@@ -1,0 +1,18 @@
+GRU Predict Result
+model_name: gru_v4
+version: v4
+val_mae: 877.621033
+val_rmse: 1,229.301880
+val_smape: 87.61%
+val_per_user_nmae: 121.30%
+test_mae: 846.740662
+test_rmse: 1,211.904541
+test_smape: 79.42%
+test_per_user_nmae: 208.24%
+naive_7d_mae: 989.764615
+naive_7d_rmse: 1,649.280634
+moving_avg_30d_mae: 926.367527
+moving_avg_30d_rmse: 1,425.732313
+beat_moving_avg: True
+metrics_json: artificats/metrics_v4.json
+test_predictions_csv: artificats/predictions_test_v4.csv

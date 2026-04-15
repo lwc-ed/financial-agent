@@ -1,0 +1,33 @@
+GRU Aligned Pretrain Result
+model_name: gru_aligned_pretrain_ensemble_bias
+version: aligned_v3 (10 features + MMD loss)
+pretrained: True (Rolling Z-score Alignment + MMD)
+all_seeds: [42, 123, 456, 777, 789, 999, 2024]
+best_combo: [123, 789]
+val_mae: 815.784119
+val_rmse: 1230.876099
+val_medae: 538.635254
+val_smape: 89.24%
+val_per_user_nmae: 84.06%
+test_mae: 797.760925
+test_rmse: 1184.083862
+test_medae: 474.898499
+test_smape: 80.10%
+test_per_user_nmae: 156.09%
+bias_correction: none（停用，實驗證明不做 correction 更佳）
+feature_type: rolling_zscore_aligned
+feature_cols: ['zscore_7d', 'zscore_14d', 'zscore_30d', 'pct_change_norm', 'volatility_7d', 'is_above_mean_30d', 'pct_rank_7d', 'pct_rank_30d', 'dow_sin', 'dow_cos']
+
+=================================================================
+           方法比較（Test MAE / MedAE，越低越好）
+=================================================================
+              MAE     MedAE
+  No Pretrain      :  836.29   N/A    <- 基準
+  Naive TL (V5)    :  851.48   N/A    <- 有 pretrain 但無 alignment
+  Aligned Pretrain :  797.76   474.90  <- 本方法（MMD alignment）
+=================================================================
+  Val MAE:
+    No Pretrain      : 720.03
+    Naive TL (V5)    : 770.02
+    Aligned Pretrain : 815.78
+=================================================================

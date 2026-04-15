@@ -1,0 +1,33 @@
+{
+  "n_sample_per_domain": 500,
+  "n_features": 12,
+  "feature_cols": [
+    "zscore_7d",
+    "zscore_14d",
+    "zscore_30d",
+    "pct_change_norm",
+    "volatility_7d",
+    "is_above_mean_30d",
+    "pct_rank_7d",
+    "pct_rank_30d",
+    "spike_ratio",
+    "max_ratio_30d",
+    "dow_sin",
+    "dow_cos"
+  ],
+  "mmd_raw_features": 0.059515,
+  "mmd_encoded_repr": 0.196301,
+  "seeds_used": [
+    7,
+    13,
+    21,
+    42,
+    123,
+    314,
+    456,
+    789,
+    1000,
+    2024
+  ],
+  "interpretation": "MMD < 0.05 表示良好的域對齊（domain alignment），支持 Transfer Learning 的有效性"
+}
