@@ -234,5 +234,412 @@ Notes:
 - Test 2 看風險等級分對沒
 - Test 3 看支出金額預測準不準
 
+## 12. 六個主模型接入共用 evaluator 的必要工作
 
+以下六個模型最後都必須接到共用輸出/評估模組。
 
+共用模組目前預期每個模型至少提供兩份資料：
+
+### 12.1 prediction_input_df
+
+必要欄位：
+
+- `user_id`
+- `date`
+- `y_true`
+- `y_pred`
+
+說明：
+
+- `y_true = true_expense_7d`
+- `y_pred = predicted_expense_7d`
+- `date = 該 sample 的預測時點 t`
+
+### 12.2 split_metadata_df
+
+必要欄位：
+
+- `user_id`
+- `date`
+- `split`
+
+說明：
+
+- `split` 至少必須包含 `train`
+- 共用 evaluator 會用 `train` 區間去計算 `monthly_available_cash`
+
+### 12.3 六個模型共同最低要求
+
+所有模型在正式接入前，都必須先確認自己能輸出：
+
+- `user_id`
+- `date`
+- `y_true`
+- `y_pred`
+- `split`
+
+若做不到，代表該模型還不能直接接共用 evaluator。
+
+### 12.4 各模型目前需要補的事
+
+#### A. `gru_TL_alignment`
+
+目前狀況：
+
+- 已有 `user_id`
+- 已能產生 `y_pred`
+- 尚未正式保存每個 sample 對應的 `date`
+
+接入前必做：
+
+- 在 preprocessing 階段補存 train/val/test 的 sample metadata
+- metadata 至少包含 `user_id`、`date`、`split`
+- predict script 要能組出 `prediction_input_df`
+- 舊的 `decision_evaluation` 與 `tiered_alert` 不可再視為正式 spec 輸出
+
+#### B. `bilstm_TL_alignment`
+
+目前狀況：
+
+- 已有 `user_id`
+- 已能產生 `y_pred`
+- 尚未正式保存每個 sample 對應的 `date`
+
+接入前必做：
+
+- 在 preprocessing 階段補存 train/val/test 的 sample metadata
+- metadata 至少包含 `user_id`、`date`、`split`
+- predict script 要能組出 `prediction_input_df`
+- 舊的 `decision_evaluation` 與 `tiered_alert` 不可再視為正式 spec 輸出
+
+#### C. `bigru_TL_alignment`
+
+目前狀況：
+
+- 已有 `user_id`
+- 已能產生 `y_pred`
+- 尚未正式保存每個 sample 對應的 `date`
+
+接入前必做：
+
+- 在 preprocessing 階段補存 train/val/test 的 sample metadata
+- metadata 至少包含 `user_id`、`date`、`split`
+- predict script 要能組出 `prediction_input_df`
+- 正式輸出必須改寫到 `ml/model_outputs/bigru_TL_alignment`
+
+#### D. `bigru`
+
+目前狀況：
+
+- preprocessing 內部有建立 train/val/test user 順序
+- 但目前沒有正式存出 `user_id`
+- 也沒有正式存出每個 sample 對應的 `date`
+
+接入前必做：
+
+- preprocessing 必須正式輸出 train/val/test metadata
+- metadata 至少包含 `user_id`、`date`、`split`
+- evaluate/predict script 必須能組出 `prediction_input_df`
+- 不可只留下回歸報告 txt 而沒有標準化輸出
+
+#### E. `bilstm`
+
+目前狀況：
+
+- preprocessing 內部有建立 train/val/test user 順序
+- 但目前沒有正式存出 `user_id`
+- 也沒有正式存出每個 sample 對應的 `date`
+- 後續 decision 腳本仍在重建 user_id，表示 metadata 設計不完整
+
+接入前必做：
+
+- preprocessing 必須正式輸出 train/val/test metadata
+- metadata 至少包含 `user_id`、`date`、`split`
+- evaluate/predict script 必須能組出 `prediction_input_df`
+- 舊的 decision / tiered alert 腳本不可再當正式 spec 流程
+
+#### F. `xgboost_TL_alignment`
+
+目前狀況：
+
+- 已有 `user_id`
+- 已有 `date`
+- 已能產生 `y_true`
+- 已能產生 `y_pred`
+- 目前最接近可直接接入共用 evaluator
+
+接入前必做：
+
+- 補出 `split_metadata_df`
+- 必須明確標示哪些 row 屬於 `train`，哪些屬於 `test`
+- 正式輸出必須改寫到 `ml/model_outputs/xgboost_TL_alignment`
+
+## 13. AI 協作規則
+
+本節是寫給任何協助本專案的 AI。
+
+### 13.0 本專案目前的共用評估程式
+
+本專案目前的共用評估程式是：
+
+- `ml/output_eval_utils.py`
+
+其中正式入口函式是：
+
+- `run_output_evaluation(...)`
+
+此函式的用途是：
+
+- 接收各模型已經算好的 `y_pred`
+- 接收 sample-level metadata
+- 依本規格自動產生正式輸出
+
+也就是說：
+
+- 模型自己負責「預測」
+- `ml/output_eval_utils.py` 負責「統一評估與統一輸出」
+
+### 13.0.1 各模型接入共用評估程式的最低介面
+
+每個模型修改完成後，至少必須能組出以下兩份資料：
+
+#### `prediction_input_df`
+
+必要欄位：
+
+- `user_id`
+- `date`
+- `y_true`
+- `y_pred`
+
+#### `split_metadata_df`
+
+必要欄位：
+
+- `user_id`
+- `date`
+- `split`
+
+限制：
+
+- `split` 必須至少包含 `train`
+
+### 13.0.2 各模型接入共用評估程式的標準呼叫方式
+
+各模型在完成自己的預測之後，正式流程必須呼叫：
+
+```python
+from ml.output_eval_utils import run_output_evaluation
+
+run_output_evaluation(
+    model_name="<model_name>",
+    prediction_input_df=prediction_input_df,
+    split_metadata_df=split_metadata_df,
+)
+```
+
+其中 `model_name` 必須使用模型資料夾名稱：
+
+- `bigru`
+- `bigru_TL_alignment`
+- `gru_TL_alignment`
+- `bilstm`
+- `bilstm_TL_alignment`
+- `xgboost_TL_alignment`
+
+### 13.0.3 接入完成後應該產生的正式輸出位置
+
+呼叫 `run_output_evaluation(...)` 後，正式輸出應寫到：
+
+- `ml/model_outputs/<model_name>/`
+
+並且至少包含：
+
+- `metrics_regression.json`
+- `metrics_alarm_binary.json`
+- `metrics_risk_4class.json`
+- `predictions.csv`
+- `summary.txt`
+
+### 13.0.4 模型端修改完成的判定標準
+
+若某模型聲稱自己「已經接好共用 evaluator」，AI 或組員必須至少檢查：
+
+1. 該模型的 predict/evaluate script 是否真的有 import：
+   `from ml.output_eval_utils import run_output_evaluation`
+2. 是否真的有建立 `prediction_input_df`
+3. 是否真的有建立 `split_metadata_df`
+4. 是否真的有呼叫 `run_output_evaluation(...)`
+5. `ml/model_outputs/<model_name>/` 是否真的出現 spec 要求的 5 個正式輸出檔
+
+只要以上任一項不成立，就不能算完成接入。
+
+### 13.0.5 六個模型建議接入點
+
+以下是六個主模型目前最合理的共用 evaluator 接入位置。
+
+#### `bigru`
+
+建議接入 script：
+
+- `ml/bigru/3_evaluate_standard_bigru.py`
+
+原因：
+
+- 這支已經在做最終 test 預測
+- 已經有 `y_test_raw`
+- 已經會得到 `predictions_real`
+
+接入前還要先補：
+
+- `ml/bigru/1_prepare_data.py` 必須正式存出 train/val/test metadata
+- 至少要能提供 `user_id`、`date`、`split`
+
+#### `bigru_TL_alignment`
+
+建議接入 script：
+
+- `ml/bigru_TL_alignment/5_predict_bigru.py`
+
+原因：
+
+- 這支已經會做 ensemble 推論
+- 已經會得到 `test_preds`
+- 已經是目前最接近正式輸出的入口
+
+接入前還要先補：
+
+- `ml/bigru_TL_alignment/2_preprocess_personal.py` 必須正式存出 sample metadata
+
+#### `gru_TL_alignment`
+
+建議接入 script：
+
+- `ml/gru_TL_alignment/6_predict_aligned.py`
+
+原因：
+
+- 這支已經會做 best combo / ensemble 預測
+- 已經會得到 `test_preds`
+- 舊的 `7_evaluate_decisions.py` 與 `9_tiered_alert.py` 應退出正式流程
+
+接入前還要先補：
+
+- `ml/gru_TL_alignment/3_preprocess_personal_aligned.py` 必須正式存出 sample metadata
+
+#### `bilstm`
+
+建議接入 script：
+
+- `ml/bilstm/3_evaluate_model.py`
+
+原因：
+
+- 這支已經在做最終 test 預測
+- 已經會得到 `predictions_real`
+- 舊的 `4_evaluate_decisions.py` 與 `5_tiered_alert.py` 不應繼續作為正式 spec 流程
+
+接入前還要先補：
+
+- `ml/bilstm/1_prepare_data.py` 必須正式存出 train/val/test metadata
+
+#### `bilstm_TL_alignment`
+
+建議接入 script：
+
+- `ml/bilstm_TL_alignment/5_predict_bilstm.py`
+
+原因：
+
+- 這支已經會做 best combo / ensemble 預測
+- 已經會得到 `test_preds`
+- 舊的 `6_evaluate_decisions.py` 與 `7_tiered_alert.py` 應退出正式流程
+
+接入前還要先補：
+
+- `ml/bilstm_TL_alignment/2_preprocess_personal.py` 必須正式存出 sample metadata
+
+#### `xgboost_TL_alignment`
+
+建議接入 script：
+
+- `ml/xgboost_TL_alignment/test_transfer_aligned.py`
+
+原因：
+
+- 這支已經會輸出 `user_id`、`date`、`y_true`、`y_pred`
+- 這支目前最接近直接呼叫共用 evaluator
+
+接入前還要先補：
+
+- 依目前的 train/test 切法建立 `split_metadata_df`
+- 讓 `test_transfer_aligned.py` 在算完 prediction dataframe 後直接呼叫 `run_output_evaluation(...)`
+
+### 13.1 AI 在開始動作前必須先反問
+
+若使用者只說「幫我接 spec」、「幫我改輸出」、「幫我接共用 evaluator」這類要求，
+AI 不可直接開始修改。
+
+AI 必須先明確反問：
+
+- 「你目前負責的是哪一個模型？」
+
+若使用者沒有明確回答模型名稱，AI 不可直接往下做。
+
+### 13.2 AI 必須先核對模型責任範圍
+
+在得到模型名稱後，AI 必須先依本文件第 12 節檢查該模型目前還缺什麼，
+再告訴使用者：
+
+- 這個模型目前已具備哪些條件
+- 這個模型目前還缺哪些欄位或 metadata
+- 接共用 evaluator 前，必須先補哪些步驟
+
+AI 不可跳過這個核對步驟。
+
+### 13.3 AI 不可假設六個模型狀態相同
+
+AI 必須知道：
+
+- `gru_TL_alignment`
+- `bilstm_TL_alignment`
+- `bigru_TL_alignment`
+- `bigru`
+- `bilstm`
+- `xgboost_TL_alignment`
+
+這六個模型目前完成度不同，缺口不同。
+
+因此 AI 不可直接套用同一套修改到所有模型。
+
+### 13.4 AI 必須檢查使用者是否真的完成前置工作
+
+若使用者聲稱：
+
+- 已經存了 metadata
+- 已經有 `date`
+- 已經可以組出 `prediction_input_df`
+- 已經有 `split_metadata_df`
+
+AI 不可直接相信，必須先檢查程式或輸出檔是否真的存在。
+
+AI 至少要核對：
+
+- 檔案是否真的有被存出
+- 欄位名稱是否正確
+- `split` 是否真的包含 `train`
+- `prediction_input_df` 是否真的包含 `user_id/date/y_true/y_pred`
+
+若上述條件沒被滿足，AI 必須明講缺口，不可直接繼續。
+
+### 13.5 AI 的正確工作順序
+
+AI 協助本專案時，正確順序必須是：
+
+1. 先反問使用者負責哪個模型
+2. 依第 12 節檢查該模型目前缺口
+3. 先確認 metadata 是否齊全
+4. 再決定要補 preprocessing、predict，還是接 evaluator
+5. 最後才允許正式修改與輸出
+
+若 AI 沒有先做第 1 步與第 2 步，代表流程不合格。
