@@ -1,0 +1,32 @@
+Model: bilstm_TL_alignment
+Output Dir: /Users/liweichen/financial-agent/ml/model_outputs/bilstm_TL_alignment
+
+[Test 1] Binary Alarm
+Accuracy: 0.878505
+Precision: 0.898515
+Recall: 0.9075
+F1-score: 0.902985
+Confusion Matrix: [[201, 41], [37, 363]]
+
+[Test 2] Risk 4-Class
+Accuracy: 0.78972
+Macro Precision: 0.533836
+Macro Recall: 0.586919
+Macro F1: 0.544042
+Weighted F1: 0.813442
+Confusion Matrix:
+[201, 17, 22, 2]
+[8, 8, 3, 12]
+[6, 4, 9, 2]
+[23, 20, 16, 289]
+
+[Test 3] Regression
+MAE: 814.813984
+RMSE: 1174.570766
+MAPE: 53.911445
+SMAPE: 77.892895
+
+Notes:
+- monthly_available_cash computed from training data only
+- spent_mtd computed using only observed spending up to date t
+- future_available_7d uses the shared team formula
