@@ -1,14 +1,17 @@
 from flask import Blueprint, request, redirect, render_template, jsonify, session
-import requests, jwt
+import requests, jwt, os
+from dotenv import load_dotenv
 from backend.database import SessionLocal
 from backend.models.user import User
 
+load_dotenv()
+
 auth_bp = Blueprint("auth", __name__)
 
-GOOGLE_CLIENT_ID = "143127007053-vb0fqvjalcq31bff87j6cuh66fqd9amb.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET = "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"
+GOOGLE_CLIENT_ID = os.getenv("CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.getenv("CLIENT_SECRET")
 REDIRECT_URI = "https://financial-agent.it.com/callback_google"
-SECRET_KEY = "super_secret_random_key"
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
 @auth_bp.route("/login_page")
 def login_page():

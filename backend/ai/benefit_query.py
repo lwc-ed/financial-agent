@@ -1,13 +1,14 @@
 import os
 import json
 import pymysql
-import re
 from dotenv import load_dotenv
 
 load_dotenv()
 
-print("MAIN_DB_URL =", os.getenv("MAIN_DB_URL"))
-print("BENEFIT_DB_URL =", os.getenv("BENEFIT_DB_URL"))
+_DB_USER = os.getenv("DB_USER")
+_DB_PASSWORD = os.getenv("DB_PASSWORD")
+_DB_HOST = os.getenv("DB_HOST")
+_DB_PORT = int(os.getenv("DB_PORT", "3306"))
 
 BANK_CARD_MAP = {
     "cube_benefits": ("國泰世華", "CUBE 卡"),
@@ -18,38 +19,20 @@ BANK_CARD_MAP = {
 }
 
 # ---------------------------
-# 解析 MySQL URL
-# ---------------------------
-def parse_mysql_url(url):
-    pattern = r"mysql\+?pymysql?:\/\/(.*?):(.*?)@(.*?):(\d+)\/(.*)"
-    match = re.match(pattern, url)
-    if not match:
-        print("❌ URL 格式錯誤 →", url)
-        return None
-    return match.groups()
-
-# ---------------------------
 # 連 Benefit DB
 # ---------------------------
 def get_benefit_db_connection():
-    url = os.getenv("BENEFIT_DB_URL")
-    if not url:
-        print("❌ BENEFIT_DB_URL 未設定")
+    if not all([_DB_USER, _DB_PASSWORD, _DB_HOST]):
+        print("❌ DB 環境變數未設定（DB_USER / DB_PASSWORD / DB_HOST）")
         return None
-
-    parsed = parse_mysql_url(url)
-    if not parsed:
-        return None
-
-    user, password, host, port, db = parsed
 
     try:
         return pymysql.connect(
-            host=host,
-            user=user,
-            password=password,
-            database=db,
-            port=int(port),
+            host=_DB_HOST,
+            user=_DB_USER,
+            password=_DB_PASSWORD,
+            database="credit_card_benefits",
+            port=_DB_PORT,
             charset="utf8mb4",
             cursorclass=pymysql.cursors.DictCursor
         )
