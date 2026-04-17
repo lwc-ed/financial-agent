@@ -2,11 +2,15 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 from urllib.parse import quote_plus
 import json
+import os
+from dotenv import load_dotenv
 
-DB_USER = "nycuiemagent"
-DB_PASSWORD = quote_plus("SUPERidol$")  # 密碼含 $
-DB_HOST = "financial-agent-rescued.cpwk2ce8cqyu.us-east-2.rds.amazonaws.com"
-DB_PORT = "3306"
+load_dotenv()
+
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = quote_plus(os.getenv("DB_PASSWORD", ""))
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT", "3306")
 
 # --- 主應用資料庫 financial_agent ---
 MAIN_DB_NAME = "financial_agent"

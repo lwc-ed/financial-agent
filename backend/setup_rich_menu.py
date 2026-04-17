@@ -18,12 +18,14 @@ import time
 
 
 
-# ✅ 請換成你自己的 Channel Access Token
-channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU="
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
+channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
 
 # ✅ 圖片路徑
-image_path = "/Users/liweichen/financial-agent/picture/menu1.jpg"
+image_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "picture", "menu1.jpg")
 
 
 # ✅ 正確初始化方式（包含 host）

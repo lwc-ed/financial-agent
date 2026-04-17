@@ -12,8 +12,8 @@ from models.user import User  # 假設你有 User model
 linebot_bp = Blueprint("linebot", __name__)
 
 # 替換成你自己的 LINE Channel Access Token 與 Secret
-channel_access_token = "4CtUYyGR0+ISjVhzcnGLmJmG8Qf/vzH5/gQM98g/jR2ZoMZguJPkvjiLvMXoSb3ctaKkMO7Onhe6Fa1bc3BHw6sF7coKlYy1dozA7/V6ZFOpt9S9wU8PXZhefQoOGtC2J6fj70vQzIqNktiQVx2MdAdB04t89/1O/w1cDnyilFU="
-channel_secret = "bde6ff24868fe4edeef87393ea9db525"
+channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
+channel_secret = os.getenv("CHANNEL_SECRET")
 
 line_bot_api = LineBotApi(channel_access_token)
 handler = WebhookHandler(channel_secret)
