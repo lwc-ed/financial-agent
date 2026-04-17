@@ -11,9 +11,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 import pickle, os, json, sys
+import pandas as pd
 from itertools import combinations
 sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from alignment_utils import ALIGNED_FEATURE_COLS
+from output_eval_utils import run_output_evaluation
 
 ARTIFACTS_DIR = "artifacts_bilstm_v2"
 
@@ -76,8 +79,12 @@ X_test = np.load(f"{ARTIFACTS_DIR}/personal_X_test.npy")
 
 y_val_scaled  = np.load(f"{ARTIFACTS_DIR}/personal_y_val.npy")
 y_test_raw    = np.load(f"{ARTIFACTS_DIR}/personal_y_test_raw.npy")
-test_user_ids = np.load(f"{ARTIFACTS_DIR}/personal_test_user_ids.npy")
-val_user_ids  = np.load(f"{ARTIFACTS_DIR}/personal_val_user_ids.npy")
+test_user_ids  = np.load(f"{ARTIFACTS_DIR}/personal_test_user_ids.npy")
+val_user_ids   = np.load(f"{ARTIFACTS_DIR}/personal_val_user_ids.npy")
+train_user_ids = np.load(f"{ARTIFACTS_DIR}/personal_train_user_ids.npy")
+test_dates     = np.load(f"{ARTIFACTS_DIR}/personal_test_dates.npy")
+val_dates      = np.load(f"{ARTIFACTS_DIR}/personal_val_dates.npy")
+train_dates    = np.load(f"{ARTIFACTS_DIR}/personal_train_dates.npy")
 
 with open(f"{ARTIFACTS_DIR}/personal_target_scaler.pkl", "rb") as f:
     target_scaler = pickle.load(f)
@@ -220,4 +227,25 @@ with open(f"{ARTIFACTS_DIR}/metrics.json", "w") as f:
 
 print(f"\n✅ 結果儲存至 {ARTIFACTS_DIR}/result.txt")
 print(f"✅ Metrics 儲存至 {ARTIFACTS_DIR}/metrics.json")
-print(f"\n🎉 完成！")
+
+# ── 共用評估器 ────────────────────────────────────────────────────────────────
+print("\n📊 呼叫共用評估器...")
+prediction_input_df = pd.DataFrame({
+    "user_id": test_user_ids,
+    "date"   : pd.to_datetime(test_dates),
+    "y_true" : y_test_raw.ravel(),
+    "y_pred" : test_preds.ravel(),
+})
+
+split_metadata_df = pd.concat([
+    pd.DataFrame({"user_id": train_user_ids, "date": pd.to_datetime(train_dates), "split": "train"}),
+    pd.DataFrame({"user_id": val_user_ids,   "date": pd.to_datetime(val_dates),   "split": "val"}),
+    pd.DataFrame({"user_id": test_user_ids,  "date": pd.to_datetime(test_dates),  "split": "test"}),
+], ignore_index=True)
+
+run_output_evaluation(
+    model_name="bilstm_TL_alignment",
+    prediction_input_df=prediction_input_df,
+    split_metadata_df=split_metadata_df,
+)
+print("\n🎉 完成！")

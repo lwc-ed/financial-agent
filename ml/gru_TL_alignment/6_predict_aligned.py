@@ -16,9 +16,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 import pickle, os, json, sys
+import pandas as pd
 from pathlib import Path
 sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from alignment_utils import ALIGNED_FEATURE_COLS
+from output_eval_utils import run_output_evaluation
 
 ROOT = Path(__file__).resolve().parent
 ARTIFACTS_DIR  = "artifacts_aligned"
@@ -84,8 +87,12 @@ y_test_raw = np.load(f"{ARTIFACTS_DIR}/personal_aligned_y_test_raw.npy")
 with open(f"{ARTIFACTS_DIR}/personal_aligned_target_scaler.pkl", "rb") as f:
     target_scaler = pickle.load(f)
 
-test_user_ids = np.load(f"{ARTIFACTS_DIR}/personal_aligned_test_user_ids.npy")
-val_user_ids  = np.load(f"{ARTIFACTS_DIR}/personal_aligned_val_user_ids.npy")
+test_user_ids  = np.load(f"{ARTIFACTS_DIR}/personal_aligned_test_user_ids.npy")
+val_user_ids   = np.load(f"{ARTIFACTS_DIR}/personal_aligned_val_user_ids.npy")
+train_user_ids = np.load(f"{ARTIFACTS_DIR}/personal_aligned_train_user_ids.npy")
+test_dates     = np.load(f"{ARTIFACTS_DIR}/personal_aligned_test_dates.npy")
+val_dates      = np.load(f"{ARTIFACTS_DIR}/personal_aligned_val_dates.npy")
+train_dates    = np.load(f"{ARTIFACTS_DIR}/personal_aligned_train_dates.npy")
 
 # 載入 val 的原始 y（用 personal_aligned_y_val.npy 做 inverse）
 y_val_scaled = np.load(f"{ARTIFACTS_DIR}/personal_aligned_y_val.npy")
@@ -280,4 +287,25 @@ with open(f"{ARTIFACTS_DIR}/aligned_metrics.json", "w") as f:
 
 print(f"✅ 結果儲存至 {ARTIFACTS_DIR}/aligned_result.txt")
 print(f"✅ Metrics 儲存至 {ARTIFACTS_DIR}/aligned_metrics.json")
-print(f"\n🎉 完成！")
+
+# ── 共用評估器 ────────────────────────────────────────────────────────────────
+print("\n📊 呼叫共用評估器...")
+prediction_input_df = pd.DataFrame({
+    "user_id": test_user_ids,
+    "date"   : pd.to_datetime(test_dates),
+    "y_true" : y_test_raw.ravel(),
+    "y_pred" : test_preds.ravel(),
+})
+
+split_metadata_df = pd.concat([
+    pd.DataFrame({"user_id": train_user_ids, "date": pd.to_datetime(train_dates), "split": "train"}),
+    pd.DataFrame({"user_id": val_user_ids,   "date": pd.to_datetime(val_dates),   "split": "val"}),
+    pd.DataFrame({"user_id": test_user_ids,  "date": pd.to_datetime(test_dates),  "split": "test"}),
+], ignore_index=True)
+
+run_output_evaluation(
+    model_name="gru_TL_alignment",
+    prediction_input_df=prediction_input_df,
+    split_metadata_df=split_metadata_df,
+)
+print("\n🎉 完成！")
