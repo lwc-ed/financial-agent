@@ -50,6 +50,7 @@ for user_id in sorted(df["user_id"].unique()):
 
     feats["future_expense_7d_sum"] = u["future_expense_7d_sum"].values
     feats["user_id"]               = user_id
+    feats["date"]                  = u["date"].values
     result_list.append(feats)
 
 daily = pd.concat(result_list).reset_index(drop=True)
@@ -61,19 +62,21 @@ print(f"  計算完後：{before:,} → {len(daily):,} 筆")
 # 3. 滑動視窗 + per-user 70/15/15 切分
 # ─────────────────────────────────────────────────────────────────────────────
 print(f"\n🪟 建立滑動視窗（INPUT_DAYS={INPUT_DAYS}，per-user 70/15/15）...")
-X_train_list, y_train_list, train_uid = [], [], []
-X_val_list,   y_val_list,   val_uid   = [], [], []
-X_test_list,  y_test_list,  test_uid  = [], [], []
+X_train_list, y_train_list, train_uid, train_dates = [], [], [], []
+X_val_list,   y_val_list,   val_uid,   val_dates   = [], [], [], []
+X_test_list,  y_test_list,  test_uid,  test_dates  = [], [], [], []
 
 for user_id in sorted(daily["user_id"].unique()):
     u          = daily[daily["user_id"] == user_id].reset_index(drop=True)
     feat_arr   = u[ALIGNED_FEATURE_COLS].values.astype(np.float32)
     target_arr = u[TARGET_COL].values.astype(np.float32)
 
-    windows_X, windows_y = [], []
+    date_arr = u["date"].values
+    windows_X, windows_y, windows_dates = [], [], []
     for t in range(INPUT_DAYS, len(u)):
         windows_X.append(feat_arr[t - INPUT_DAYS : t])
         windows_y.append([target_arr[t]])
+        windows_dates.append(date_arr[t])
 
     n = len(windows_X)
     if n < 5:
@@ -95,6 +98,9 @@ for user_id in sorted(daily["user_id"].unique()):
     X_train_list.extend(X_tr); y_train_list.extend(y_tr); train_uid.extend([user_id]*len(X_tr))
     X_val_list.extend(X_vl);   y_val_list.extend(y_vl);   val_uid.extend([user_id]*len(X_vl))
     X_test_list.extend(X_te);  y_test_list.extend(y_te);  test_uid.extend([user_id]*len(X_te))
+    train_dates.extend(windows_dates[:t_end])
+    val_dates.extend(windows_dates[t_end:v_end])
+    test_dates.extend(windows_dates[v_end:])
 
 X_train = np.array(X_train_list, dtype=np.float32)
 y_train = np.array(y_train_list, dtype=np.float32)
@@ -137,6 +143,9 @@ np.save(f"{ARTIFACTS_DIR}/personal_aligned_y_test_raw.npy", y_test)
 np.save(f"{ARTIFACTS_DIR}/personal_aligned_train_user_ids.npy", np.array(train_uid))
 np.save(f"{ARTIFACTS_DIR}/personal_aligned_val_user_ids.npy",   np.array(val_uid))
 np.save(f"{ARTIFACTS_DIR}/personal_aligned_test_user_ids.npy",  np.array(test_uid))
+np.save(f"{ARTIFACTS_DIR}/personal_aligned_train_dates.npy", np.array(train_dates, dtype="datetime64[D]"))
+np.save(f"{ARTIFACTS_DIR}/personal_aligned_val_dates.npy",   np.array(val_dates,   dtype="datetime64[D]"))
+np.save(f"{ARTIFACTS_DIR}/personal_aligned_test_dates.npy",  np.array(test_dates,  dtype="datetime64[D]"))
 
 with open(f"{ARTIFACTS_DIR}/personal_aligned_target_scaler.pkl", "wb") as f:
     pickle.dump(target_scaler, f)
