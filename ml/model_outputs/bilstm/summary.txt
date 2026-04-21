@@ -1,0 +1,32 @@
+Model: bilstm
+Output Dir: \\wsl.localhost\Ubuntu-22.04\home\user\financial-agent\ml\model_outputs\bilstm
+
+[Test 1] Binary Alarm
+Accuracy: 0.84891
+Precision: 0.867374
+Recall: 0.874332
+F1-score: 0.870839
+Confusion Matrix: [[218, 50], [47, 327]]
+
+[Test 2] Risk 4-Class
+Accuracy: 0.753894
+Macro Precision: 0.534344
+Macro Recall: 0.576031
+Macro F1: 0.540712
+Weighted F1: 0.775611
+Confusion Matrix:
+[218, 19, 21, 10]
+[8, 10, 4, 11]
+[8, 4, 11, 4]
+[31, 9, 29, 245]
+
+[Test 3] Regression
+MAE: 798.096994
+RMSE: 1212.03694
+MAPE: 51.592499
+SMAPE: 78.455158
+
+Notes:
+- monthly_available_cash computed from training data only
+- spent_mtd computed using only observed spending up to date t
+- future_available_7d uses the shared team formula
