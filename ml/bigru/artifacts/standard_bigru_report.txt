@@ -1,15 +1,17 @@
 Bi-GRU Baseline Result
-model_name: my_bigru_standard
-version: v1_standard
+model_name: bigru
+version: v2_with_spec
 pretrained: False (Trained from scratch)
-test_mae: 801.00
-test_rmse: 1183.68
-test_smape: 81.42%
+test_mae: 771.21
+test_rmse: 1197.68
+test_mape: 54.41%
+test_smape: 76.45%
 
 ==============================================================
             My Standard Bi-GRU 獨立作戰結果 (越低越好)
 ==============================================================
-  Test MAE   : 801.00 
-  Test RMSE  : 1183.68
-  Test sMAPE : 81.42%
+  Test MAE   : 771.21
+  Test RMSE  : 1197.68
+  Test MAPE  : 54.41%
+  Test sMAPE : 76.45%
 ==============================================================

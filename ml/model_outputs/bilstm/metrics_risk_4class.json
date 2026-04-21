@@ -5,35 +5,35 @@
     "mid_risk",
     "high_risk"
   ],
-  "Accuracy": 0.753894,
-  "Macro Precision": 0.534344,
-  "Macro Recall": 0.576031,
-  "Macro F1": 0.540712,
-  "Weighted F1": 0.775611,
+  "Accuracy": 0.76947,
+  "Macro Precision": 0.541135,
+  "Macro Recall": 0.583173,
+  "Macro F1": 0.547619,
+  "Weighted F1": 0.792851,
   "Confusion Matrix": [
     [
-      218,
-      19,
-      21,
-      10
+      212,
+      22,
+      25,
+      9
     ],
     [
-      8,
+      5,
       10,
-      4,
-      11
+      2,
+      16
     ],
     [
-      8,
-      4,
+      5,
+      5,
       11,
-      4
+      6
     ],
     [
-      31,
-      9,
-      29,
-      245
+      18,
+      10,
+      25,
+      261
     ]
   ]
 }

@@ -2,23 +2,23 @@ Model: bilstm_TL_alignment
 Output Dir: /Users/liweichen/financial-agent/ml/model_outputs/bilstm_TL_alignment
 
 [Test 1] Binary Alarm
-Accuracy: 0.878505
-Precision: 0.898515
-Recall: 0.9075
-F1-score: 0.902985
-Confusion Matrix: [[201, 41], [37, 363]]
+Accuracy: 0.856698
+Precision: 0.865285
+Recall: 0.893048
+F1-score: 0.878947
+Confusion Matrix: [[216, 52], [40, 334]]
 
 [Test 2] Risk 4-Class
-Accuracy: 0.78972
-Macro Precision: 0.533836
-Macro Recall: 0.586919
-Macro F1: 0.544042
-Weighted F1: 0.813442
+Accuracy: 0.741433
+Macro Precision: 0.512988
+Macro Recall: 0.547366
+Macro F1: 0.51655
+Weighted F1: 0.768478
 Confusion Matrix:
-[201, 17, 22, 2]
-[8, 8, 3, 12]
-[6, 4, 9, 2]
-[23, 20, 16, 289]
+[216, 21, 22, 9]
+[8, 8, 3, 14]
+[7, 5, 10, 5]
+[25, 26, 21, 242]
 
 [Test 3] Regression
 MAE: 814.813984
