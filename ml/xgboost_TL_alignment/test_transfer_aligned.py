@@ -1,10 +1,12 @@
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.append(str(ROOT))
+# 把專案根目錄加到 Python path
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
 import json
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -43,7 +45,6 @@ def evaluate_model(
         raise ValueError(f"{name} 評估資料缺少 label 或 target 欄位")
 
     X = df[feature_cols].copy()
-    y_log = df["label"].copy()
     y_raw = df["target"].copy()
 
     X_sc = scaler.transform(X)
@@ -59,9 +60,10 @@ def evaluate_model(
 
     pred_df = pd.DataFrame()
     if "user_id" in df.columns:
-        pred_df["user_id"] = df["user_id"].values
+        pred_df["user_id"] = df["user_id"].astype(str).values
     if "date" in df.columns:
-        pred_df["date"] = df["date"].values
+        pred_df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d").values
+
     pred_df["y_true"] = y_raw.values
     pred_df["y_pred"] = preds_raw
 
@@ -82,29 +84,90 @@ def evaluate_model(
     return metrics, pred_df
 
 
-def build_split_metadata(df: pd.DataFrame, train_ratio: float = 0.8) -> pd.DataFrame:
+def build_split_metadata_per_user(df: pd.DataFrame, train_ratio: float = 0.8) -> pd.DataFrame:
     """
     建立共用 evaluator 需要的 split_metadata_df
     必要欄位: user_id, date, split
 
-    這裡沿用目前 script 的切法：
-    前 80% -> train
-    後 20% -> test
-
-    若未來有 valid，這裡再一起補。
+    修正重點：
+    - 不能整份 df 直接 80/20 切
+    - 要改成每個 user 各自依日期排序後切 train/test
+    - 這樣每個 user 才會至少有 train 資料可算 monthly_available_cash
     """
     required_cols = ["user_id", "date"]
     missing = [c for c in required_cols if c not in df.columns]
     if missing:
         raise ValueError(f"建立 split_metadata_df 時缺少欄位: {missing}")
 
-    split_idx = int(len(df) * train_ratio)
+    work_df = df.copy()
+    work_df["user_id"] = work_df["user_id"].astype(str)
+    work_df["date"] = pd.to_datetime(work_df["date"])
 
-    split_metadata_df = df[["user_id", "date"]].copy()
-    split_metadata_df["split"] = "test"
-    split_metadata_df.loc[: split_idx - 1, "split"] = "train"
+    parts = []
+
+    for user_id, g in work_df.groupby("user_id", sort=False):
+        g = g.sort_values("date").copy()
+        n = len(g)
+
+        if n == 1:
+            # 只有一筆時，只能放 train
+            g["split"] = "train"
+        else:
+            split_idx = int(n * train_ratio)
+
+            # 至少保證 1 筆 train
+            if split_idx < 1:
+                split_idx = 1
+
+            # 也盡量保留至少 1 筆 test
+            if split_idx >= n:
+                split_idx = n - 1
+
+            g["split"] = "test"
+            g.iloc[:split_idx, g.columns.get_loc("split")] = "train"
+
+        parts.append(g[["user_id", "date", "split"]])
+
+    split_metadata_df = pd.concat(parts, axis=0).reset_index(drop=True)
+    split_metadata_df["date"] = split_metadata_df["date"].dt.strftime("%Y-%m-%d")
 
     return split_metadata_df
+
+
+def build_test_df_per_user(df: pd.DataFrame, train_ratio: float = 0.8) -> pd.DataFrame:
+    """
+    與 split_metadata_df 相同邏輯：
+    每個 user 各自依日期排序後切 test。
+    """
+    work_df = df.copy()
+    work_df["user_id"] = work_df["user_id"].astype(str)
+    work_df["date"] = pd.to_datetime(work_df["date"])
+
+    test_parts = []
+
+    for user_id, g in work_df.groupby("user_id", sort=False):
+        g = g.sort_values("date").copy()
+        n = len(g)
+
+        if n <= 1:
+            # 沒辦法切 test，跳過
+            continue
+
+        split_idx = int(n * train_ratio)
+        if split_idx < 1:
+            split_idx = 1
+        if split_idx >= n:
+            split_idx = n - 1
+
+        g_test = g.iloc[split_idx:].copy()
+        test_parts.append(g_test)
+
+    if not test_parts:
+        raise ValueError("測試集為空，請檢查每位 user 的資料量")
+
+    test_df = pd.concat(test_parts, axis=0).reset_index(drop=True)
+    test_df["date"] = pd.to_datetime(test_df["date"]).dt.strftime("%Y-%m-%d")
+    return test_df
 
 
 def main():
@@ -123,15 +186,16 @@ def main():
         raise FileNotFoundError(f"找不到 scaler 檔案: {scaler_path}")
 
     df = pd.read_csv(own_data_path)
+    df["user_id"] = df["user_id"].astype(str)
 
     if "date" in df.columns:
-        df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
+        df["date"] = pd.to_datetime(df["date"])
 
     feature_cols = load_feature_schema(schema_path)
     scaler = load_pickle(scaler_path)
 
-    split_idx = int(len(df) * 0.8)
-    test_df = df.iloc[split_idx:].copy()
+    # 依每個 user 各自切 test
+    test_df = build_test_df_per_user(df, train_ratio=0.8)
 
     if len(test_df) == 0:
         raise ValueError("測試集為空，請檢查資料量")
@@ -149,7 +213,6 @@ def main():
     results = []
     prediction_dfs = {}
 
-    # 1) 先跑 base model（保留舊功能）
     if base_model_path.exists():
         metrics_base, pred_df_base = evaluate_model(
             base_model_path, scaler, test_df, feature_cols, "base_aligned"
@@ -159,7 +222,6 @@ def main():
     else:
         print(f"[WARN] base model not found: {base_model_path}")
 
-    # 2) 再跑 finetuned model（保留舊功能）
     if finetuned_model_path.exists():
         metrics_ft, pred_df_ft = evaluate_model(
             finetuned_model_path, scaler, test_df, feature_cols, "finetuned_aligned"
@@ -169,7 +231,6 @@ def main():
     else:
         print(f"[WARN] finetuned model not found: {finetuned_model_path}")
 
-    # 3) 舊版結果輸出（保留）
     output_json = RESULT_DIR / "transfer_test_metrics_v2.json"
     output_txt = RESULT_DIR / "aligned_results_v2.txt"
 
@@ -190,11 +251,10 @@ def main():
     print(f"[OK] saved summary -> {output_txt}")
     print(results)
 
-    # 4) 建立共用 evaluator 所需 split metadata
-    split_metadata_df = build_split_metadata(df, train_ratio=0.8)
+    # 用 per-user split 建正式 metadata
+    split_metadata_df = build_split_metadata_per_user(df, train_ratio=0.8)
 
-    # 5) 選定正式 spec 輸出的模型
-    #    規則：優先 finetuned，若沒有就退回 base
+    # 正式 spec 輸出：優先 finetuned，沒有才退回 base
     if "finetuned_aligned" in prediction_dfs:
         official_prediction_input_df = prediction_dfs["finetuned_aligned"].copy()
         official_model_source = "finetuned_aligned"
@@ -204,7 +264,14 @@ def main():
     else:
         raise RuntimeError("沒有可用模型可做正式輸出，base/finetuned 都不存在")
 
-    # 6) 呼叫正式 spec evaluator
+    # Debug：檢查 prediction users 是否都在 train 出現過
+    train_users = set(
+        split_metadata_df.loc[split_metadata_df["split"] == "train", "user_id"].astype(str)
+    )
+    pred_users = set(official_prediction_input_df["user_id"].astype(str))
+    missing_users = sorted(pred_users - train_users)
+    print("Users in prediction but not in train:", missing_users)
+
     print(f"[INFO] official spec output uses: {official_model_source}")
 
     run_output_evaluation(
