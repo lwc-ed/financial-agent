@@ -1,4 +1,17 @@
-# model & data
+# model & outputs
+ml/bigru/artifacts/
+ml/model_outputs/
+
+# experiment folders
+ml/ml_alignment_kyh/
+ml/ml_alignment_kyh_v2/
+ml/ml_alignment_kyh_v3/
+
+# files
+*.npy
+*.pth
+*.json
+*.csv# model & data
 ml/bigru/artifacts/
 ml/model_outputs/
 
