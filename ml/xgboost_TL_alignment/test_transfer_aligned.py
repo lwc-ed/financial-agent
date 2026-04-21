@@ -87,24 +87,26 @@ def build_split_metadata(df: pd.DataFrame, train_ratio: float = 0.8) -> pd.DataF
     建立共用 evaluator 需要的 split_metadata_df
     必要欄位: user_id, date, split
 
-    這裡沿用目前 script 的切法：
-    前 80% -> train
-    後 20% -> test
-
-    若未來有 valid，這裡再一起補。
+    **按每位 user 個別切割**：每位 user 的前 train_ratio 筆 -> train，其餘 -> test。
+    這樣可確保每位 user 在 split_metadata_df 中都有 train 紀錄，
+    避免 output_eval_utils 無法計算 monthly_available_cash。
     """
     required_cols = ["user_id", "date"]
     missing = [c for c in required_cols if c not in df.columns]
     if missing:
         raise ValueError(f"建立 split_metadata_df 時缺少欄位: {missing}")
 
-    split_idx = int(len(df) * train_ratio)
+    parts = []
+    for uid, group in df.groupby("user_id", sort=False):
+        group = group.reset_index(drop=True)
+        n = len(group)
+        split_idx = max(1, int(n * train_ratio))   # 至少保留 1 筆 train
+        sub = group[["user_id", "date"]].copy()
+        sub["split"] = "test"
+        sub.loc[: split_idx - 1, "split"] = "train"
+        parts.append(sub)
 
-    split_metadata_df = df[["user_id", "date"]].copy()
-    split_metadata_df["split"] = "test"
-    split_metadata_df.loc[: split_idx - 1, "split"] = "train"
-
-    return split_metadata_df
+    return pd.concat(parts, ignore_index=True)
 
 
 def main():
@@ -123,6 +125,11 @@ def main():
         raise FileNotFoundError(f"找不到 scaler 檔案: {scaler_path}")
 
     df = pd.read_csv(own_data_path)
+
+    # 對齊 output_eval_utils 的 user_id 格式（transaction 檔案萃取出的是 "user14" 格式）
+    df["user_id"] = df["user_id"].astype(str).apply(
+        lambda x: x if x.startswith("user") else f"user{x}"
+    )
 
     if "date" in df.columns:
         df["date"] = pd.to_datetime(df["date"]).dt.strftime("%Y-%m-%d")
