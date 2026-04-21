@@ -1,4 +1,12 @@
-# ---- Python ----
+# model & data
+ml/bigru/artifacts/
+ml/model_outputs/
+
+*.npy
+*.pth
+*.pkl
+*.csv
+*.json# ---- Python ----
 __pycache__/
 *.py[cod]
 *.pyc
