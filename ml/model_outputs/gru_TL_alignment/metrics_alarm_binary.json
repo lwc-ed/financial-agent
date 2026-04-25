@@ -1,16 +1,16 @@
 {
-  "Accuracy": 0.869159,
-  "Precision": 0.913613,
-  "Recall": 0.8725,
-  "F1-score": 0.892583,
+  "Accuracy": 0.79564,
+  "Precision": 0.844262,
+  "Recall": 0.768657,
+  "F1-score": 0.804688,
   "Confusion Matrix": [
     [
-      209,
-      33
+      275,
+      57
     ],
     [
-      51,
-      349
+      93,
+      309
     ]
   ]
 }
