@@ -4,18 +4,18 @@ model       : BiLSTMWithAttention + MMD loss
 features    : 10 aligned features (z-score + pct_rank)
 feature_cols: ['zscore_7d', 'zscore_14d', 'zscore_30d', 'pct_change_norm', 'volatility_7d', 'is_above_mean_30d', 'pct_rank_7d', 'pct_rank_30d', 'dow_sin', 'dow_cos']
 all_seeds   : [0, 7, 13, 21, 42, 100, 123, 314, 456, 777, 789, 999, 1234, 2024, 9999]
-best_combo  : [42, 777]
+best_combo  : [42, 314]
 
-val_mae           : 823.4440
-val_rmse          : 1182.5573
-val_medae         : 588.3930
-test_mae          : 814.8140
-test_rmse         : 1174.5708
-test_medae        : 554.0823
-test_smape        : 77.89%
-test_per_user_nmae: 206.85%
+val_mae           : 1470.6824
+val_rmse          : 2609.4807
+val_medae         : 857.2720
+test_mae          : 1254.8705
+test_rmse         : 1745.7083
+test_medae        : 964.8608
+test_smape        : 85.16%
+test_per_user_nmae: 140.87%
 
-all_seeds_test_mae: 844.8575
+all_seeds_test_mae: 1299.7200
 
 baseline_classmate: 743.51
-gap               : +71.30
+gap               : +511.36

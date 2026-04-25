@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 import xgboost as xgb
 
-from alignment_utils import DATA_DIR, MODEL_DIR, RESULT_DIR, load_feature_schema, load_pickle
+from alignment_utils import DATA_DIR, MODEL_DIR, RESULT_DIR, load_feature_schema, load_pickle, train_valid_test_split_by_time
 
 LOW_RATIO = 1.2
 HIGH_RATIO = 1.8
@@ -40,8 +40,8 @@ def get_test_df() -> pd.DataFrame:
     if "target" not in df.columns:
         raise ValueError("own_processed_aligned.csv 缺少 target 欄位，無法做三級警報評估")
 
-    split_idx = int(len(df) * 0.8)
-    test_df = df.iloc[split_idx:].copy().reset_index(drop=True)
+    _, _, test_df = train_valid_test_split_by_time(df, train_ratio=0.70, valid_ratio=0.15)
+    test_df = test_df.reset_index(drop=True)
     if len(test_df) == 0:
         raise ValueError("測試集為空，請檢查 own_processed_aligned.csv")
     return test_df

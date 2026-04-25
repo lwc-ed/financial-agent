@@ -33,8 +33,13 @@ from output_eval_utils import run_output_evaluation # 導入正式評估工具
 SEEDS = sorted([int(f.split("seed")[1].replace(".pth", "")) for f in _glob.glob(f"{ARTIFACTS_DIR}/finetune_bigru_seed*.pth")])
 print(f"🔍 偵測到 {len(SEEDS)} 個 seeds: {SEEDS}")
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-if torch.backends.mps.is_available(): device = torch.device("mps")
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+elif torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
+print(f"⚙️  目前使用設備: {device}")
 
 INPUT_SIZE = len(ALIGNED_FEATURE_COLS)
 HIDDEN_SIZE = 48

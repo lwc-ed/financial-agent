@@ -21,7 +21,7 @@ ARTIFACTS_DIR = MY_DIR / "artifacts"
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
 # 排除不要的使用者 (跟團隊約定一致)
-EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
+EXCLUDE_USERS = ["user4", "user5", "user6"]
 
 # ── 2. 超參數設定 ────────────────────────────────────────────────────────
 SEQ_LEN = 30       # 觀測過去 30 天

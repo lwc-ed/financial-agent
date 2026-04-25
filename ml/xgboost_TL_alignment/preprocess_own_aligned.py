@@ -26,6 +26,14 @@ def main():
     df = pd.read_csv(input_path)
 
     # -------------------------------------------------
+    # 0. 排除與 DL 模型一致的使用者
+    # -------------------------------------------------
+    EXCLUDE_USERS = ["user4", "user5", "user6"]
+    before = len(df)
+    df = df[~df["user_id"].astype(str).isin(EXCLUDE_USERS)].reset_index(drop=True)
+    print(f"[INFO] 排除 {EXCLUDE_USERS}：{before} → {len(df)} 筆")
+
+    # -------------------------------------------------
     # 1. 欄位對應：future_expense_7d_sum 當成 target
     # -------------------------------------------------
     if "future_expense_7d_sum" not in df.columns:

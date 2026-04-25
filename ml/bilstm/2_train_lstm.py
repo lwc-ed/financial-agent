@@ -62,7 +62,12 @@ HIDDEN_SIZE = 64
 NUM_LAYERS = 2
 OUTPUT_SIZE = 1
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+elif torch.cuda.is_available():
+    device = torch.device("cuda")
+else:
+    device = torch.device("cpu")
 print(f"⚙️  使用運算設備: {device}")
 
 model = MyBiLSTM(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE).to(device)

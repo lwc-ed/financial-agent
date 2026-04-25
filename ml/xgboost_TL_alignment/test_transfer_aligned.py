@@ -90,7 +90,7 @@ def build_split_metadata_per_user(
     valid_ratio: float = 0.15,
 ) -> pd.DataFrame:
     """
-    建立共用 evaluator 需要的 split_metadata_df
+    建立共用 evaluator 需要的 split_metadata_df（per-user 70/15/15）
     必要欄位: user_id, date, split
 
     修正重點：
@@ -132,10 +132,13 @@ def build_split_metadata_per_user(
     return split_metadata_df
 
 
-def build_test_df_per_user(df: pd.DataFrame, train_ratio: float = 0.8) -> pd.DataFrame:
+def build_test_df_per_user(
+    df: pd.DataFrame,
+    train_ratio: float = 0.70,
+    valid_ratio: float = 0.15,
+) -> pd.DataFrame:
     """
-    與 split_metadata_df 相同邏輯：
-    每個 user 各自依日期排序後切 test。
+    每個 user 各自依日期排序後取最後 15% 作為 test set。
     """
     work_df = df.copy()
     work_df["user_id"] = work_df["user_id"].astype(str)
@@ -148,16 +151,12 @@ def build_test_df_per_user(df: pd.DataFrame, train_ratio: float = 0.8) -> pd.Dat
         n = len(g)
 
         if n <= 1:
-            # 沒辦法切 test，跳過
             continue
 
-        split_idx = int(n * train_ratio)
-        if split_idx < 1:
-            split_idx = 1
-        if split_idx >= n:
-            split_idx = n - 1
+        valid_end = max(int(n * train_ratio) + 1, int(n * (train_ratio + valid_ratio)))
+        valid_end = min(valid_end, n - 1)
 
-        g_test = g.iloc[split_idx:].copy()
+        g_test = g.iloc[valid_end:].copy()
         test_parts.append(g_test)
 
     if not test_parts:
@@ -197,8 +196,8 @@ def main():
     feature_cols = load_feature_schema(schema_path)
     scaler = load_pickle(scaler_path)
 
-    # 依每個 user 各自切 test
-    test_df = build_test_df_per_user(df, train_ratio=0.8)
+    # 依每個 user 各自切 test（70/15/15）
+    test_df = build_test_df_per_user(df, train_ratio=0.70, valid_ratio=0.15)
 
     if len(test_df) == 0:
         raise ValueError("測試集為空，請檢查資料量")
@@ -255,7 +254,7 @@ def main():
     print(results)
 
     # 用 per-user split 建正式 metadata
-    split_metadata_df = build_split_metadata_per_user(df, train_ratio=0.8)
+    split_metadata_df = build_split_metadata_per_user(df, train_ratio=0.70, valid_ratio=0.15)
 
     # 正式 spec 輸出：優先 finetuned，沒有才退回 base
     if "finetuned_aligned" in prediction_dfs:

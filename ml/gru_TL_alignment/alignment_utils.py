@@ -14,7 +14,7 @@ import os
 # ── 路徑設定（相對於 ml/ 目錄執行）──────────────────────────────────────────
 WALMART_DIR  = "../walmart"
 PERSONAL_DIR = "../data"
-EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
+EXCLUDE_USERS = ["user4", "user5", "user6"]
 
 # ── 共用特徵欄位名稱 ─────────────────────────────────────────────────────────
 ALIGNED_FEATURE_COLS = [

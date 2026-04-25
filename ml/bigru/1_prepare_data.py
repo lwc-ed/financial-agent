@@ -14,7 +14,7 @@ ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 print(f"🔍 尋找 Excel 檔案的目標資料夾: {DATA_DIR}")
 
 # 排除不要的使用者，跟現有 baseline 一致
-EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
+EXCLUDE_USERS = ["user4", "user5", "user6"]
 
 # ── 2. 超參數設定 ────────────────────────────────────────────────────────
 SEQ_LEN = 30

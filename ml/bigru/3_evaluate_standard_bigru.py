@@ -78,7 +78,12 @@ def main():
     NUM_LAYERS = 2
     OUTPUT_SIZE = 1
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
+    elif torch.cuda.is_available():
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
     model = MyBiGRU(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE).to(device)
 
     model_path = ARTIFACTS_DIR / "best_standard_bigru.pth"

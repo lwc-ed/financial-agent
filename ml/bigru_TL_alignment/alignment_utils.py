@@ -15,7 +15,7 @@ import pandas as pd
 BASE_DIR = Path(__file__).resolve().parent
 WALMART_DIR = BASE_DIR.parent / "walmart"
 PERSONAL_DIR = BASE_DIR.parent / "data"
-EXCLUDE_USERS = ["user4", "user5", "user6", "user14"]
+EXCLUDE_USERS = ["user4", "user5", "user6"]
 
 ALIGNED_FEATURE_COLS = [
     "zscore_7d",

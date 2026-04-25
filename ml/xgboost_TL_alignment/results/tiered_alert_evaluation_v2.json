@@ -27,88 +27,88 @@
   "global_metrics": {
     "confusion_matrix": [
       [
-        437,
-        30,
-        0
+        449,
+        22,
+        77
+      ],
+      [
+        102,
+        19,
+        2
       ],
       [
         68,
-        66,
-        0
-      ],
-      [
-        1,
-        8,
-        5
+        25,
+        30
       ]
     ],
     "per_level": {
       "🟢 正常": {
-        "precision": 0.8636,
-        "recall": 0.9358,
-        "f1": 0.8983,
-        "support": 467
+        "precision": 0.7254,
+        "recall": 0.8193,
+        "f1": 0.7695,
+        "support": 548
       },
       "🟡 低度": {
-        "precision": 0.6346,
-        "recall": 0.4925,
-        "f1": 0.5546,
-        "support": 134
+        "precision": 0.2879,
+        "recall": 0.1545,
+        "f1": 0.2011,
+        "support": 123
       },
       "🔴 高度": {
-        "precision": 1.0,
-        "recall": 0.3571,
-        "f1": 0.5263,
-        "support": 14
+        "precision": 0.2752,
+        "recall": 0.2439,
+        "f1": 0.2586,
+        "support": 123
       }
     },
-    "exact_accuracy": 0.826,
-    "ordinal_accuracy": 0.9984,
-    "severe_error_rate": 0.0016,
-    "expected_cost": 0.2927,
-    "high_alert_fnr": 0.6429
+    "exact_accuracy": 0.6272,
+    "ordinal_accuracy": 0.8174,
+    "severe_error_rate": 0.1826,
+    "expected_cost": 0.9899,
+    "high_alert_fnr": 0.7561
   },
   "true_distribution": {
-    "🟢 正常": 467,
-    "🟡 低度": 134,
-    "🔴 高度": 14
+    "🟢 正常": 548,
+    "🟡 低度": 123,
+    "🔴 高度": 123
   },
   "pred_distribution": {
-    "🟢 正常": 506,
-    "🟡 低度": 104,
-    "🔴 高度": 5
+    "🟢 正常": 619,
+    "🟡 低度": 66,
+    "🔴 高度": 109
   },
   "per_user": {
-    "14": {
+    "user1": {
       "confusion_matrix": [
         [
-          60,
-          7,
-          0
-        ],
-        [
-          8,
-          10,
-          0
-        ],
-        [
+          13,
           0,
+          0
+        ],
+        [
+          4,
           1,
+          0
+        ],
+        [
+          1,
+          0,
           0
         ]
       ],
       "per_level": {
         "🟢 正常": {
-          "precision": 0.8824,
-          "recall": 0.8955,
-          "f1": 0.8889,
-          "support": 67
+          "precision": 0.7222,
+          "recall": 1.0,
+          "f1": 0.8387,
+          "support": 13
         },
         "🟡 低度": {
-          "precision": 0.5556,
-          "recall": 0.5556,
-          "f1": 0.5556,
-          "support": 18
+          "precision": 1.0,
+          "recall": 0.2,
+          "f1": 0.3333,
+          "support": 5
         },
         "🔴 高度": {
           "precision": 0.0,
@@ -117,132 +117,682 @@
           "support": 1
         }
       },
-      "exact_accuracy": 0.814,
-      "ordinal_accuracy": 1.0,
-      "severe_error_rate": 0.0,
-      "expected_cost": 0.2616,
+      "exact_accuracy": 0.7368,
+      "ordinal_accuracy": 0.9474,
+      "severe_error_rate": 0.0526,
+      "expected_cost": 0.6842,
       "high_alert_fnr": 1.0,
       "true_dist": {
-        "🟢 正常": 67,
-        "🟡 低度": 18,
+        "🟢 正常": 13,
+        "🟡 低度": 5,
         "🔴 高度": 1
       },
       "pred_dist": {
-        "🟢 正常": 68,
-        "🟡 低度": 18,
+        "🟢 正常": 18,
+        "🟡 低度": 1,
         "🔴 高度": 0
       },
-      "n_samples": 86
+      "n_samples": 19
     },
-    "15": {
+    "user10": {
       "confusion_matrix": [
         [
-          221,
-          14,
+          35,
+          11,
           0
         ],
         [
-          42,
-          37,
+          11,
+          4,
+          0
+        ],
+        [
+          5,
+          0,
+          0
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.6863,
+          "recall": 0.7609,
+          "f1": 0.7216,
+          "support": 46
+        },
+        "🟡 低度": {
+          "precision": 0.2667,
+          "recall": 0.2667,
+          "f1": 0.2667,
+          "support": 15
+        },
+        "🔴 高度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 5
+        }
+      },
+      "exact_accuracy": 0.5909,
+      "ordinal_accuracy": 0.9242,
+      "severe_error_rate": 0.0758,
+      "expected_cost": 0.7955,
+      "high_alert_fnr": 1.0,
+      "true_dist": {
+        "🟢 正常": 46,
+        "🟡 低度": 15,
+        "🔴 高度": 5
+      },
+      "pred_dist": {
+        "🟢 正常": 51,
+        "🟡 低度": 15,
+        "🔴 高度": 0
+      },
+      "n_samples": 66
+    },
+    "user11": {
+      "confusion_matrix": [
+        [
+          26,
+          4,
+          0
+        ],
+        [
+          7,
+          6,
+          2
+        ],
+        [
+          5,
+          4,
+          0
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.6842,
+          "recall": 0.8667,
+          "f1": 0.7647,
+          "support": 30
+        },
+        "🟡 低度": {
+          "precision": 0.4286,
+          "recall": 0.4,
+          "f1": 0.4138,
+          "support": 15
+        },
+        "🔴 高度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 9
+        }
+      },
+      "exact_accuracy": 0.5926,
+      "ordinal_accuracy": 0.9074,
+      "severe_error_rate": 0.0926,
+      "expected_cost": 1.0185,
+      "high_alert_fnr": 1.0,
+      "true_dist": {
+        "🟢 正常": 30,
+        "🟡 低度": 15,
+        "🔴 高度": 9
+      },
+      "pred_dist": {
+        "🟢 正常": 38,
+        "🟡 低度": 14,
+        "🔴 高度": 2
+      },
+      "n_samples": 54
+    },
+    "user12": {
+      "confusion_matrix": [
+        [
+          33,
+          2,
+          0
+        ],
+        [
+          13,
+          3,
+          0
+        ],
+        [
+          2,
+          0,
+          0
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.6875,
+          "recall": 0.9429,
+          "f1": 0.7952,
+          "support": 35
+        },
+        "🟡 低度": {
+          "precision": 0.6,
+          "recall": 0.1875,
+          "f1": 0.2857,
+          "support": 16
+        },
+        "🔴 高度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 2
+        }
+      },
+      "exact_accuracy": 0.6792,
+      "ordinal_accuracy": 0.9623,
+      "severe_error_rate": 0.0377,
+      "expected_cost": 0.6981,
+      "high_alert_fnr": 1.0,
+      "true_dist": {
+        "🟢 正常": 35,
+        "🟡 低度": 16,
+        "🔴 高度": 2
+      },
+      "pred_dist": {
+        "🟢 正常": 48,
+        "🟡 低度": 5,
+        "🔴 高度": 0
+      },
+      "n_samples": 53
+    },
+    "user13": {
+      "confusion_matrix": [
+        [
+          57,
+          0,
+          0
+        ],
+        [
+          2,
+          2,
+          0
+        ],
+        [
+          17,
+          2,
+          0
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.75,
+          "recall": 1.0,
+          "f1": 0.8571,
+          "support": 57
+        },
+        "🟡 低度": {
+          "precision": 0.5,
+          "recall": 0.5,
+          "f1": 0.5,
+          "support": 4
+        },
+        "🔴 高度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 19
+        }
+      },
+      "exact_accuracy": 0.7375,
+      "ordinal_accuracy": 0.7875,
+      "severe_error_rate": 0.2125,
+      "expected_cost": 1.1875,
+      "high_alert_fnr": 1.0,
+      "true_dist": {
+        "🟢 正常": 57,
+        "🟡 低度": 4,
+        "🔴 高度": 19
+      },
+      "pred_dist": {
+        "🟢 正常": 76,
+        "🟡 低度": 4,
+        "🔴 高度": 0
+      },
+      "n_samples": 80
+    },
+    "user14": {
+      "confusion_matrix": [
+        [
+          67,
+          1,
+          0
+        ],
+        [
+          24,
+          0,
+          0
+        ],
+        [
+          5,
+          0,
+          0
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.6979,
+          "recall": 0.9853,
+          "f1": 0.8171,
+          "support": 68
+        },
+        "🟡 低度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 24
+        },
+        "🔴 高度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 5
+        }
+      },
+      "exact_accuracy": 0.6907,
+      "ordinal_accuracy": 0.9485,
+      "severe_error_rate": 0.0515,
+      "expected_cost": 0.7577,
+      "high_alert_fnr": 1.0,
+      "true_dist": {
+        "🟢 正常": 68,
+        "🟡 低度": 24,
+        "🔴 高度": 5
+      },
+      "pred_dist": {
+        "🟢 正常": 96,
+        "🟡 低度": 1,
+        "🔴 高度": 0
+      },
+      "n_samples": 97
+    },
+    "user15": {
+      "confusion_matrix": [
+        [
+          54,
+          0,
+          0
+        ],
+        [
+          16,
+          0,
           0
         ],
         [
           1,
           0,
-          1
+          0
         ]
       ],
       "per_level": {
         "🟢 正常": {
-          "precision": 0.8371,
-          "recall": 0.9404,
-          "f1": 0.8858,
-          "support": 235
+          "precision": 0.7606,
+          "recall": 1.0,
+          "f1": 0.864,
+          "support": 54
         },
         "🟡 低度": {
-          "precision": 0.7255,
-          "recall": 0.4684,
-          "f1": 0.5692,
-          "support": 79
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 16
         },
         "🔴 高度": {
-          "precision": 1.0,
-          "recall": 0.5,
-          "f1": 0.6667,
-          "support": 2
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 1
         }
       },
-      "exact_accuracy": 0.8196,
-      "ordinal_accuracy": 0.9968,
-      "severe_error_rate": 0.0032,
-      "expected_cost": 0.3038,
-      "high_alert_fnr": 0.5,
+      "exact_accuracy": 0.7606,
+      "ordinal_accuracy": 0.9859,
+      "severe_error_rate": 0.0141,
+      "expected_cost": 0.5211,
+      "high_alert_fnr": 1.0,
       "true_dist": {
-        "🟢 正常": 235,
-        "🟡 低度": 79,
-        "🔴 高度": 2
-      },
-      "pred_dist": {
-        "🟢 正常": 264,
-        "🟡 低度": 51,
+        "🟢 正常": 54,
+        "🟡 低度": 16,
         "🔴 高度": 1
       },
-      "n_samples": 316
+      "pred_dist": {
+        "🟢 正常": 71,
+        "🟡 低度": 0,
+        "🔴 高度": 0
+      },
+      "n_samples": 71
     },
-    "16": {
+    "user16": {
       "confusion_matrix": [
         [
-          156,
-          9,
+          37,
+          0,
+          1
+        ],
+        [
+          1,
+          0,
           0
         ],
         [
-          18,
-          19,
+          12,
+          4,
+          3
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.74,
+          "recall": 0.9737,
+          "f1": 0.8409,
+          "support": 38
+        },
+        "🟡 低度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 1
+        },
+        "🔴 高度": {
+          "precision": 0.75,
+          "recall": 0.1579,
+          "f1": 0.2609,
+          "support": 19
+        }
+      },
+      "exact_accuracy": 0.6897,
+      "ordinal_accuracy": 0.7759,
+      "severe_error_rate": 0.2241,
+      "expected_cost": 1.3103,
+      "high_alert_fnr": 0.8421,
+      "true_dist": {
+        "🟢 正常": 38,
+        "🟡 低度": 1,
+        "🔴 高度": 19
+      },
+      "pred_dist": {
+        "🟢 正常": 50,
+        "🟡 低度": 4,
+        "🔴 高度": 4
+      },
+      "n_samples": 58
+    },
+    "user2": {
+      "confusion_matrix": [
+        [
+          29,
+          1,
+          0
+        ],
+        [
+          17,
+          2,
+          0
+        ],
+        [
+          4,
+          2,
+          0
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.58,
+          "recall": 0.9667,
+          "f1": 0.725,
+          "support": 30
+        },
+        "🟡 低度": {
+          "precision": 0.4,
+          "recall": 0.1053,
+          "f1": 0.1667,
+          "support": 19
+        },
+        "🔴 高度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 6
+        }
+      },
+      "exact_accuracy": 0.5636,
+      "ordinal_accuracy": 0.9273,
+      "severe_error_rate": 0.0727,
+      "expected_cost": 1.1,
+      "high_alert_fnr": 1.0,
+      "true_dist": {
+        "🟢 正常": 30,
+        "🟡 低度": 19,
+        "🔴 高度": 6
+      },
+      "pred_dist": {
+        "🟢 正常": 50,
+        "🟡 低度": 5,
+        "🔴 高度": 0
+      },
+      "n_samples": 55
+    },
+    "user3": {
+      "confusion_matrix": [
+        [
+          47,
+          3,
+          0
+        ],
+        [
+          2,
+          0,
+          0
+        ],
+        [
+          2,
+          1,
+          0
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.9216,
+          "recall": 0.94,
+          "f1": 0.9307,
+          "support": 50
+        },
+        "🟡 低度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 2
+        },
+        "🔴 高度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 3
+        }
+      },
+      "exact_accuracy": 0.8545,
+      "ordinal_accuracy": 0.9636,
+      "severe_error_rate": 0.0364,
+      "expected_cost": 0.3364,
+      "high_alert_fnr": 1.0,
+      "true_dist": {
+        "🟢 正常": 50,
+        "🟡 低度": 2,
+        "🔴 高度": 3
+      },
+      "pred_dist": {
+        "🟢 正常": 51,
+        "🟡 低度": 4,
+        "🔴 高度": 0
+      },
+      "n_samples": 55
+    },
+    "user7": {
+      "confusion_matrix": [
+        [
+          27,
+          0,
+          1
+        ],
+        [
+          2,
+          1,
+          0
+        ],
+        [
+          7,
+          5,
+          13
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.75,
+          "recall": 0.9643,
+          "f1": 0.8437,
+          "support": 28
+        },
+        "🟡 低度": {
+          "precision": 0.1667,
+          "recall": 0.3333,
+          "f1": 0.2222,
+          "support": 3
+        },
+        "🔴 高度": {
+          "precision": 0.9286,
+          "recall": 0.52,
+          "f1": 0.6667,
+          "support": 25
+        }
+      },
+      "exact_accuracy": 0.7321,
+      "ordinal_accuracy": 0.8571,
+      "severe_error_rate": 0.1429,
+      "expected_cost": 1.0,
+      "high_alert_fnr": 0.48,
+      "true_dist": {
+        "🟢 正常": 28,
+        "🟡 低度": 3,
+        "🔴 高度": 25
+      },
+      "pred_dist": {
+        "🟢 正常": 36,
+        "🟡 低度": 6,
+        "🔴 高度": 14
+      },
+      "n_samples": 56
+    },
+    "user8": {
+      "confusion_matrix": [
+        [
+          23,
+          0,
+          2
+        ],
+        [
+          3,
+          0,
+          0
+        ],
+        [
+          7,
+          7,
+          12
+        ]
+      ],
+      "per_level": {
+        "🟢 正常": {
+          "precision": 0.697,
+          "recall": 0.92,
+          "f1": 0.7931,
+          "support": 25
+        },
+        "🟡 低度": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 3
+        },
+        "🔴 高度": {
+          "precision": 0.8571,
+          "recall": 0.4615,
+          "f1": 0.6,
+          "support": 26
+        }
+      },
+      "exact_accuracy": 0.6481,
+      "ordinal_accuracy": 0.8333,
+      "severe_error_rate": 0.1667,
+      "expected_cost": 1.2222,
+      "high_alert_fnr": 0.5385,
+      "true_dist": {
+        "🟢 正常": 25,
+        "🟡 低度": 3,
+        "🔴 高度": 26
+      },
+      "pred_dist": {
+        "🟢 正常": 33,
+        "🟡 低度": 7,
+        "🔴 高度": 14
+      },
+      "n_samples": 54
+    },
+    "user9": {
+      "confusion_matrix": [
+        [
+          1,
+          0,
+          73
+        ],
+        [
+          0,
+          0,
           0
         ],
         [
           0,
-          7,
-          4
+          0,
+          2
         ]
       ],
       "per_level": {
         "🟢 正常": {
-          "precision": 0.8966,
-          "recall": 0.9455,
-          "f1": 0.9204,
-          "support": 165
+          "precision": 1.0,
+          "recall": 0.0135,
+          "f1": 0.0267,
+          "support": 74
         },
         "🟡 低度": {
-          "precision": 0.5429,
-          "recall": 0.5135,
-          "f1": 0.5278,
-          "support": 37
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
         },
         "🔴 高度": {
-          "precision": 1.0,
-          "recall": 0.3636,
-          "f1": 0.5333,
-          "support": 11
+          "precision": 0.0267,
+          "recall": 1.0,
+          "f1": 0.0519,
+          "support": 2
         }
       },
-      "exact_accuracy": 0.8404,
-      "ordinal_accuracy": 1.0,
-      "severe_error_rate": 0.0,
-      "expected_cost": 0.2887,
-      "high_alert_fnr": 0.6364,
+      "exact_accuracy": 0.0395,
+      "ordinal_accuracy": 0.0395,
+      "severe_error_rate": 0.9605,
+      "expected_cost": 1.9211,
+      "high_alert_fnr": 0.0,
       "true_dist": {
-        "🟢 正常": 165,
-        "🟡 低度": 37,
-        "🔴 高度": 11
+        "🟢 正常": 74,
+        "🟡 低度": 0,
+        "🔴 高度": 2
       },
       "pred_dist": {
-        "🟢 正常": 174,
-        "🟡 低度": 35,
-        "🔴 高度": 4
+        "🟢 正常": 1,
+        "🟡 低度": 0,
+        "🔴 高度": 75
       },
-      "n_samples": 213
+      "n_samples": 76
     }
   }
 }

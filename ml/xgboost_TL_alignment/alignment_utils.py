@@ -85,3 +85,24 @@ def train_valid_split_by_time(
     train_df = df.iloc[:split_idx].copy()
     valid_df = df.iloc[split_idx:].copy()
     return train_df, valid_df
+
+
+def train_valid_test_split_by_time(
+    df: pd.DataFrame,
+    train_ratio: float = 0.70,
+    valid_ratio: float = 0.15,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    """Per-user chronological 70/15/15 split."""
+    train_list, valid_list, test_list = [], [], []
+    for _, grp in df.groupby("user_id"):
+        grp = grp.sort_values("date").reset_index(drop=True)
+        n = len(grp)
+        train_end = int(n * train_ratio)
+        valid_end = int(n * (train_ratio + valid_ratio))
+        train_list.append(grp.iloc[:train_end])
+        valid_list.append(grp.iloc[train_end:valid_end])
+        test_list.append(grp.iloc[valid_end:])
+    train_df = pd.concat(train_list).reset_index(drop=True)
+    valid_df = pd.concat(valid_list).reset_index(drop=True)
+    test_df = pd.concat(test_list).reset_index(drop=True)
+    return train_df, valid_df, test_df
