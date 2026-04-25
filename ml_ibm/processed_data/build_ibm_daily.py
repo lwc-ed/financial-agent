@@ -1,26 +1,30 @@
 """
 build_ibm_daily.py
 ==================
-將 IBM Credit Card Transactions (ealtman2019/credit-card-transactions)
-從 transaction-level 聚合成 per-user 日粒度資料。
+將 IBM Credit Card Transactions 從 transaction-level 聚合成 per-user 日粒度資料。
 
-輸入：ml_ibm/processed_data/raw/transactions.csv
+輸入：ml_ibm/ibm_data/credit_card_transactions-ibm_v2.csv
 輸出：ml_ibm/processed_data/artifacts/ibm_daily.csv
 
-欄位說明（輸出）：
-  user_id        int    IBM 原始 User 欄位（0~1999）
-  date           date   交易日期
-  daily_expense  float  當日所有有效支出總和（負值代表退款，clip at 0）
-  daily_refund   float  當日退款總額（abs）
-  txn_count      int    當日有效交易筆數（不含 fraud、不含 error）
-  raw_txn_count  int    當日全部交易筆數（含 error，不含 fraud）
-
-處理規則：
-  - Is Fraud? == "Yes" → 一律排除
-  - Errors? != "" → 排除（declined / glitch 交易）
-  - Amount 去掉 $ 轉 float
-  - Amount < 0 → 退款，計入 daily_refund，daily_expense 不計負值
-  - 補齊每位 user 的連續日期（missing date 填 0）
+輸出欄位：
+  user_id          int    IBM 原始 User 欄位（0~1999）
+  date             date   交易日期
+  daily_expense    float  當日支出總和（log1p 壓縮，clip at 0）
+  daily_income     float  固定為 0（IBM 無收入資料）
+  txn_count        int    當日交易筆數
+  daily_net        float  = -daily_expense（income=0）
+  dow              int    星期幾（0=週一）
+  is_weekend       int    0 或 1
+  day              int    幾號（1~31）
+  month            int    幾月（1~12）
+  expense_7d_sum   float  7 日支出總和
+  expense_7d_mean  float  7 日支出平均
+  expense_30d_sum  float  30 日支出總和
+  expense_30d_mean float  30 日支出平均
+  zscore_7d        float  7 日 z-score（幣值對齊用）
+  zscore_14d       float  14 日 z-score
+  zscore_30d       float  30 日 z-score
+  target           float  未來 7 天支出總和（log1p，pretrain 用）
 """
 
 from pathlib import Path
@@ -29,81 +33,52 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent
-RAW_DIR = ROOT / "raw"
+IBM_DATA_DIR = ROOT.parent / "ibm_data"
 ARTIFACTS_DIR = ROOT / "artifacts"
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
 
-INPUT_PATH = RAW_DIR / "transactions.csv"
+INPUT_PATH = IBM_DATA_DIR / "credit_card_transactions-ibm_v2.csv"
 OUTPUT_PATH = ARTIFACTS_DIR / "ibm_daily.csv"
+
+EPS = 1e-6
 
 
 def parse_amount(s: pd.Series) -> pd.Series:
-    """將 '$134.09' / '$-99.00' 轉換為 float。"""
+    """'$134.09' / '$-99.00' → float"""
     return s.str.replace("$", "", regex=False).astype(float)
 
 
-def load_raw(path: Path) -> pd.DataFrame:
-    print(f"[INFO] 讀取原始資料: {path}")
-    df = pd.read_csv(path, low_memory=False)
-    print(f"[INFO] 原始筆數: {len(df):,}，用戶數: {df['User'].nunique():,}")
-    return df
+def compute_zscore(s: pd.Series, window: int) -> pd.Series:
+    mean = s.rolling(window, min_periods=1).mean()
+    std  = s.rolling(window, min_periods=2).std().fillna(0)
+    return ((s - mean) / (std + EPS)).clip(-5, 5).fillna(0)
 
 
-def preprocess(df: pd.DataFrame) -> pd.DataFrame:
-    # 1. 建立 date 欄位
-    df = df.copy()
-    df["date"] = pd.to_datetime(
-        df["Year"].astype(str) + "-"
-        + df["Month"].astype(str).str.zfill(2) + "-"
-        + df["Day"].astype(str).str.zfill(2)
+def process_chunk(chunk: pd.DataFrame) -> pd.DataFrame:
+    """只讀需要的欄位，解析 Amount，建立 date，聚合成日粒度。"""
+    chunk["amount"] = parse_amount(chunk["Amount"])
+    chunk["date"] = pd.to_datetime(
+        chunk["Year"].astype(str) + "-"
+        + chunk["Month"].astype(str).str.zfill(2) + "-"
+        + chunk["Day"].astype(str).str.zfill(2)
     )
-
-    # 2. 解析金額
-    df["amount"] = parse_amount(df["Amount"])
-
-    # 3. 排除詐騙交易
-    before = len(df)
-    df = df[df["Is Fraud?"].str.strip().str.upper() == "NO"].copy()
-    print(f"[INFO] 排除詐騙：{before - len(df):,} 筆 → 剩 {len(df):,} 筆")
-
-    # 4. 排除有錯誤的交易（Insufficient Balance / Technical Glitch 等）
-    before = len(df)
-    df = df[df["Errors?"].isna() | (df["Errors?"].str.strip() == "")].copy()
-    print(f"[INFO] 排除 error 交易：{before - len(df):,} 筆 → 剩 {len(df):,} 筆")
-
-    # 5. 重新命名 user_id
-    df = df.rename(columns={"User": "user_id"})
-
-    return df
-
-
-def aggregate_daily(df: pd.DataFrame) -> pd.DataFrame:
-    print("[INFO] 開始日粒度聚合...")
-
-    # 正值 = 支出；負值 = 退款
-    df["expense"] = df["amount"].clip(lower=0)
-    df["refund"] = (-df["amount"]).clip(lower=0)
+    # clip 負值（退款）不讓日支出變負
+    chunk["expense"] = chunk["amount"].clip(lower=0)
 
     daily = (
-        df.groupby(["user_id", "date"])
+        chunk.groupby(["User", "date"])
         .agg(
             daily_expense=("expense", "sum"),
-            daily_refund=("refund", "sum"),
-            txn_count=("expense", "count"),      # 有效（非負）交易筆數
-            raw_txn_count=("amount", "count"),   # 所有交易筆數
+            txn_count=("expense", "count"),
         )
         .reset_index()
+        .rename(columns={"User": "user_id"})
     )
-
-    # 退款抵扣（但不讓 daily_expense 變負）
-    daily["daily_expense"] = (daily["daily_expense"] - daily["daily_refund"]).clip(lower=0)
-
     return daily
 
 
 def fill_date_gaps(daily: pd.DataFrame) -> pd.DataFrame:
     """補齊每位 user 的連續日期，missing date 填 0。"""
-    print("[INFO] 補齊連續日期...")
     parts = []
     for uid, grp in daily.groupby("user_id"):
         grp = grp.sort_values("date").reset_index(drop=True)
@@ -116,32 +91,108 @@ def fill_date_gaps(daily: pd.DataFrame) -> pd.DataFrame:
         )
         grp["user_id"] = uid
         parts.append(grp)
+    return pd.concat(parts, ignore_index=True).sort_values(["user_id", "date"]).reset_index(drop=True)
 
-    result = pd.concat(parts, ignore_index=True)
-    result = result.sort_values(["user_id", "date"]).reset_index(drop=True)
-    return result
+
+def compute_features(daily: pd.DataFrame) -> pd.DataFrame:
+    """Per-user 計算所有衍生特徵。"""
+    parts = []
+    for uid, grp in daily.groupby("user_id"):
+        grp = grp.sort_values("date").reset_index(drop=True)
+        s = grp["daily_expense"]
+
+        # log1p 壓縮（幣值縮放）
+        s_log = np.log1p(s)
+
+        # Rolling 特徵（在 log1p 空間計算，再存回去）
+        grp["expense_7d_sum"]  = s_log.rolling(7,  min_periods=1).sum()
+        grp["expense_7d_mean"] = s_log.rolling(7,  min_periods=1).mean()
+        grp["expense_30d_sum"] = s_log.rolling(30, min_periods=1).sum()
+        grp["expense_30d_mean"]= s_log.rolling(30, min_periods=1).mean()
+
+        # Z-score（抹除 USD/TWD 幣值差異）
+        grp["zscore_7d"]  = compute_zscore(s_log, 7)
+        grp["zscore_14d"] = compute_zscore(s_log, 14)
+        grp["zscore_30d"] = compute_zscore(s_log, 30)
+
+        # 日期特徵
+        grp["dow"]        = grp["date"].dt.dayofweek
+        grp["is_weekend"] = (grp["dow"] >= 5).astype(int)
+        grp["day"]        = grp["date"].dt.day
+        grp["month"]      = grp["date"].dt.month
+
+        # 填 0 的欄位
+        grp["daily_income"] = 0.0
+        grp["daily_net"]    = -s
+
+        # daily_expense 轉 log1p
+        grp["daily_expense"] = s_log
+
+        # Target：未來 7 天支出總和（log1p 空間）
+        grp["target"] = s_log.rolling(7).sum().shift(-7)
+
+        parts.append(grp)
+
+    return pd.concat(parts, ignore_index=True)
 
 
 def main():
     if not INPUT_PATH.exists():
         raise FileNotFoundError(
             f"找不到原始資料：{INPUT_PATH}\n"
-            "請先下載 Kaggle ealtman2019/credit-card-transactions\n"
-            "並將 transactions.csv 放到 ml_ibm/processed_data/raw/ 資料夾"
+            "請將 credit_card_transactions-ibm_v2.csv 放到 ml_ibm/ibm_data/"
         )
 
-    df_raw = load_raw(INPUT_PATH)
-    df = preprocess(df_raw)
-    daily = aggregate_daily(df)
+    print(f"[INFO] 開始讀取：{INPUT_PATH}")
+    print("[INFO] 使用 chunking 讀取（每批 500,000 筆）...")
+
+    USECOLS = ["User", "Year", "Month", "Day", "Amount"]
+    chunks = []
+    for i, chunk in enumerate(pd.read_csv(INPUT_PATH, usecols=USECOLS, chunksize=500_000)):
+        daily_chunk = process_chunk(chunk)
+        chunks.append(daily_chunk)
+        print(f"  chunk {i+1} 處理完畢，累積 {sum(len(c) for c in chunks):,} 筆日資料")
+
+    print("[INFO] 合併所有 chunk...")
+    daily = (
+        pd.concat(chunks, ignore_index=True)
+        .groupby(["user_id", "date"])
+        .agg(daily_expense=("daily_expense", "sum"),
+             txn_count=("txn_count", "sum"))
+        .reset_index()
+    )
+    print(f"[INFO] 聚合後：{len(daily):,} 筆，{daily['user_id'].nunique():,} 位用戶")
+
+    print("[INFO] 補齊連續日期...")
     daily = fill_date_gaps(daily)
+
+    print("[INFO] 計算衍生特徵...")
+    daily = compute_features(daily)
+
+    # 去除 target 為 NaN 的列（每位 user 最後 6 天）
+    daily = daily.dropna(subset=["target"]).reset_index(drop=True)
+
+    # 整理欄位順序
+    cols = [
+        "user_id", "date",
+        "daily_expense", "daily_income", "txn_count", "daily_net",
+        "dow", "is_weekend", "day", "month",
+        "expense_7d_sum", "expense_7d_mean", "expense_30d_sum", "expense_30d_mean",
+        "zscore_7d", "zscore_14d", "zscore_30d",
+        "target",
+    ]
+    daily = daily[cols]
 
     daily.to_csv(OUTPUT_PATH, index=False, encoding="utf-8-sig")
 
     print(f"\n[OK] 儲存至 {OUTPUT_PATH}")
-    print(f"[STATS] 總筆數: {len(daily):,}，用戶數: {daily['user_id'].nunique():,}")
-    print(f"[STATS] 日期範圍: {daily['date'].min().date()} ~ {daily['date'].max().date()}")
-    print(f"[STATS] daily_expense 描述:")
+    print(f"[STATS] 總筆數：{len(daily):,}")
+    print(f"[STATS] 用戶數：{daily['user_id'].nunique():,}")
+    print(f"[STATS] 日期範圍：{daily['date'].min()} ~ {daily['date'].max()}")
+    print(f"\n[STATS] daily_expense（log1p）描述：")
     print(daily["daily_expense"].describe())
+    print(f"\n[STATS] target（log1p）描述：")
+    print(daily["target"].describe())
 
 
 if __name__ == "__main__":
