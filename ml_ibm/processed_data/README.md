@@ -1,98 +1,64 @@
-# processed_data
+# ml_ibm/processed_data
 
-這個資料夾是 `ml/` 的共用資料前處理入口。
+這個資料夾是 `ml_ibm/` 的共用資料前處理入口。
 
 ## 目的
 
-把所有模型都會共用的資料生成流程集中在同一個地方，避免：
+將 IBM Credit Card Transactions 原始資料聚合成所有模型共用的日粒度格式，
+讓 `ml_ibm/` 底下各模型的 pretrain 腳本只需讀取同一份 `ibm_daily.csv`。
 
-- 各模型互相依賴彼此資料夾
-- 同一份 `features_all.csv` 在不同地方各存一份
-- 修改特徵欄位時不知道應該改哪裡
+## 輸出
 
-## 目前輸出
+輸出放在 `artifacts/`（不上傳）：
 
-輸出都放在 `artifacts/`：
-
-- `daily_ledger_all.parquet`
-- `daily_ledger_all.csv`
-- `features_all.parquet`
-- `features_all.csv`
-- `kaggle_processed_common.csv`
+- `ibm_daily.csv` — 所有模型共用的日粒度資料
 
 ## 腳本
 
-### `build_daily_ledgers.py`
-讀取 `ml/data/raw_transactions_user*.xlsx/csv/tsv`，建立 daily ledger。
+### `build_ibm_daily.py`
+
+讀取 `ml_ibm/ibm_data/credit_card_transactions-ibm_v2.csv`，
+聚合成 per-user 日粒度，輸出 `artifacts/ibm_daily.csv`。
 
 主要欄位：
-- `user_id`
-- `date`
-- `daily_income`
-- `daily_expense`
-- `txn_count`
-- `daily_net`
-- `has_income`
-- `has_expense`
-- `dow`
-- `is_weekend`
-- `day`
-- `month`
 
-### `build_features.py`
-讀取 `daily_ledger_all.parquet`，建立共用特徵表 `features_all`。
-
-目前包含的重點欄位：
-- `daily_income`
-- `daily_expense`
-- `daily_net`
-- `txn_count`
-- `expense_7d_sum`
-- `expense_7d_mean`
-- `expense_30d_sum`
-- `expense_30d_mean`
-- `net_7d_sum`
-- `net_30d_sum`
-- `txn_7d_sum`
-- `txn_30d_sum`
-- `expense_7d_30d_ratio`
-- `expense_trend`
-- `days_to_end_of_month`
-- `future_expense_7d_sum`
-
-### `build_kaggle_common.py`
-讀取 `ml/wallmart/` 的 Kaggle Walmart 原始資料，建立：
-
-- `artifacts/kaggle_processed_common.csv`
-
-這份資料是給需要 Walmart / Kaggle 共用欄位格式的模型使用，例如 `xgboost_TL_alignment`。
+| 欄位 | 說明 |
+|---|---|
+| `user_id` | 用戶 ID（0~1999）|
+| `date` | 日期 |
+| `daily_expense` | 當日支出（log1p 壓縮）|
+| `daily_income` | 固定為 0（IBM 無收入資料）|
+| `txn_count` | 當日交易筆數 |
+| `daily_net` | = `-daily_expense` |
+| `dow` | 星期幾（0=週一）|
+| `is_weekend` | 0 或 1 |
+| `day` | 幾號（1~31）|
+| `month` | 幾月（1~12）|
+| `expense_7d_sum` | 7 日支出總和 |
+| `expense_7d_mean` | 7 日支出平均 |
+| `expense_30d_sum` | 30 日支出總和 |
+| `expense_30d_mean` | 30 日支出平均 |
+| `zscore_7d` | 7 日 z-score |
+| `zscore_14d` | 14 日 z-score |
+| `zscore_30d` | 30 日 z-score |
+| `target` | 未來 7 天支出總和（log1p）|
 
 ## 執行方式
 
 ```bash
-cd /Users/liweichen/financial-agent/ml/processed_data
-python3 build_daily_ledgers.py
-python3 build_features.py
-python3 build_kaggle_common.py
+cd /Users/liweichen/financial-agent/ml_ibm/processed_data
+pip install -r requirements.txt
+python build_ibm_daily.py
 ```
 
-## 使用規則
+原始資料需先下載並放置於：
 
-1. 共用特徵表只從這裡產生。
-2. 其他模型應讀 `processed_data/artifacts/features_all.csv` 或 `.parquet`。
-3. Kaggle / Walmart 的共用對齊資料應讀 `processed_data/artifacts/kaggle_processed_common.csv`。
-4. 不要再把 `ml_gru/features_all.csv` 當成共用主來源。
+```
+ml_ibm/ibm_data/credit_card_transactions-ibm_v2.csv
+```
 
 ## 最低相依套件
-
-如果你在 `processed_data` 底下使用獨立 venv，至少要安裝：
 
 ```bash
 pip install -r requirements.txt
 ```
-
-其中：
-- `openpyxl`：讀 `.xlsx`
-- `pyarrow`：讀寫 parquet
-
-如果沒有 `pyarrow`，目前腳本仍會輸出 CSV，並在讀取時自動優先 fallback 到 CSV。

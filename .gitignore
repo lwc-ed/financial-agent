@@ -2,6 +2,19 @@
 ml/bigru/artifacts/
 ml/model_outputs/
 
+# ml_ibm — 原始資料、中間產物、模型輸出全部不上傳
+ml_ibm/ibm_data/
+ml_ibm/processed_data/artifacts/
+ml_ibm/**/artifacts*/
+ml_ibm/**/models/
+ml_ibm/**/results/
+ml_ibm/**/data/
+# ml_ibm model_outputs：只允許上傳各模型的 summary.txt，其餘全部排除
+ml_ibm/model_outputs/**
+!ml_ibm/model_outputs/
+!ml_ibm/model_outputs/*/
+!ml_ibm/model_outputs/*/summary.txt
+
 # experiment folders
 ml/ml_alignment_kyh/
 ml/ml_alignment_kyh_v2/
