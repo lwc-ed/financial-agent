@@ -1,0 +1,5 @@
+# 忽略 ibm_data 資料夾內所有檔案
+ibm_data/*
+
+# 但保留 README.md
+!ibm_data/README.md
