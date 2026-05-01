@@ -106,7 +106,7 @@ preds_list = []
 for seed in SEEDS:
     ckpt  = torch.load(f"{ARTIFACTS_DIR}/finetune_aligned_gru_seed{seed}.pth", map_location=device)
     model = GRUWithAttention(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT).to(device)
-    model.load_state_dict(ckpt["model_state"])
+    model.load_state_dict(ckpt["model_state"], strict=False)
     model.eval()
     X_t = torch.tensor(X_test, dtype=torch.float32).to(device)
     with torch.no_grad():

@@ -48,6 +48,7 @@ ml_ibm/
 - 所有 `.py` 腳本
 - `README.md`、`requirements.txt`
 - `OUTPUT_EVALUATION_SPEC.md`
+- `model_outputs/**/summary.txt` — 最終 spec 輸出
 
 **不上傳（.gitignore 已設定）：**
 - `ibm_data/` — 原始 CSV 太大
