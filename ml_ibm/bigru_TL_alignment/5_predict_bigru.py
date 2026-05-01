@@ -17,17 +17,20 @@ import numpy as np
 import pandas as pd
 import torch
 
-# ── 設置路徑以 import 工具 ──────────────────────────────────────────
+# ── 1. 設置正確的路徑 ──────────────────────────────────────────
 MY_DIR = Path(__file__).resolve().parent
 ARTIFACTS_DIR = MY_DIR / "artifacts_bigru_tl"
-ML_ROOT = MY_DIR.parent
+
+# 往上跳兩層到 financial-agent，然後進入 ml 資料夾找工具
+ML_UTILS_DIR = MY_DIR.parents[1] / "ml" 
 
 sys.path.insert(0, str(MY_DIR))
-sys.path.insert(0, str(ML_ROOT)) # 為了讀取 output_eval_utils
+sys.path.insert(0, str(ML_UTILS_DIR)) 
 
 from alignment_utils import ALIGNED_FEATURE_COLS
 from model_bigru import BiGRUWithAttention
-from output_eval_utils import run_output_evaluation # 導入正式評估工具
+# 現在這一行不會報錯了
+from output_eval_utils import run_output_evaluation
 
 # ... (中間載入 SEEDS 與模型的邏輯保持不變) ...
 SEEDS = sorted([int(f.split("seed")[1].replace(".pth", "")) for f in _glob.glob(f"{ARTIFACTS_DIR}/finetune_bigru_seed*.pth")])
@@ -129,8 +132,10 @@ split_metadata_df = metadata_df[['user_id', 'date', 'split']]
 run_output_evaluation(
     model_name="bigru_TL_alignment",
     prediction_input_df=prediction_input_df,
-    split_metadata_df=split_metadata_df
+    split_metadata_df=split_metadata_df,
+    # 確保報表存到 ml_ibm/model_outputs/
+    output_root=MY_DIR.parent / "model_outputs"
 )
 
-print(f"\n✅ 所有正式評估檔案已儲存至: {ML_ROOT}/model_outputs/bigru_TL_alignment/")
+print(f"\n✅ 所有正式評估檔案已儲存至: {MY_DIR.parent}/model_outputs/bigru_TL_alignment/")
 print("🎉 bigru_TL_alignment 期末考完成！")

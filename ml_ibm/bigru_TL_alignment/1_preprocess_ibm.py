@@ -41,6 +41,13 @@ def load_ibm_daily() -> pd.DataFrame:
             "請先執行 ml_ibm/processed_data/build_ibm_daily.py"
         )
     df = pd.read_csv(IBM_DAILY_PATH, parse_dates=["date"])
+    
+# --- 關鍵修改：從 2000 人降為 500 人 ---
+    target_users = sorted(df['user_id'].unique())[:500]
+    df = df[df['user_id'].isin(target_users)].reset_index(drop=True)
+    print(f"⚠️  防爆記憶體模式：載入 500 位用戶資料")
+    # --------------------------------------------
+
     df = df.sort_values(["user_id", "date"]).reset_index(drop=True)
     print(f"[INFO] ibm_daily 載入：{len(df):,} 筆，{df['user_id'].nunique():,} 位用戶")
     return df
