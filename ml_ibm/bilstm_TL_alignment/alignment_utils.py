@@ -11,9 +11,11 @@ import numpy as np
 import pandas as pd
 import os
 
-# ── 路徑設定（相對於 ml/ 目錄執行）──────────────────────────────────────────
-WALMART_DIR   = "../walmart"
-PERSONAL_DIR  = "../data"
+# ── 路徑設定 ──────────────────────────────────────────────────────────────────
+import pathlib as _pathlib
+_ML_ROOT      = _pathlib.Path(__file__).resolve().parent.parent.parent / "ml"
+WALMART_DIR   = str(_ML_ROOT / "walmart")
+PERSONAL_DIR  = str(_ML_ROOT / "data")
 EXCLUDE_USERS = ["user4", "user5", "user6"]
 
 # ── 共用特徵欄位名稱（10 個）────────────────────────────────────────────────

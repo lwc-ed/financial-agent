@@ -20,6 +20,7 @@ import pandas as pd
 from pathlib import Path
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "ml")))
 from alignment_utils import ALIGNED_FEATURE_COLS
 from output_eval_utils import run_output_evaluation
 
@@ -52,10 +53,12 @@ HIDDEN_SIZE = 64
 NUM_LAYERS  = 2
 DROPOUT     = 0.4
 OUTPUT_SIZE = 1
+NUM_CLASSES = 4
 
 
-class GRUWithAttention(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, output_size, dropout):
+class GRUWithAttentionMT(nn.Module):
+    """Multi-task GRU：回歸頭 + 分類頭（predict 只用回歸頭）"""
+    def __init__(self, input_size, hidden_size, num_layers, output_size, dropout, num_classes=4):
         super().__init__()
         self.gru        = nn.GRU(input_size, hidden_size, num_layers,
                                  dropout=dropout if num_layers > 1 else 0,
@@ -65,16 +68,20 @@ class GRUWithAttention(nn.Module):
         self.dropout    = nn.Dropout(dropout)
         self.fc1        = nn.Linear(hidden_size, hidden_size // 2)
         self.fc2        = nn.Linear(hidden_size // 2, output_size)
+        self.cls_head   = nn.Linear(hidden_size // 2, num_classes)
         self.relu       = nn.ReLU()
 
-    def forward(self, x):
+    def encode(self, x) -> torch.Tensor:
         gru_out, _ = self.gru(x)
         attn_w     = torch.softmax(self.attention(gru_out), dim=1)
         context    = (gru_out * attn_w).sum(dim=1)
-        context    = self.layer_norm(context)
-        out        = self.dropout(context)
-        out        = self.relu(self.fc1(out))
-        return self.fc2(out)
+        return self.layer_norm(context)
+
+    def forward(self, x):
+        context = self.encode(x)
+        out     = self.dropout(context)
+        hidden  = self.relu(self.fc1(out))
+        return self.fc2(hidden), self.cls_head(hidden)
 
 
 # ── 載入資料 ──────────────────────────────────────────────────────────────────
@@ -105,13 +112,14 @@ def get_all_preds(X: np.ndarray, seed_list: list) -> dict:
     for seed in seed_list:
         model_path = f"{ARTIFACTS_DIR}/finetune_aligned_gru_seed{seed}.pth"
         ckpt  = torch.load(model_path, map_location=device)
-        model = GRUWithAttention(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT).to(device)
+        model = GRUWithAttentionMT(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT, NUM_CLASSES).to(device)
         model.load_state_dict(ckpt["model_state"])
         model.eval()
 
         X_t = torch.tensor(X, dtype=torch.float32).to(device)
         with torch.no_grad():
-            preds = model(X_t).cpu().numpy()
+            reg_out, _ = model(X_t)   # 只取回歸頭
+            preds = reg_out.cpu().numpy()
         all_preds[seed] = preds
     return all_preds
 
@@ -307,5 +315,6 @@ run_output_evaluation(
     model_name="gru_TL_alignment",
     prediction_input_df=prediction_input_df,
     split_metadata_df=split_metadata_df,
+    output_root=ROOT.parent / "model_outputs",
 )
 print("\n🎉 完成！")

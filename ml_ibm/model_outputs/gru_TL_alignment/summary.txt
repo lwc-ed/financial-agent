@@ -1,0 +1,32 @@
+Model: gru_TL_alignment
+Output Dir: /Users/liweichen/financial-agent/ml_ibm/model_outputs/gru_TL_alignment
+
+[Test 1] Binary Alarm
+Accuracy: 0.83515
+Precision: 0.878706
+Recall: 0.810945
+F1-score: 0.843467
+Confusion Matrix: [[287, 45], [76, 326]]
+
+[Test 2] Risk 4-Class
+Accuracy: 0.760218
+Macro Precision: 0.49742
+Macro Recall: 0.498179
+Macro F1: 0.496719
+Weighted F1: 0.753181
+Confusion Matrix:
+[287, 13, 8, 24]
+[29, 3, 5, 12]
+[18, 4, 9, 5]
+[29, 15, 14, 259]
+
+[Test 3] Regression
+MAE: 1039.524129
+RMSE: 1520.978137
+MAPE: 63.132521
+SMAPE: 77.011344
+
+Notes:
+- monthly_available_cash computed from training data only
+- spent_mtd computed using only observed spending up to date t
+- future_available_7d uses the shared team formula

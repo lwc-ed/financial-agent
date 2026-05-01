@@ -13,11 +13,14 @@ import torch.nn as nn
 import pickle, os, json, sys
 import pandas as pd
 from itertools import combinations
+from pathlib import Path
 sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "ml")))
 from alignment_utils import ALIGNED_FEATURE_COLS
 from output_eval_utils import run_output_evaluation
 
+ROOT = Path(__file__).resolve().parent
 ARTIFACTS_DIR = "artifacts_bilstm_v2"
 
 # 自動掃描所有已訓練的 seed
@@ -41,26 +44,29 @@ HIDDEN_SIZE = 64
 NUM_LAYERS  = 2
 DROPOUT     = 0.4
 OUTPUT_SIZE = 1
+NUM_CLASSES = 4
 
 
-class BiLSTMWithAttention(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, output_size, dropout):
+class BiLSTMWithAttentionMT(nn.Module):
+    """Multi-task BiLSTM：回歸頭 + 分類頭（predict 只用回歸頭）"""
+    def __init__(self, input_size, hidden_size, num_layers, output_size, dropout, num_classes=4):
         super().__init__()
         self.lstm = nn.LSTM(
             input_size, hidden_size, num_layers,
             batch_first=True, bidirectional=True,
             dropout=dropout if num_layers > 1 else 0
         )
-        bi_hidden = hidden_size * 2
+        bi_hidden       = hidden_size * 2
         self.attention  = nn.Linear(bi_hidden, 1)
         self.layer_norm = nn.LayerNorm(bi_hidden)
         self.dropout    = nn.Dropout(dropout)
-        self.fc1 = nn.Linear(bi_hidden, hidden_size)
-        self.fc2 = nn.Linear(hidden_size, output_size)
-        self.relu = nn.ReLU()
+        self.fc1        = nn.Linear(bi_hidden, hidden_size)
+        self.fc2        = nn.Linear(hidden_size, output_size)
+        self.cls_head   = nn.Linear(hidden_size, num_classes)
+        self.relu       = nn.ReLU()
 
     def encode(self, x) -> torch.Tensor:
-        out, _ = self.lstm(x)
+        out, _  = self.lstm(x)
         attn_w  = torch.softmax(self.attention(out), dim=1)
         context = (out * attn_w).sum(dim=1)
         return self.layer_norm(context)
@@ -68,8 +74,8 @@ class BiLSTMWithAttention(nn.Module):
     def forward(self, x):
         context = self.encode(x)
         out     = self.dropout(context)
-        out     = self.relu(self.fc1(out))
-        return self.fc2(out)
+        hidden  = self.relu(self.fc1(out))
+        return self.fc2(hidden), self.cls_head(hidden)
 
 
 # ── 載入資料 ──────────────────────────────────────────────────────────────────
@@ -97,12 +103,13 @@ def get_all_preds(X: np.ndarray) -> dict:
     all_preds = {}
     for seed in SEEDS:
         ckpt  = torch.load(f"{ARTIFACTS_DIR}/finetune_bilstm_seed{seed}.pth", map_location=device)
-        model = BiLSTMWithAttention(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT).to(device)
+        model = BiLSTMWithAttentionMT(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT, NUM_CLASSES).to(device)
         model.load_state_dict(ckpt["model_state"])
         model.eval()
         X_t = torch.tensor(X, dtype=torch.float32).to(device)
         with torch.no_grad():
-            preds = model(X_t).cpu().numpy()
+            reg_out, _ = model(X_t)   # 只取回歸頭
+            preds = reg_out.cpu().numpy()
         all_preds[seed] = preds
     return all_preds
 
@@ -247,5 +254,6 @@ run_output_evaluation(
     model_name="bilstm_TL_alignment",
     prediction_input_df=prediction_input_df,
     split_metadata_df=split_metadata_df,
+    output_root=ROOT.parent / "model_outputs",
 )
 print("\n🎉 完成！")

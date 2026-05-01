@@ -32,7 +32,6 @@ LEARNING_RATE = 0.0001
 PATIENCE      = 20
 WEIGHT_DECAY  = 5e-4
 HUBER_DELTA   = 1.0
-MMD_LAMBDA    = 0.1    # ← MMD 固定貢獻 10% 的 HuberLoss（動態 normalize）
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
 if torch.backends.mps.is_available():
@@ -46,17 +45,12 @@ else:
     print("⚠️  使用 CPU")
 
 # ── 載入資料 ──────────────────────────────────────────────────────────────────
-print("\n📂 載入 Aligned Walmart 資料...")
-X_train = np.load(f"{ARTIFACTS_DIR}/walmart_aligned_X_train.npy")
-y_train = np.load(f"{ARTIFACTS_DIR}/walmart_aligned_y_train.npy")
-X_val   = np.load(f"{ARTIFACTS_DIR}/walmart_aligned_X_val.npy")
-y_val   = np.load(f"{ARTIFACTS_DIR}/walmart_aligned_y_val.npy")
+print("\n📂 載入 IBM 資料...")
+X_train = np.load(f"{ARTIFACTS_DIR}/ibm_X_train.npy")
+y_train = np.load(f"{ARTIFACTS_DIR}/ibm_y_train.npy")
+X_val   = np.load(f"{ARTIFACTS_DIR}/ibm_X_val.npy")
+y_val   = np.load(f"{ARTIFACTS_DIR}/ibm_y_val.npy")
 print(f"  X_train: {X_train.shape}  y_train: {y_train.shape}")
-
-# 個人資料（只用 X，不用 label）── 給 MMD 計算用
-print("\n📂 載入個人資料（用於 MMD alignment）...")
-X_personal = np.load(f"{ARTIFACTS_DIR}/personal_aligned_X_train.npy")
-print(f"  X_personal: {X_personal.shape}")
 
 train_loader = DataLoader(
     TensorDataset(torch.tensor(X_train), torch.tensor(y_train)),
@@ -66,46 +60,6 @@ val_loader = DataLoader(
     TensorDataset(torch.tensor(X_val), torch.tensor(y_val)),
     batch_size=BATCH_SIZE, shuffle=False
 )
-# 個人資料 loader（只有 X）
-personal_loader = DataLoader(
-    TensorDataset(torch.tensor(X_personal, dtype=torch.float32)),
-    batch_size=BATCH_SIZE, shuffle=True
-)
-
-
-# ── MMD 計算（RBF kernel）─────────────────────────────────────────────────────
-def compute_mmd(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-    """
-    Maximum Mean Discrepancy（RBF kernel + Median Heuristic）
-    x: source domain representations  (B1, D)
-    y: target domain representations  (B2, D)
-    回傳純量 MMD²，值越小代表兩個 domain 越接近
-
-    Median Heuristic：用所有點對距離的中位數當 bandwidth，
-    自動適應 representation 的 scale，不需要手動調整。
-    """
-    n = x.size(0)
-    m = y.size(0)
-
-    rx = (x ** 2).sum(dim=1, keepdim=True)   # (n, 1)
-    ry = (y ** 2).sum(dim=1, keepdim=True)   # (m, 1)
-
-    dist_xx = rx + rx.t() - 2 * torch.mm(x, x.t())   # (n, n)
-    dist_yy = ry + ry.t() - 2 * torch.mm(y, y.t())   # (m, m)
-    dist_xy = rx + ry.t() - 2 * torch.mm(x, y.t())   # (n, m)
-
-    # Median Heuristic：取所有距離的中位數當 bandwidth
-    all_dist = torch.cat([dist_xx.reshape(-1), dist_yy.reshape(-1), dist_xy.reshape(-1)])
-    bandwidth = all_dist.median().clamp(min=1e-6)
-
-    K = torch.exp(-0.5 * dist_xx / bandwidth)
-    L = torch.exp(-0.5 * dist_yy / bandwidth)
-    P = torch.exp(-0.5 * dist_xy / bandwidth)
-
-    mmd = (K.sum() - K.trace()) / (n * (n - 1) + 1e-8) \
-        + (L.sum() - L.trace()) / (m * (m - 1) + 1e-8) \
-        - 2 * P.mean()
-    return mmd.clamp(min=0)
 
 
 # ── 模型架構 ──────────────────────────────────────────────────────────────────
@@ -143,63 +97,34 @@ print(f"\n🏗️  模型參數量 : {total_params:,}")
 
 criterion = nn.HuberLoss(delta=HUBER_DELTA)
 optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=5)
+scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=15)
 
 # ── 訓練 ──────────────────────────────────────────────────────────────────────
-print(f"\n🚀 開始 GRU Aligned Pretrain（MMD_LAMBDA={MMD_LAMBDA}）...")
-print("=" * 75)
-print(f"  {'Epoch':>5}  {'HuberLoss':>10}  {'MMD_loss':>10}  {'Total':>10}  {'Val':>10}  {'LR':>8}")
-print("=" * 75)
+print(f"\n🚀 開始 GRU IBM Pretrain...")
+print("=" * 55)
+print(f"  {'Epoch':>5}  {'HuberLoss':>10}  {'Val':>10}  {'LR':>8}")
+print("=" * 55)
 
 best_val_loss    = float("inf")
 patience_counter = 0
 best_model_path  = f"{ARTIFACTS_DIR}/pretrain_aligned_gru.pth"
 train_losses, val_losses = [], []
 
-personal_iter = iter(personal_loader)   # 個人資料的 iterator
-
 for epoch in range(1, EPOCHS + 1):
     model.train()
     epoch_huber = 0.0
-    epoch_mmd   = 0.0
 
     for X_b, y_b in train_loader:
         X_b, y_b = X_b.to(device), y_b.to(device)
-
-        # 取一個 personal batch（循環用）
-        try:
-            (X_p,) = next(personal_iter)
-        except StopIteration:
-            personal_iter = iter(personal_loader)
-            (X_p,) = next(personal_iter)
-        X_p = X_p.to(device)
-
         optimizer.zero_grad()
-
-        # Task loss（Huber）
-        preds      = model(X_b)
-        huber_loss = criterion(preds, y_b)
-
-        # MMD loss：Walmart hidden rep vs 個人 hidden rep
-        rep_walmart  = model.encode(X_b)
-        rep_personal = model.encode(X_p)
-        mmd_loss     = compute_mmd(rep_walmart, rep_personal)
-
-        # 動態 normalize：讓 MMD 固定貢獻 MMD_LAMBDA × HuberLoss（不受 scale 影響）
-        mmd_scale  = huber_loss.detach() / (mmd_loss.detach() + 1e-8)
-        total_loss = huber_loss + MMD_LAMBDA * mmd_scale * mmd_loss
-        total_loss.backward()
+        loss = criterion(model(X_b), y_b)
+        loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
-
-        epoch_huber += huber_loss.item()
-        epoch_mmd   += mmd_loss.item()
+        epoch_huber += loss.item()
 
     epoch_huber /= len(train_loader)
-    epoch_mmd   /= len(train_loader)
-    epoch_total  = epoch_huber + MMD_LAMBDA * epoch_mmd
 
-    # Validation
     model.eval()
     val_loss = 0.0
     with torch.no_grad():
@@ -208,11 +133,11 @@ for epoch in range(1, EPOCHS + 1):
     val_loss /= len(val_loader)
 
     scheduler.step(val_loss)
-    train_losses.append(epoch_total)
+    train_losses.append(epoch_huber)
     val_losses.append(val_loss)
 
     lr = optimizer.param_groups[0]["lr"]
-    print(f"  {epoch:5d}  {epoch_huber:10.6f}  {epoch_mmd:10.6f}  {epoch_total:10.6f}  {val_loss:10.6f}  {lr:8.6f}")
+    print(f"  {epoch:5d}  {epoch_huber:10.6f}  {val_loss:10.6f}  {lr:8.6f}")
 
     if val_loss < best_val_loss:
         best_val_loss    = val_loss
@@ -221,8 +146,7 @@ for epoch in range(1, EPOCHS + 1):
             "epoch"       : epoch,
             "model_state" : model.state_dict(),
             "val_loss"    : best_val_loss,
-            "version"     : "aligned_mmd",
-            "mmd_lambda"  : MMD_LAMBDA,
+            "version"     : "ibm_pretrain",
             "hyperparams" : {
                 "input_size"  : INPUT_SIZE,
                 "hidden_size" : HIDDEN_SIZE,
@@ -241,11 +165,11 @@ for epoch in range(1, EPOCHS + 1):
 
 print("=" * 75)
 print(f"\n🎉 Aligned Pretrain 完成！最佳 Val Loss：{best_val_loss:.6f}")
-print(f"   💡 觀察 HuberLoss 和 MMD_loss 的 scale，若差距太大請調整 MMD_LAMBDA（目前={MMD_LAMBDA}）")
+print(f"   💡 Loss = HuberLoss only（MMD 已移除）")
 
 with open(f"{ARTIFACTS_DIR}/pretrain_aligned_history.pkl", "wb") as f:
     pickle.dump({"train_loss": train_losses, "val_loss": val_losses}, f)
 
 print("  ✅ pretrain_aligned_gru.pth")
 print("  ✅ pretrain_aligned_history.pkl")
-print(f"\n下一步：執行 5_finetune_aligned.py")
+print(f"\n下一步：執行 4_finetune_aligned.py")
