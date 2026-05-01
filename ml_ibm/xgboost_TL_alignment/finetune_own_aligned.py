@@ -20,8 +20,8 @@ ROOT = Path(__file__).resolve().parent
 
 
 def main():
-    base_model_path = MODEL_DIR / "xgb_kaggle_aligned_v2.json"
-    scaler_path = MODEL_DIR / "feature_scaler_v2.pkl"
+    base_model_path = MODEL_DIR / "xgb_ibm_aligned_v2.json"
+    scaler_path = MODEL_DIR / "xgb_ibm_feature_scaler.pkl"
     own_data_path = DATA_DIR / "own_processed_aligned.csv"
     finetuned_model_path = MODEL_DIR / "xgb_finetuned_own_aligned_v2.json"
     metric_path = RESULT_DIR / "finetune_own_metrics_v2.json"
