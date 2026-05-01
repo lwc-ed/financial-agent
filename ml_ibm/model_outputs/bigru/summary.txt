@@ -1,0 +1,32 @@
+Model: bigru
+Output Dir: /home/yuhung/financial-agent/ml_ibm/model_outputs/bigru
+
+[Test 1] Binary Alarm
+Accuracy: 0.799728
+Precision: 0.821159
+Recall: 0.810945
+F1-score: 0.81602
+Confusion Matrix: [[261, 71], [76, 326]]
+
+[Test 2] Risk 4-Class
+Accuracy: 0.712534
+Macro Precision: 0.441389
+Macro Recall: 0.437668
+Macro F1: 0.438388
+Weighted F1: 0.722471
+Confusion Matrix:
+[261, 31, 18, 22]
+[23, 8, 9, 9]
+[21, 8, 0, 7]
+[32, 19, 12, 254]
+
+[Test 3] Regression
+MAE: 1120.785906
+RMSE: 1685.840973
+MAPE: 62.036201
+SMAPE: 77.871604
+
+Notes:
+- monthly_available_cash computed from training data only
+- spent_mtd computed using only observed spending up to date t
+- future_available_7d uses the shared team formula

@@ -1,0 +1,32 @@
+Model: xgboost_TL_alignment
+Output Dir: /home/yuhung/financial-agent/ml_ibm/model_outputs/xgboost_TL_alignment
+
+[Test 1] Binary Alarm
+Accuracy: 0.77399
+Precision: 0.795556
+Recall: 0.804494
+F1-score: 0.8
+Confusion Matrix: [[255, 92], [87, 358]]
+
+[Test 2] Risk 4-Class
+Accuracy: 0.632576
+Macro Precision: 0.444641
+Macro Recall: 0.44114
+Macro F1: 0.439604
+Weighted F1: 0.622402
+Confusion Matrix:
+[255, 31, 18, 43]
+[25, 8, 7, 24]
+[24, 11, 12, 38]
+[38, 17, 15, 226]
+
+[Test 3] Regression
+MAE: 1232.479739
+RMSE: 1952.057
+MAPE: 83.332905
+SMAPE: 87.439006
+
+Notes:
+- monthly_available_cash computed from training data only
+- spent_mtd computed using only observed spending up to date t
+- future_available_7d uses the shared team formula
