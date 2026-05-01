@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parent
 
 def main():
     # own data 來源改成 features_all.csv
-    input_path = ROOT.parent / "processed_data" / "artifacts" / "features_all.csv"
+    input_path = ROOT.parents[1] / "ml" / "processed_data" / "artifacts" / "features_all.csv"
     output_path = DATA_DIR / "own_processed_aligned.csv"
     schema_path = DATA_DIR / "common_features.json"
 

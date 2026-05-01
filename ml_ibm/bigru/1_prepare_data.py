@@ -6,7 +6,7 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 # ── 1. 路徑設定 ──────────────────────────────────────────────────────────
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+DATA_DIR = Path(__file__).resolve().parents[2] / "ml" / "data"
 MY_DIR = Path(__file__).resolve().parent
 ARTIFACTS_DIR = MY_DIR / "artifacts"
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
