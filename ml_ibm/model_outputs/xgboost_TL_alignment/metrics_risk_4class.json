@@ -1,0 +1,39 @@
+{
+  "labels": [
+    "no_alarm",
+    "low_risk",
+    "mid_risk",
+    "high_risk"
+  ],
+  "Accuracy": 0.632576,
+  "Macro Precision": 0.444641,
+  "Macro Recall": 0.44114,
+  "Macro F1": 0.439604,
+  "Weighted F1": 0.622402,
+  "Confusion Matrix": [
+    [
+      255,
+      31,
+      18,
+      43
+    ],
+    [
+      25,
+      8,
+      7,
+      24
+    ],
+    [
+      24,
+      11,
+      12,
+      38
+    ],
+    [
+      38,
+      17,
+      15,
+      226
+    ]
+  ]
+}
