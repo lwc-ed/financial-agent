@@ -21,15 +21,18 @@ EXCLUDE_USERS = ["user4", "user5", "user6"]
 # ── 共用特徵欄位名稱 ─────────────────────────────────────────────────────────
 ALIGNED_FEATURE_COLS = [
     "zscore_7d",
-    "zscore_14d",           # NEW：補中間尺度（7d 與 30d 之間）
+    "zscore_14d",
     "zscore_30d",
     "pct_change_norm",
     "volatility_7d",
     "is_above_mean_30d",
-    "pct_rank_7d",          # NEW：近 7 天百分位排名（0~1，天然 domain-invariant）
-    "pct_rank_30d",         # NEW：近 30 天百分位排名（0~1，天然 domain-invariant）
+    "pct_rank_7d",
+    "pct_rank_30d",
     "dow_sin",
     "dow_cos",
+    "days_to_month_end",    # NEW：距月底天數（正規化 0~1），快月底高消費 = mid risk 訊號
+    "expense_acceleration", # NEW：近 7 天均值 / 近 14 天均值，捕捉消費加速
+    "spent_ratio_mtd",      # NEW：本月累積支出 / 預期進度，反映預算消耗速度
 ]
 TARGET_COL   = "future_expense_7d_sum"
 INPUT_DAYS   = 30
@@ -99,6 +102,15 @@ def compute_aligned_features(series: pd.Series, dates: pd.Series) -> pd.DataFram
         "pct_rank_30d"     : pct_rank_30d.values,
         "dow_sin"          : dow_sin.values,
         "dow_cos"          : dow_cos.values,
+        "days_to_month_end": (d.apply(
+            lambda x: (x.replace(day=1) + pd.DateOffset(months=1) - pd.Timedelta(days=1) - x).days
+        ) / 30.0).clip(0, 1).values,
+        "expense_acceleration": (roll7_mean / (roll14_mean + eps)).clip(0, 3).values,
+        "spent_ratio_mtd"  : (
+            pd.DataFrame({"m": d.dt.to_period("M"), "e": s})
+            .groupby("m")["e"].cumsum()
+            / (roll30_mean * d.dt.day / 30.0 + eps)
+        ).clip(0, 5).values,
     })
 
 
