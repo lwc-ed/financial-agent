@@ -42,10 +42,10 @@ def load_ibm_daily() -> pd.DataFrame:
         )
     df = pd.read_csv(IBM_DAILY_PATH, parse_dates=["date"])
     
-# --- 關鍵修改：從 2000 人降為 500 人 ---
-    target_users = sorted(df['user_id'].unique())[:500]
+# --- 關鍵修改：從 2000 人降為 1000 人 ---
+    target_users = sorted(df['user_id'].unique())[:1000] 
     df = df[df['user_id'].isin(target_users)].reset_index(drop=True)
-    print(f"⚠️  防爆記憶體模式：載入 500 位用戶資料")
+    print(f"⚠️  防爆記憶體模式：載入 1000 位用戶資料")
     # --------------------------------------------
 
     df = df.sort_values(["user_id", "date"]).reset_index(drop=True)

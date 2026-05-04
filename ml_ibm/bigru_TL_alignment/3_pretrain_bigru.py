@@ -1,8 +1,3 @@
-"""
-Step 3：BiGRU Aligned Pretrain (IBM 全量跑 - 移除 MMD 加速版)
-======================================================
-"""
-
 import os
 import pickle
 import sys
@@ -21,35 +16,25 @@ sys.path.insert(0, str(MY_DIR))
 from alignment_utils import ALIGNED_FEATURE_COLS
 from model_bigru import BiGRUWithAttention
 
-# ── 2. 超參數設定 (正式訓練設定) ─────────────────────────────────────────
+# ── 2. 超參數 ────────────────────────────────────────────────────────────
 INPUT_SIZE = len(ALIGNED_FEATURE_COLS)
 HIDDEN_SIZE = 48
 NUM_LAYERS = 2
 DROPOUT = 0.4
 OUTPUT_SIZE = 1
-BATCH_SIZE = 512      # 全量跑時，加大 Batch Size 可以跑更快
-EPOCHS = 30           # 【關鍵】設定為正式要求的 30 輪
+BATCH_SIZE = 512
+EPOCHS = 30 
 LEARNING_RATE = 0.0005
-PATIENCE = 10
-WEIGHT_DECAY = 5e-4
 HUBER_DELTA = 1.0
 
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-elif torch.cuda.is_available():
-    device = torch.device("cuda")
-else:
-    device = torch.device("cpu")
-print(f"⚙️  目前使用設備: {device} | 模式：全量訓練 (無 MMD)")
+device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
+print(f"⚙️  目前使用設備: {device} | 模式：1000人中斷續傳版")
 
 # ── 3. 載入資料 ──────────────────────────────────────────────────────────
-print(f"📂 載入 IBM 資料中...")
 X_train = np.load(ARTIFACTS_DIR / "ibm_X_train.npy")
 y_train = np.load(ARTIFACTS_DIR / "ibm_y_train.npy")
 X_val   = np.load(ARTIFACTS_DIR / "ibm_X_val.npy")
 y_val   = np.load(ARTIFACTS_DIR / "ibm_y_val.npy")
-
-# 注意：不再需要載入 X_personal，因為不跑 MMD 了，這能大幅節省記憶體！
 
 train_loader = DataLoader(TensorDataset(torch.tensor(X_train), torch.tensor(y_train)), batch_size=BATCH_SIZE, shuffle=True)
 val_loader = DataLoader(TensorDataset(torch.tensor(X_val), torch.tensor(y_val)), batch_size=BATCH_SIZE)
@@ -58,31 +43,34 @@ model = BiGRUWithAttention(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DRO
 criterion = nn.HuberLoss(delta=HUBER_DELTA)
 optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
 
-# ── 4. 訓練迴圈 ──────────────────────────────────────────────────────────
-print(f"🚀 開始預訓練 (預計跑 {EPOCHS} 輪)...")
+# ── ✨ 核心功能：存檔點偵測 (Checkpoints) ───────────────────────────────────
+checkpoint_path = ARTIFACTS_DIR / "pretrain_checkpoint.pth"
+start_epoch = 1
 best_val_loss = float("inf")
-best_model_path = ARTIFACTS_DIR / "pretrain_bigru.pth"
 
-for epoch in range(1, EPOCHS + 1):
+if checkpoint_path.exists():
+    print(f"📦 偵測到上次沒跑完的存檔！正在載入...")
+    checkpoint = torch.load(checkpoint_path, map_location=device)
+    model.load_state_dict(checkpoint['model_state'])
+    optimizer.load_state_dict(checkpoint['optimizer_state'])
+    start_epoch = checkpoint['epoch'] + 1
+    best_val_loss = checkpoint['best_val_loss']
+    print(f"🚀 已從 Epoch {start_epoch} 恢復訓練！")
+
+# ── 4. 訓練迴圈 ──────────────────────────────────────────────────────────
+print(f"🚀 預計練功到 Epoch {EPOCHS}...")
+
+for epoch in range(start_epoch, EPOCHS + 1):
     model.train()
     total_loss = 0
-    
-    for i, (X_b, y_b) in enumerate(train_loader):
+    for X_b, y_b in train_loader:
         X_b, y_b = X_b.to(device), y_b.to(device)
         optimizer.zero_grad()
-        
-        # 只計算 Huber Loss，移除耗時的 MMD 計算
-        outputs = model(X_b)
-        loss = criterion(outputs, y_b)
-        
+        loss = criterion(model(X_b), y_b)
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
-        
-        if i % 100 == 0:
-            print(f"  > Epoch {epoch} [{i}/{len(train_loader)}] Loss: {loss.item():.4f}", end='\r')
 
-    # 驗證
     model.eval()
     val_loss = 0
     with torch.no_grad():
@@ -90,11 +78,22 @@ for epoch in range(1, EPOCHS + 1):
             val_loss += criterion(model(X_v.to(device)), y_v.to(device)).item()
     val_loss /= len(val_loader)
     
-    print(f"✅ Epoch {epoch:2d} | Train Loss: {total_loss/len(train_loader):.6f} | Val Loss: {val_loss:.6f}")
+    print(f"✅ Epoch {epoch:2d} | Train: {total_loss/len(train_loader):.4f} | Val: {val_loss:.4f}")
 
+    # 每跑完一輪就強制存檔一次，當作保險
     if val_loss < best_val_loss:
         best_val_loss = val_loss
-        torch.save({"model_state": model.state_dict()}, best_model_path)
-        print(f"  🌟 已存下目前最好的 IBM 模型大腦")
+        # 同時儲存最終權重與存檔點
+        torch.save({"model_state": model.state_dict()}, ARTIFACTS_DIR / "pretrain_bigru.pth")
+    
+    # 存檔點 (包含優化器狀態，方便斷點續傳)
+    torch.save({
+        'epoch': epoch,
+        'model_state': model.state_dict(),
+        'optimizer_state': optimizer.state_dict(),
+        'best_val_loss': best_val_loss,
+    }, checkpoint_path)
 
 print(f"\n🎉 預訓練完成！最佳 Val Loss: {best_val_loss:.6f}")
+# 訓練完全結束後，可以把存檔點刪掉省空間
+if checkpoint_path.exists(): os.remove(checkpoint_path)
