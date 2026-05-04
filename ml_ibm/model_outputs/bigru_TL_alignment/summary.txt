@@ -2,29 +2,29 @@ Model: bigru_TL_alignment
 Output Dir: /home/user/financial-agent/ml_ibm/model_outputs/bigru_TL_alignment
 
 [Test 1] Binary Alarm
-Accuracy: 0.848774
-Precision: 0.885942
+Accuracy: 0.809264
+Precision: 0.82266
 Recall: 0.830846
-F1-score: 0.85751
-Confusion Matrix: [[289, 43], [68, 334]]
+F1-score: 0.826733
+Confusion Matrix: [[260, 72], [68, 334]]
 
 [Test 2] Risk 4-Class
-Accuracy: 0.757493
-Macro Precision: 0.530893
-Macro Recall: 0.53288
-Macro F1: 0.528814
-Weighted F1: 0.758667
+Accuracy: 0.717984
+Macro Precision: 0.501057
+Macro Recall: 0.515356
+Macro F1: 0.503196
+Weighted F1: 0.73297
 Confusion Matrix:
-[289, 15, 8, 20]
-[20, 10, 3, 16]
-[17, 4, 10, 5]
-[31, 10, 29, 247]
+[260, 30, 18, 24]
+[19, 11, 9, 10]
+[18, 3, 10, 5]
+[31, 14, 26, 246]
 
 [Test 3] Regression
-MAE: 1129.472207
-RMSE: 1836.834478
-MAPE: 57.172189
-SMAPE: 80.649442
+MAE: 1026.821703
+RMSE: 1544.22339
+MAPE: 58.83456
+SMAPE: 76.759349
 
 Notes:
 - monthly_available_cash computed from training data only
