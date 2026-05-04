@@ -1,0 +1,32 @@
+Model: bilstm_TL_alignment_smote
+Output Dir: /home/yuhung/financial-agent/ml_ibm/model_outputs/bilstm_TL_alignment_smote
+
+[Test 1] Binary Alarm
+Accuracy: 0.844687
+Precision: 0.85122
+Recall: 0.868159
+F1-score: 0.859606
+Confusion Matrix: [[271, 61], [53, 349]]
+
+[Test 2] Risk 4-Class
+Accuracy: 0.771117
+Macro Precision: 0.444136
+Macro Recall: 0.45397
+Macro F1: 0.447122
+Weighted F1: 0.753235
+Confusion Matrix:
+[271, 17, 13, 31]
+[21, 4, 6, 18]
+[15, 4, 0, 17]
+[17, 7, 2, 291]
+
+[Test 3] Regression
+MAE: 1184.849644
+RMSE: 1627.239112
+MAPE: 74.057511
+SMAPE: 75.193795
+
+Notes:
+- monthly_available_cash computed from training data only
+- spent_mtd computed using only observed spending up to date t
+- future_available_7d uses the shared team formula
