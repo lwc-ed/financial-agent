@@ -505,16 +505,17 @@ def write_spec_outputs(
         encoding="utf-8",
     )
     predictions_df.to_csv(predictions_path, index=False)
-    summary_path.write_text(
-        build_summary_text(
-            model_name=model_name,
-            output_dir=output_dir,
-            regression_metrics=regression_metrics,
-            binary_metrics=binary_metrics,
-            four_class_metrics=four_class_metrics,
-        ),
-        encoding="utf-8",
+    summary_text = build_summary_text(
+        model_name=model_name,
+        output_dir=output_dir,
+        regression_metrics=regression_metrics,
+        binary_metrics=binary_metrics,
+        four_class_metrics=four_class_metrics,
     )
+    with open(summary_path, "a", encoding="utf-8") as f:
+        if summary_path.stat().st_size > 0 if summary_path.exists() else False:
+            f.write("\n" + "=" * 60 + "\n\n")
+        f.write(summary_text)
 
     return EvaluationArtifacts(
         output_dir=output_dir,
@@ -533,11 +534,14 @@ def build_summary_text(
     binary_metrics: dict,
     four_class_metrics: dict,
 ) -> str:
+    from datetime import datetime
+    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     smape_text = "N/A" if regression_metrics.get("SMAPE") is None else str(regression_metrics["SMAPE"])
     mape_text = "N/A" if regression_metrics.get("MAPE") is None else str(regression_metrics["MAPE"])
 
     matrix_lines = "\n".join(str(row) for row in four_class_metrics["Confusion Matrix"])
     return (
+        f"Generated at: {generated_at}\n"
         f"Model: {model_name}\n"
         f"Output Dir: {output_dir}\n\n"
         f"[Test 1] Binary Alarm\n"
