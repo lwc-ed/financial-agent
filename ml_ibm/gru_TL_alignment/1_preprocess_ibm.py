@@ -37,7 +37,7 @@ from alignment_utils import ALIGNED_FEATURE_COLS, INPUT_DAYS, TARGET_COL
 
 IBM_DAILY_PATH = MY_DIR.parent / "processed_data" / "artifacts" / "ibm_daily.csv"
 
-N_SOURCE_USERS = 300
+N_SOURCE_USERS = 500
 MIN_DAYS_PER_USER = INPUT_DAYS + 7 + 10  # 30 + 7 + 10 緩衝
 
 
@@ -59,30 +59,42 @@ def load_ibm_daily() -> pd.DataFrame:
 
 
 def build_features(grp: pd.DataFrame) -> pd.DataFrame:
-    """組合 10 個 aligned 特徵，保證欄位順序與 ALIGNED_FEATURE_COLS 一致。"""
+    """組合 13 個 aligned 特徵，保證欄位順序與 ALIGNED_FEATURE_COLS 一致。"""
     eps = 1e-6
-    s = grp["daily_expense"].reset_index(drop=True)  # log1p 空間
+    s   = grp["daily_expense"].reset_index(drop=True)
+    d   = pd.to_datetime(grp["date"]).reset_index(drop=True)
 
     roll7_mean  = s.rolling(7,  min_periods=1).mean()
     roll7_std   = s.rolling(7,  min_periods=2).std().fillna(0)
+    roll14_mean = s.rolling(14, min_periods=1).mean()
     roll30_mean = s.rolling(30, min_periods=1).mean()
 
     dow = grp["dow"].reset_index(drop=True)
 
+    days_to_month_end = (d.apply(
+        lambda x: (x.replace(day=1) + pd.DateOffset(months=1) - pd.Timedelta(days=1) - x).days
+    ) / 30.0).clip(0, 1)
+
+    spent_ratio_mtd = (
+        pd.DataFrame({"m": d.dt.to_period("M"), "e": s})
+        .groupby("m")["e"].cumsum()
+        / (roll30_mean * d.dt.day / 30.0 + eps)
+    ).clip(0, 5)
+
     return pd.DataFrame({
-        # 直接從 ibm_daily.csv 拿
-        "zscore_7d"        : grp["zscore_7d"].values,
-        "zscore_14d"       : grp["zscore_14d"].values,
-        "zscore_30d"       : grp["zscore_30d"].values,
-        # 從 daily_expense（log1p）計算，均為相對特徵
-        "pct_change_norm"  : (s.diff().fillna(0) / (roll30_mean + eps)).clip(-3, 3).values,
-        "volatility_7d"    : (roll7_std / (roll7_mean + eps)).clip(0, 5).values,
-        "is_above_mean_30d": (s > roll30_mean).astype(float).values,
-        "pct_rank_7d"      : s.rolling(7,  min_periods=1).rank(pct=True).values,
-        "pct_rank_30d"     : s.rolling(30, min_periods=1).rank(pct=True).values,
-        # 從 dow 計算
-        "dow_sin"          : np.sin(2 * np.pi * dow / 7).values,
-        "dow_cos"          : np.cos(2 * np.pi * dow / 7).values,
+        "zscore_7d"         : grp["zscore_7d"].values,
+        "zscore_14d"        : grp["zscore_14d"].values,
+        "zscore_30d"        : grp["zscore_30d"].values,
+        "pct_change_norm"   : (s.diff().fillna(0) / (roll30_mean + eps)).clip(-3, 3).values,
+        "volatility_7d"     : (roll7_std / (roll7_mean + eps)).clip(0, 5).values,
+        "is_above_mean_30d" : (s > roll30_mean).astype(float).values,
+        "pct_rank_7d"       : s.rolling(7,  min_periods=1).rank(pct=True).values,
+        "pct_rank_30d"      : s.rolling(30, min_periods=1).rank(pct=True).values,
+        "dow_sin"           : np.sin(2 * np.pi * dow / 7).values,
+        "dow_cos"           : np.cos(2 * np.pi * dow / 7).values,
+        "days_to_month_end" : days_to_month_end.values,
+        "expense_acceleration": (roll7_mean / (roll14_mean + eps)).clip(0, 3).values,
+        "spent_ratio_mtd"   : spent_ratio_mtd.values,
     })[ALIGNED_FEATURE_COLS]
 
 

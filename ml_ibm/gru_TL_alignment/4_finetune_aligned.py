@@ -37,13 +37,18 @@ WEIGHT_DECAY  = 1e-4
 HUBER_DELTA   = 1.0
 MT_ALPHA      = 0.5   # classification loss 的權重
 FOCAL_GAMMA   = 2.0   # focal loss gamma
-SEEDS         = [42, 123, 777, 456, 789, 999, 2024]
+SEEDS = [
+    42, 123, 777, 456, 789, 999, 2024,
+    0, 7, 13, 21, 100, 314, 1234, 9999,
+    11, 22, 33, 44, 55, 66, 77, 88, 99,
+    111, 222, 333, 444, 555, 666
+]
 
-if torch.backends.mps.is_available():
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
     device = torch.device("mps")
     print("✅ 使用 Apple M1 MPS 加速")
-elif torch.cuda.is_available():
-    device = torch.device("cuda")
 else:
     device = torch.device("cpu")
 

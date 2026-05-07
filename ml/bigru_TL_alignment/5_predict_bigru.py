@@ -27,16 +27,16 @@ sys.path.insert(0, str(ML_ROOT)) # 為了讀取 output_eval_utils
 
 from alignment_utils import ALIGNED_FEATURE_COLS
 from model_bigru import BiGRUWithAttention
-from output_eval_utils import run_output_evaluation # 導入正式評估工具
+from output_eval_utils import run_output_evaluation, compute_per_seed_metrics # 導入正式評估工具
 
 # ... (中間載入 SEEDS 與模型的邏輯保持不變) ...
 SEEDS = sorted([int(f.split("seed")[1].replace(".pth", "")) for f in _glob.glob(f"{ARTIFACTS_DIR}/finetune_bigru_seed*.pth")])
 print(f"🔍 偵測到 {len(SEEDS)} 個 seeds: {SEEDS}")
 
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
 else:
     device = torch.device("cpu")
 print(f"⚙️  目前使用設備: {device}")
