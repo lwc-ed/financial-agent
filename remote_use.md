@@ -2,6 +2,7 @@
 ## 進虛擬環境
 所有訓練套件都裝在虛擬環境裡了，不管跑哪個模型都進入下方虛擬環境
 ```bash
+git checkout ... #切到自己的branch
 tmux #防止遠端掉線
 cd financial-agent
 conda activate ./mlenv
