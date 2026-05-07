@@ -34,12 +34,12 @@ WEIGHT_DECAY  = 5e-4
 HUBER_DELTA   = 1.0
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-    print("✅ 使用 Apple M1 MPS 加速")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
     print("✅ 使用 CUDA")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+    print("✅ 使用 Apple M1 MPS 加速")
 else:
     device = torch.device("cpu")
     print("⚠️  使用 CPU")

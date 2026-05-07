@@ -570,6 +570,105 @@ def build_summary_text(
     )
 
 
+def compute_per_seed_metrics(
+    seed_preds_dict: dict,
+    target_scaler,
+    prediction_input_df: pd.DataFrame,
+    split_metadata_df: pd.DataFrame,
+    output_dir: "str | Path",
+    transactions_df: "pd.DataFrame | None" = None,
+    data_dir: "str | Path | None" = None,
+) -> pd.DataFrame:
+    """
+    每個 seed 各自計算三個主要指標，儲存為 per_seed_metrics.csv，
+    並 append 到 summary.txt。
+
+    Parameters
+    ----------
+    seed_preds_dict : {seed: np.ndarray (scaled predictions on test set)}
+    target_scaler   : 用來 inverse_transform 的 scaler
+    prediction_input_df : 包含 user_id, date, y_true（raw）的 test DataFrame
+    split_metadata_df   : 包含 user_id, date, split 的 DataFrame
+    output_dir      : 要存檔的資料夾（model_outputs/<model_name>/）
+    """
+    import numpy as np
+
+    output_dir = Path(output_dir)
+    pred_df  = _prepare_prediction_input(prediction_input_df)
+    split_df = _prepare_split_metadata(split_metadata_df)
+    raw_txn_df = _prepare_transactions(transactions_df, data_dir=data_dir)
+
+    # ── 預先計算靜態部分（所有 seed 共用）──────────────────────────────
+    monthly_cash_df = compute_monthly_available_cash(raw_txn_df, split_df)
+    spent_lookup    = build_spent_mtd_lookup(raw_txn_df)
+
+    base_df = pred_df.merge(monthly_cash_df, on="user_id", how="left", validate="many_to_one")
+    base_df["spent_mtd"] = base_df.apply(
+        lambda row: lookup_spent_mtd(spent_lookup, row["user_id"], row["date"]), axis=1
+    )
+    base_df["future_available_7d"] = base_df.apply(
+        lambda row: compute_future_available_7d(
+            row["date"], float(row["monthly_available_cash"]), float(row["spent_mtd"])
+        ), axis=1
+    )
+    base_df["true_risk_ratio"]  = base_df.apply(
+        lambda row: compute_risk_ratio(float(row["y_true"]), float(row["future_available_7d"])), axis=1
+    )
+    base_df["true_alarm"]      = base_df["true_risk_ratio"].apply(risk_ratio_to_alarm).astype(int)
+    base_df["true_risk_level"] = base_df["true_risk_ratio"].apply(risk_ratio_to_level)
+
+    y_true   = base_df["y_true"].to_numpy(dtype=float)
+    fav_7d   = base_df["future_available_7d"].to_numpy(dtype=float)
+    t_alarm  = base_df["true_alarm"].to_numpy(dtype=int)
+    t_level  = base_df["true_risk_level"].tolist()
+
+    # ── 每個 seed 計算指標 ──────────────────────────────────────────────
+    rows = []
+    for seed in sorted(seed_preds_dict.keys()):
+        scaled = seed_preds_dict[seed]
+        y_pred = target_scaler.inverse_transform(scaled).ravel()
+
+        pred_risk_ratio = np.array([compute_risk_ratio(float(p), float(f)) for p, f in zip(y_pred, fav_7d)])
+        pred_alarm      = np.array([risk_ratio_to_alarm(r) for r in pred_risk_ratio], dtype=int)
+        pred_level      = [risk_ratio_to_level(r) for r in pred_risk_ratio]
+
+        reg  = compute_regression_metrics(y_true, y_pred)
+        bin_m = compute_binary_alarm_metrics(t_alarm, pred_alarm)
+        cls_m = compute_4class_risk_metrics(t_level, pred_level)
+
+        rows.append({
+            "seed":        seed,
+            "MAE":         reg["MAE"],
+            "RMSE":        reg["RMSE"],
+            "Binary_F1":   bin_m["F1-score"],
+            "Weighted_F1": cls_m["Weighted F1"],
+        })
+
+    df = pd.DataFrame(rows)
+    csv_path = output_dir / "per_seed_metrics.csv"
+    df.to_csv(csv_path, index=False)
+    print(f"✅ per_seed_metrics.csv 已儲存（{len(df)} 個 seed）→ {csv_path}")
+
+    # ── Append 到 summary.txt ──────────────────────────────────────────
+    summary_path = output_dir / "summary.txt"
+    with open(summary_path, "a", encoding="utf-8") as f:
+        from datetime import datetime
+        generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        f.write("\n" + "=" * 60 + "\n\n")
+        f.write(f"Generated at: {generated_at}\n")
+        f.write("[Per-Seed Metrics（假設檢定用）]\n")
+        f.write(f"{'Seed':>8}  {'MAE':>10}  {'RMSE':>10}  {'Binary_F1':>10}  {'Weighted_F1':>12}\n")
+        f.write("-" * 58 + "\n")
+        for _, row in df.iterrows():
+            f.write(
+                f"{int(row['seed']):>8}  {row['MAE']:>10.4f}  {row['RMSE']:>10.4f}"
+                f"  {row['Binary_F1']:>10.4f}  {row['Weighted_F1']:>12.4f}\n"
+            )
+        f.write("\n")
+
+    return df
+
+
 def month_span_inclusive(start_date: pd.Timestamp, end_date: pd.Timestamp) -> int:
     start = pd.Timestamp(start_date)
     end = pd.Timestamp(end_date)

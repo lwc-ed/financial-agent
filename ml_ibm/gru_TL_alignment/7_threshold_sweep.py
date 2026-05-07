@@ -22,10 +22,10 @@ COST_FP = 1.0
 THRESHOLDS = [round(x * 0.1, 1) for x in range(8, 26)]  # 0.8 ~ 2.5
 
 # ── 裝置 ──────────────────────────────────────────────────────────────────────
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
 else:
     device = torch.device("cpu")
 

@@ -34,7 +34,10 @@ ml/model_outputs/
 *.pth
 *.pkl
 *.csv
-*.json# ---- Python ----
+*.json# ---- Conda 環境 ----
+mlenv/
+
+# ---- Python ----
 __pycache__/
 *.py[cod]
 *.pyc

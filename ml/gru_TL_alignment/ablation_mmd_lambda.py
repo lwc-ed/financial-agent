@@ -47,10 +47,10 @@ HUBER_DELTA   = 1.0
 ABLATION_SEEDS = [42, 123, 777]   # 3 seeds 夠比較，跑比較快
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
-if torch.backends.mps.is_available():
-    device = torch.device("mps");  print("✅ Apple M1 MPS")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda"); print("✅ CUDA")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps");  print("✅ Apple M1 MPS")
 else:
     device = torch.device("cpu");  print("⚠️  CPU")
 

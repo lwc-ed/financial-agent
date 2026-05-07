@@ -37,12 +37,17 @@ WEIGHT_DECAY = 1e-4
 HUBER_DELTA = 1.0
 MMD_LAMBDA = 0.0      # 【核心修正】設為 0.0 以提速
 
-SEEDS = [42, 123, 777, 456, 789, 999, 2024]
+SEEDS = [
+    42, 123, 777, 456, 789, 999, 2024,
+    0, 7, 13, 21, 100, 314, 1234, 9999,
+    11, 22, 33, 44, 55, 66, 77, 88, 99,
+    111, 222, 333, 444, 555, 666
+]
 
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
 else:
     device = torch.device("cpu")
 print(f"⚙️  使用設備: {device} | MMD_LAMBDA: {MMD_LAMBDA}")

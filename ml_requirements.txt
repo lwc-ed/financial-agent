@@ -1,0 +1,32 @@
+# ────────────────────────────────────────────────
+# ML Requirements — 六個 TL 模型共用
+# 適用：ml/ 與 ml_ibm/ 下的 gru / bilstm / bigru TL_alignment
+#
+# ⚠️  GPU 安裝（伺服器：RTX 4090 / CUDA 12.2）
+#    torch 需要搭配 CUDA wheel，請用以下指令安裝：
+#    pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cu121
+#
+#    安裝其餘套件：
+#    pip install -r ml_requirements.txt --index-url https://download.pytorch.org/whl/cu121
+#
+# ⚠️  本機 Mac M1 安裝（MPS）
+#    pip install -r ml_requirements.txt
+# ────────────────────────────────────────────────
+
+# 深度學習（CUDA 12.2 對應 cu121 wheel）
+torch==2.10.0
+
+# 資料處理
+numpy==2.4.3
+pandas==3.0.1
+scikit-learn==1.8.0
+scipy==1.17.1
+
+# 不平衡資料處理（SMOTE）
+imbalanced-learn==0.14.1
+
+# 視覺化
+matplotlib==3.10.8
+
+# Excel 讀取（個人資料）
+openpyxl==3.1.5

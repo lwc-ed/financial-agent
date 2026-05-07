@@ -35,12 +35,12 @@ HUBER_DELTA   = 1.0
 MMD_LAMBDA    = 0.1    # ← MMD 固定貢獻 10% 的 HuberLoss（動態 normalize）
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-    print("✅ 使用 Apple M1 MPS 加速")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
     print("✅ 使用 CUDA")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+    print("✅ 使用 Apple M1 MPS 加速")
 else:
     device = torch.device("cpu")
     print("⚠️  使用 CPU")
