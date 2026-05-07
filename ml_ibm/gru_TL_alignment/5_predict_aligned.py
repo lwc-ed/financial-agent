@@ -22,7 +22,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "ml")))
 from alignment_utils import ALIGNED_FEATURE_COLS
-from output_eval_utils import run_output_evaluation
+from output_eval_utils import run_output_evaluation, compute_per_seed_metrics
 
 ROOT = Path(__file__).resolve().parent
 ARTIFACTS_DIR  = "artifacts_aligned"
@@ -41,10 +41,10 @@ SEEDS = sorted([
 print(f"🔍 偵測到 {len(SEEDS)} 個 ensemble seeds: {SEEDS}")
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
 else:
     device = torch.device("cpu")
 

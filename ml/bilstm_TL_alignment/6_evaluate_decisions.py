@@ -37,10 +37,10 @@ COST_FALSE_POSITIVE = 1.0   # 誤報 1 次的成本
 BEST_COMBO = [789]   # ← 如果跑完 5_predict 有不同結果請更新這裡
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
 else:
     device = torch.device("cpu")
 

@@ -7,10 +7,10 @@ import os
 
 # ── 0. 環境與裝置設定 ──────────────────────────────────────────────────
 # 檢查有沒有 GPU 可以用
-if torch.backends.mps.is_available():
-    device = torch.device("mps")
-elif torch.cuda.is_available():
+if torch.cuda.is_available():
     device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
 else:
     device = torch.device("cpu")
 print(f"🖥️ 目前使用的運算裝置: {device}")
