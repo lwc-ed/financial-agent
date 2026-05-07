@@ -23,6 +23,11 @@ conda deactivate
 tmux attach -t lwc
 ```
 
+## 跑完之後就刪掉自己的 session
+```bash
+tmux kill-session -t lwc
+```
+
 ## 離開遠端
 ```bash
 exit
