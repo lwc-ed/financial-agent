@@ -28,6 +28,13 @@ tmux attach -t lwc
 tmux kill-session -t lwc
 ```
 
+## 再來就是上傳 GitHub
+```bash
+git add .
+git commit -m"commit messages" 
+git push
+```
+
 ## 離開遠端
 ```bash
 exit
