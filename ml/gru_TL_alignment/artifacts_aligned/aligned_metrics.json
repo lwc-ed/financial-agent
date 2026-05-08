@@ -1,21 +1,21 @@
 {
-  "val_mae": 1475.1619873046875,
-  "val_rmse": 2627.02490234375,
-  "val_medae": 799.968505859375,
-  "val_smape": 90.25765991210938,
-  "val_per_user_nmae": 117.73110961914062,
-  "test_mae": 1090.2427978515625,
-  "test_rmse": 1562.046142578125,
-  "test_medae": 677.4141845703125,
-  "test_smape": 79.64574432373047,
-  "test_per_user_nmae": 227.5332489013672,
+  "val_mae": 1427.394287109375,
+  "val_rmse": 2648.634033203125,
+  "val_medae": 756.653076171875,
+  "val_smape": 91.32462739944458,
+  "val_per_user_nmae": 94.61517059518043,
+  "test_mae": 1055.2906494140625,
+  "test_rmse": 1562.6824951171875,
+  "test_medae": 640.983154296875,
+  "test_smape": 79.42489981651306,
+  "test_per_user_nmae": 184.0790524683952,
   "bias_correction": 0.0,
   "best_combo": [
-    789
+    456
   ],
   "comparison": {
     "no_pretrain_test_mae": 836.293152,
     "naive_tl_test_mae": 851.477722,
-    "aligned_test_mae": 1090.2427978515625
+    "aligned_test_mae": 1055.2906494140625
   }
 }

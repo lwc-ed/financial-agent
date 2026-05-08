@@ -5,7 +5,7 @@
 git checkout ... #切到自己的branch
 tmux new -s lwc #建立自己的session，防止遠端掉線
 cd financial-agent
-conda activate ./mlenv
+conda activate ./mlenv #如果有缺套件就直接pip install
 ```
 ## 跑訓練程式
 ```bash
