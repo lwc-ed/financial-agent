@@ -18,14 +18,19 @@ bash run_all.sh
 conda deactivate
 ```
 
+## 訓練跑著時，如果想離開遠端但保留程式：
+```bash
+Ctrl+b 然後按 d
+```
+
 ## 如果斷線後可以重連自己的session
 ```bash
 tmux attach -t lwc
 ```
 
-## 跑完之後就刪掉自己的 session
+## 如果確定不需要該session
 ```bash
-tmux kill-session -t lwc
+exit
 ```
 
 ## 再來就是上傳 GitHub
