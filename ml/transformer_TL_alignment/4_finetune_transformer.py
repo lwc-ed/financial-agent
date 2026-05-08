@@ -31,7 +31,12 @@ WEIGHT_DECAY  = 1e-4
 HUBER_DELTA   = 1.0
 MMD_LAMBDA    = 0.1
 
-SEEDS = [42, 123, 777, 456, 789, 999, 2024]
+SEEDS = [
+    42, 123, 777, 456, 789, 999, 2024,
+    0, 7, 13, 21, 100, 314, 1234, 9999,
+    11, 22, 33, 44, 55, 66, 77, 88, 99,
+    111, 222, 333, 444, 555, 666
+]
 
 if torch.cuda.is_available():
     device = torch.device("cuda")

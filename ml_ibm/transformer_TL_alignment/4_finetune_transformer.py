@@ -30,7 +30,12 @@ PATIENCE      = 10
 WEIGHT_DECAY  = 1e-4
 HUBER_DELTA   = 1.0
 
-SEEDS = [42, 123, 777, 456, 789, 999, 2024]
+SEEDS = [
+    42, 123, 777, 456, 789, 999, 2024,
+    0, 7, 13, 21, 100, 314, 1234, 9999,
+    11, 22, 33, 44, 55, 66, 77, 88, 99,
+    111, 222, 333, 444, 555, 666
+]
 
 device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")
 print(f"⚙️  使用設備: {device}")
