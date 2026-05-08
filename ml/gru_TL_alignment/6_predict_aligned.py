@@ -153,21 +153,25 @@ print("\n🔮 取得所有 seed 的推論結果...")
 val_preds_all  = get_all_preds(X_val,  SEEDS)
 test_preds_all = get_all_preds(X_test, SEEDS)
 
-print("\n🔍 暴力搜尋最佳 seed 組合（依 val MAE）...")
-from itertools import combinations
-
+print("\n🔍 貪婪搜尋最佳 seed 組合（依 val MAE）...")
 best_val_mae   = float("inf")
-best_combo     = SEEDS
+best_combo     = []
+remaining      = list(SEEDS)
 
-for r in range(1, len(SEEDS) + 1):
-    for combo in combinations(SEEDS, r):
-        combo = list(combo)
-        val_scaled_avg  = np.mean([val_preds_all[s]  for s in combo], axis=0)
+for _ in range(len(SEEDS)):
+    best_new = None
+    for cand in remaining:
+        combo_try       = best_combo + [cand]
+        val_scaled_avg  = np.mean([val_preds_all[sd] for sd in combo_try], axis=0)
         val_preds_combo = target_scaler.inverse_transform(val_scaled_avg)
         mae = float(np.mean(np.abs(y_val_raw - val_preds_combo)))
         if mae < best_val_mae:
             best_val_mae = mae
-            best_combo   = combo
+            best_new     = cand
+    if best_new is None:
+        break
+    best_combo.append(best_new)
+    remaining.remove(best_new)
 
 print(f"  最佳 combo: seeds={best_combo}  val MAE={best_val_mae:.2f}")
 
@@ -307,5 +311,14 @@ run_output_evaluation(
     model_name="gru_TL_alignment",
     prediction_input_df=prediction_input_df,
     split_metadata_df=split_metadata_df,
+)
+
+print("\n📊 計算每個 seed 個別指標...")
+compute_per_seed_metrics(
+    seed_preds_dict=test_preds_all,
+    target_scaler=target_scaler,
+    prediction_input_df=prediction_input_df,
+    split_metadata_df=split_metadata_df,
+    output_dir=ROOT.parent / "model_outputs" / "gru_TL_alignment",
 )
 print("\n🎉 完成！")

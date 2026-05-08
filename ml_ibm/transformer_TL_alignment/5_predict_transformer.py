@@ -25,7 +25,7 @@ sys.path.insert(0, str(ML_UTILS_DIR))
 
 from alignment_utils import ALIGNED_FEATURE_COLS
 from model_transformer import TransformerModel
-from output_eval_utils import run_output_evaluation
+from output_eval_utils import run_output_evaluation, compute_per_seed_metrics
 
 SEEDS = sorted([int(f.split("seed")[1].replace(".pth", "")) for f in _glob.glob(f"{ARTIFACTS_DIR}/finetune_transformer_seed*.pth")])
 print(f"🔍 偵測到 {len(SEEDS)} 個 seeds: {SEEDS}")
@@ -71,17 +71,24 @@ print("\n🔮 推論所有 seed...")
 val_preds_all  = get_all_preds(X_val)
 test_preds_all = get_all_preds(X_test)
 
-print("\n🔍 暴力搜尋最佳 seed 組合...")
+print("\n🔍 貪婪搜尋最佳 seed 組合...")
 best_val_mae = float("inf")
-best_combo = SEEDS
-for r in range(1, len(SEEDS) + 1):
-    for combo in combinations(SEEDS, r):
-        val_avg = np.mean([val_preds_all[s] for s in combo], axis=0)
+best_combo = []
+remaining = list(SEEDS)
+for _ in range(len(SEEDS)):
+    best_new = None
+    for cand in remaining:
+        combo_try = best_combo + [cand]
+        val_avg = np.mean([val_preds_all[sd] for sd in combo_try], axis=0)
         val_pred = target_scaler.inverse_transform(val_avg)
         mae = float(np.mean(np.abs(y_val_raw - val_pred)))
         if mae < best_val_mae:
             best_val_mae = mae
-            best_combo = list(combo)
+            best_new = cand
+    if best_new is None:
+        break
+    best_combo.append(best_new)
+    remaining.remove(best_new)
 
 print(f"  最佳 combo: seeds={best_combo}  val MAE={best_val_mae:.2f}")
 
@@ -107,5 +114,13 @@ run_output_evaluation(
     output_root=MY_DIR.parent / "model_outputs"
 )
 
+print("\n📊 計算每個 seed 個別指標...")
+compute_per_seed_metrics(
+    seed_preds_dict=test_preds_all,
+    target_scaler=target_scaler,
+    prediction_input_df=prediction_input_df,
+    split_metadata_df=split_metadata_df,
+    output_dir=MY_DIR.parent / "model_outputs" / "transformer_TL_alignment",
+)
 print(f"\n✅ 所有正式評估檔案已儲存至: {MY_DIR.parent}/model_outputs/transformer_TL_alignment/")
 print("🎉 transformer_TL_alignment 評估完成！")
