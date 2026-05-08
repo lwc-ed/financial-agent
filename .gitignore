@@ -4,7 +4,6 @@ ml/bigru/artifacts/
 ml/model_outputs/**
 !ml/model_outputs/
 !ml/model_outputs/*/
-!ml/model_outputs/*/per_seed_metrics_*.csv
 !ml/model_outputs/*/*.csv
 
 # ml_ibm — 原始資料、中間產物、模型輸出全部不上傳
@@ -19,7 +18,7 @@ ml_ibm/model_outputs/**
 !ml_ibm/model_outputs/
 !ml_ibm/model_outputs/*/
 !ml_ibm/model_outputs/*/summary.txt
-!ml_ibm/model_outputs/*/per_seed_metrics_*.csv
+!ml_ibm/model_outputs/*/*.csv
 !ml_ibm/model_outputs/README.md
 
 
