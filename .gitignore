@@ -1,6 +1,10 @@
 # model & outputs
 ml/bigru/artifacts/
-ml/model_outputs/
+# ml model_outputs：只允許上傳 per_seed_metrics_*.csv
+ml/model_outputs/**
+!ml/model_outputs/
+!ml/model_outputs/*/
+!ml/model_outputs/*/per_seed_metrics_*.csv
 
 # ml_ibm — 原始資料、中間產物、模型輸出全部不上傳
 ml_ibm/ibm_data/
@@ -9,11 +13,12 @@ ml_ibm/**/artifacts*/
 ml_ibm/**/models/
 ml_ibm/**/results/
 ml_ibm/**/data/
-# ml_ibm model_outputs：只允許上傳各模型的 summary.txt，其餘全部排除
+# ml_ibm model_outputs：只允許上傳 summary.txt 與 per_seed_metrics_*.csv
 ml_ibm/model_outputs/**
 !ml_ibm/model_outputs/
 !ml_ibm/model_outputs/*/
 !ml_ibm/model_outputs/*/summary.txt
+!ml_ibm/model_outputs/*/per_seed_metrics_*.csv
 !ml_ibm/model_outputs/README.md
 
 
@@ -28,7 +33,6 @@ ml/ml_alignment_kyh_v3/
 *.json
 *.csv# model & data
 ml/bigru/artifacts/
-ml/model_outputs/
 
 *.npy
 *.pth

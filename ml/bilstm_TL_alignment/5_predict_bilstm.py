@@ -11,6 +11,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import pickle, os, json, sys
+from pathlib import Path
 import pandas as pd
 from itertools import combinations
 sys.path.insert(0, os.path.dirname(__file__))
@@ -135,19 +136,25 @@ val_preds_all  = get_all_preds(X_val)
 test_preds_all = get_all_preds(X_test)
 
 # ── 暴力搜尋最佳 combo ────────────────────────────────────────────────────────
-print("\n🔍 暴力搜尋最佳 seed 組合（依 val MAE）...")
+print("\n🔍 貪婪搜尋最佳 seed 組合（依 val MAE）...")
 best_val_mae = float("inf")
-best_combo   = SEEDS
+best_combo   = []
+remaining    = list(SEEDS)
 
-for r in range(1, len(SEEDS) + 1):
-    for combo in combinations(SEEDS, r):
-        combo = list(combo)
-        val_avg  = np.mean([val_preds_all[s]  for s in combo], axis=0)
+for _ in range(len(SEEDS)):
+    best_new = None
+    for cand in remaining:
+        combo_try = best_combo + [cand]
+        val_avg  = np.mean([val_preds_all[sd] for sd in combo_try], axis=0)
         val_pred = target_scaler.inverse_transform(val_avg)
         mae = float(np.mean(np.abs(y_val_raw - val_pred)))
         if mae < best_val_mae:
             best_val_mae = mae
-            best_combo   = combo
+            best_new     = cand
+    if best_new is None:
+        break
+    best_combo.append(best_new)
+    remaining.remove(best_new)
 
 print(f"  最佳 combo: seeds={best_combo}  val MAE={best_val_mae:.2f}")
 
@@ -247,5 +254,15 @@ run_output_evaluation(
     model_name="bilstm_TL_alignment",
     prediction_input_df=prediction_input_df,
     split_metadata_df=split_metadata_df,
+)
+
+print("\n📊 計算每個 seed 個別指標...")
+_bilstm_out = Path(os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))) / "model_outputs" / "bilstm_TL_alignment"
+compute_per_seed_metrics(
+    seed_preds_dict=test_preds_all,
+    target_scaler=target_scaler,
+    prediction_input_df=prediction_input_df,
+    split_metadata_df=split_metadata_df,
+    output_dir=_bilstm_out,
 )
 print("\n🎉 完成！")

@@ -645,9 +645,11 @@ def compute_per_seed_metrics(
         })
 
     df = pd.DataFrame(rows)
-    csv_path = output_dir / "per_seed_metrics.csv"
+    from datetime import datetime
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    csv_path = output_dir / f"per_seed_metrics_{ts}.csv"
     df.to_csv(csv_path, index=False)
-    print(f"✅ per_seed_metrics.csv 已儲存（{len(df)} 個 seed）→ {csv_path}")
+    print(f"✅ per_seed_metrics_{ts}.csv 已儲存（{len(df)} 個 seed）→ {csv_path}")
 
     # ── Append 到 summary.txt ──────────────────────────────────────────
     summary_path = output_dir / "summary.txt"
