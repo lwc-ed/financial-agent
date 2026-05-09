@@ -24,11 +24,12 @@ NUM_LAYERS    = 2
 DROPOUT       = 0.4
 OUTPUT_SIZE   = 1
 BATCH_SIZE    = 32
-EPOCHS        = 50
-LEARNING_RATE = 3e-4
-PATIENCE      = 10
+EPOCHS        = 80
+LEARNING_RATE = 1e-4
+PATIENCE      = 20
 WEIGHT_DECAY  = 1e-4
 HUBER_DELTA   = 1.0
+GRAD_CLIP     = 1.0
 
 SEEDS = [
     42, 123, 777, 456, 789, 999, 2024,
@@ -73,6 +74,7 @@ for seed in SEEDS:
     model = load_pretrained().to(device)
     criterion = nn.HuberLoss(delta=HUBER_DELTA)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=7)
 
     train_loader = DataLoader(TensorDataset(torch.tensor(X_train), torch.tensor(y_train)), batch_size=BATCH_SIZE, shuffle=True)
     val_loader   = DataLoader(TensorDataset(torch.tensor(X_val), torch.tensor(y_val)), batch_size=BATCH_SIZE)
@@ -87,6 +89,7 @@ for seed in SEEDS:
             optimizer.zero_grad()
             loss = criterion(model(X_b), y_b)
             loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), GRAD_CLIP)
             optimizer.step()
 
         model.eval()
@@ -96,6 +99,8 @@ for seed in SEEDS:
                 v_loss += criterion(model(X_v.to(device)), y_v.to(device)).item()
         v_loss /= len(val_loader)
 
+        scheduler.step(v_loss)
+
         if v_loss < best_val_loss:
             best_val_loss = v_loss
             patience_counter = 0
@@ -103,6 +108,7 @@ for seed in SEEDS:
         else:
             patience_counter += 1
             if patience_counter >= PATIENCE:
+                print(f"⏹️  Early stopping at epoch {epoch}")
                 break
 
     print(f"完成！最佳 Val Loss: {best_val_loss:.6f}")
