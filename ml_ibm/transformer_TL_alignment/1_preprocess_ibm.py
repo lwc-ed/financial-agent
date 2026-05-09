@@ -30,7 +30,7 @@ from alignment_utils import ALIGNED_FEATURE_COLS, INPUT_DAYS, TARGET_COL, comput
 
 IBM_DAILY_PATH = MY_DIR.parent / "processed_data" / "artifacts" / "ibm_daily.csv"
 
-N_SOURCE_USERS = 1000       # 先用 100 人測試，最多可到 2000
+N_SOURCE_USERS = 2000       # 先用 100 人測試，最多可到 2000
 MIN_DAYS_PER_USER = INPUT_DAYS + 7 + 10
 
 
