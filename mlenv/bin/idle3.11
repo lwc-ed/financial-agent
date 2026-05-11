@@ -1,5 +1,0 @@
-#!/home/server4090-2/financial-agent/mlenv/bin/python3.11
-
-from idlelib.pyshell import main
-if __name__ == '__main__':
-    main()
