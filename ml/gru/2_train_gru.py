@@ -1,7 +1,11 @@
 """
-Step 2：Bi-LSTM baseline 訓練（30 seeds）
+Step 2：GRU baseline 訓練（30 seeds）
+======================================
+GRUWithAttention（單向，與 gru_TL_alignment 相同架構）
+每個 seed 各訓練一次，存 per-seed checkpoint
 """
 
+import pickle
 import numpy as np
 import torch
 import torch.nn as nn
@@ -12,7 +16,7 @@ ARTIFACTS_DIR = Path(__file__).resolve().parent / "artifacts"
 
 HIDDEN_SIZE   = 64
 NUM_LAYERS    = 2
-DROPOUT       = 0.3
+DROPOUT       = 0.4
 OUTPUT_SIZE   = 1
 BATCH_SIZE    = 32
 EPOCHS        = 80
@@ -36,22 +40,26 @@ else:
 print(f"⚙️  使用裝置: {device}")
 
 
-class MyBiLSTM(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, output_size, dropout=0.3):
+class GRUWithAttention(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, output_size, dropout):
         super().__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers,
-                            batch_first=True, bidirectional=True,
-                            dropout=dropout if num_layers > 1 else 0)
-        self.fc1     = nn.Linear(hidden_size * 2, 32)
-        self.relu    = nn.ReLU()
-        self.dropout = nn.Dropout(dropout)
-        self.fc2     = nn.Linear(32, output_size)
+        self.gru        = nn.GRU(input_size, hidden_size, num_layers,
+                                 dropout=dropout if num_layers > 1 else 0,
+                                 batch_first=True)
+        self.attention  = nn.Linear(hidden_size, 1)
+        self.layer_norm = nn.LayerNorm(hidden_size)
+        self.dropout    = nn.Dropout(dropout)
+        self.fc1        = nn.Linear(hidden_size, hidden_size // 2)
+        self.fc2        = nn.Linear(hidden_size // 2, output_size)
+        self.relu       = nn.ReLU()
 
     def forward(self, x):
-        lstm_out, _ = self.lstm(x)
-        out = lstm_out[:, -1, :]
-        out = self.relu(self.fc1(out))
-        out = self.dropout(out)
+        gru_out, _ = self.gru(x)
+        attn_w     = torch.softmax(self.attention(gru_out), dim=1)
+        context    = (gru_out * attn_w).sum(dim=1)
+        context    = self.layer_norm(context)
+        out        = self.dropout(context)
+        out        = self.relu(self.fc1(out))
         return self.fc2(out)
 
 
@@ -59,7 +67,7 @@ def train_one_seed(seed: int, X_train, y_train, X_val, y_val, input_size: int):
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-    model     = MyBiLSTM(input_size, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT).to(device)
+    model     = GRUWithAttention(input_size, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT).to(device)
     criterion = nn.HuberLoss(delta=1.0)
     optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
 
@@ -76,11 +84,13 @@ def train_one_seed(seed: int, X_train, y_train, X_val, y_val, input_size: int):
     patience_cnt  = 0
     best_state    = None
 
-    for _ in range(1, EPOCHS + 1):
+    for epoch in range(1, EPOCHS + 1):
         model.train()
         for Xb, yb in train_loader:
+            Xb, yb = Xb.to(device), yb.to(device)
             optimizer.zero_grad()
-            criterion(model(Xb.to(device)), yb.to(device)).backward()
+            loss = criterion(model(Xb), yb)
+            loss.backward()
             optimizer.step()
 
         model.eval()
@@ -99,18 +109,19 @@ def train_one_seed(seed: int, X_train, y_train, X_val, y_val, input_size: int):
             if patience_cnt >= PATIENCE:
                 break
 
-    torch.save({"model_state": best_state, "val_loss": best_val_loss},
-               ARTIFACTS_DIR / f"bilstm_seed{seed}.pth")
+    ckpt_path = ARTIFACTS_DIR / f"gru_seed{seed}.pth"
+    torch.save({"model_state": best_state, "val_loss": best_val_loss}, ckpt_path)
     return best_val_loss
 
 
 def main():
     print("📂 載入資料...")
-    X_train    = np.load(ARTIFACTS_DIR / "my_X_train.npy")
-    y_train    = np.load(ARTIFACTS_DIR / "my_y_train_scaled.npy")
-    X_val      = np.load(ARTIFACTS_DIR / "my_X_val.npy")
-    y_val      = np.load(ARTIFACTS_DIR / "my_y_val_scaled.npy")
+    X_train = np.load(ARTIFACTS_DIR / "my_X_train.npy")
+    y_train = np.load(ARTIFACTS_DIR / "my_y_train_scaled.npy")
+    X_val   = np.load(ARTIFACTS_DIR / "my_X_val.npy")
+    y_val   = np.load(ARTIFACTS_DIR / "my_y_val_scaled.npy")
     input_size = X_train.shape[2]
+    print(f"   X_train {X_train.shape}  X_val {X_val.shape}  input_size={input_size}")
 
     for i, seed in enumerate(SEEDS, 1):
         val_loss = train_one_seed(seed, X_train, y_train, X_val, y_val, input_size)

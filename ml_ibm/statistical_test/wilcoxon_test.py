@@ -1,5 +1,5 @@
 """
-ml vs ml_ibm 同名模型的統計檢定（Paired t-test，雙尾）
+ml vs ml_ibm 同名模型的統計檢定（Wilcoxon Signed-Rank Test，雙尾）
 輸出：ml_ibm/statistical_test/output/
 """
 
@@ -18,6 +18,7 @@ def _rjust(s: str, width: int) -> str:
     padding = width - _visual_width(s)
     return ' ' * max(0, padding) + s
 
+
 ROOT = Path(__file__).resolve().parents[2]
 ML_OUTPUT = ROOT / "ml" / "model_outputs"
 ML_IBM_OUTPUT = ROOT / "ml_ibm" / "model_outputs"
@@ -25,7 +26,6 @@ OUT_DIR = Path(__file__).resolve().parent / "output"
 
 METRICS = ["MAE", "RMSE", "Binary_F1", "Weighted_F1"]
 
-# MAE/RMSE: ml_ibm 較大 = 變差；F1: ml_ibm 較大 = 提升
 DIRECTION = {
     "MAE":         "larger_is_worse",
     "RMSE":        "larger_is_worse",
@@ -79,12 +79,12 @@ def run_test(model_name: str) -> dict | None:
         if len(a) != len(b):
             print(f"  [警告] {model_name} {m}: seed 數不一致 ({len(a)} vs {len(b)})，跳過")
             continue
-        t_stat, p_value = stats.ttest_rel(a, b)
+        stat, p_value = stats.wilcoxon(a, b, alternative="two-sided")
         results[m] = {
-            "mean_ml":    float(np.mean(a)),
-            "mean_ibm":   float(np.mean(b)),
-            "t_stat":     float(t_stat),
-            "p_value":    float(p_value),
+            "mean_ml":     float(np.mean(a)),
+            "mean_ibm":    float(np.mean(b)),
+            "statistic":   float(stat),
+            "p_value":     float(p_value),
             "conclude_05": conclude(p_value, np.mean(a), np.mean(b), DIRECTION[m], 0.05),
             "conclude_01": conclude(p_value, np.mean(a), np.mean(b), DIRECTION[m], 0.01),
         }
@@ -95,7 +95,7 @@ def format_table(model_name: str, results: dict) -> str:
     col_w = 16
     metrics_present = [m for m in METRICS if m in results]
 
-    header = f"{'pair T-test':<20}" + "".join(f"{m:>{col_w}}" for m in metrics_present)
+    header = f"{'Wilcoxon':<20}" + "".join(f"{m:>{col_w}}" for m in metrics_present)
     rows = {
         "mean (ml)":       lambda m: f"{results[m]['mean_ml']:>{col_w}.4f}",
         "mean (ml_ibm)":   lambda m: f"{results[m]['mean_ibm']:>{col_w}.4f}",
@@ -114,7 +114,6 @@ def format_table(model_name: str, results: dict) -> str:
 def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    # ml/ 和 ml_ibm/ 共有的模型名稱
     ml_models = {p.name for p in ML_OUTPUT.iterdir() if p.is_dir()}
     ibm_models = {p.name for p in ML_IBM_OUTPUT.iterdir() if p.is_dir()}
     common = sorted(ml_models & ibm_models)
@@ -141,19 +140,19 @@ def main():
         return
 
     # 輸出 txt
-    txt_path = OUT_DIR / "pair_t_test_results.txt"
+    txt_path = OUT_DIR / "wilcoxon_results.txt"
     with open(txt_path, "w") as f:
         f.write("\n\n".join(all_tables) + "\n")
 
     # 輸出 json
-    json_path = OUT_DIR / "pair_t_test_results.json"
+    json_path = OUT_DIR / "wilcoxon_results.json"
     with open(json_path, "w") as f:
         json.dump(all_json, f, ensure_ascii=False, indent=2)
 
     # 輸出 markdown
-    md_path = OUT_DIR / "pair_t_test_results.md"
+    md_path = OUT_DIR / "wilcoxon_results.md"
     with open(md_path, "w") as f:
-        f.write("# Paired T-Test Results (ml vs ml_ibm)\n\n")
+        f.write("# Wilcoxon Signed-Rank Test Results (ml vs ml_ibm)\n\n")
         for model_name, results in all_json.items():
             metrics_present = [m for m in METRICS if m in results]
             f.write(f"## {model_name}\n\n")
@@ -173,7 +172,6 @@ def main():
 
     print(f"\n輸出完成：\n  {txt_path}\n  {json_path}\n  {md_path}")
 
-    # 印出結果
     print("\n" + "=" * 70)
     print("\n\n".join(all_tables))
 
