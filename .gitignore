@@ -1,5 +1,7 @@
 # model & outputs
 ml/bigru/artifacts/
+ml/processed_data/artifacts/
+*.parquet
 
 # ml model_outputs：只允許上傳 per_seed_metrics_*.csv
 ml/model_outputs/**
@@ -41,6 +43,7 @@ ml/ml_alignment_kyh_v3/
 
 # ---- Conda 環境 ----
 mlenv/
+.mlenv/
 
 
 # ---- Python ----
