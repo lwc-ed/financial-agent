@@ -1,6 +1,0 @@
-processed_data/artifacts/
-*.npy
-*.parquet
-*.csv
-*.pth
-*.pkl
