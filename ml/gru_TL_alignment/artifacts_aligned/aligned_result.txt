@@ -3,17 +3,17 @@ model_name: gru_aligned_pretrain_ensemble_bias
 version: aligned_v3 (10 features + MMD loss)
 pretrained: True (Rolling Z-score Alignment + MMD)
 all_seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 2024, 9999]
-best_combo: [314, 22, 77, 789]
-val_mae: 1427.729370
-val_rmse: 2638.530762
-val_medae: 788.552246
-val_smape: 89.87%
-val_per_user_nmae: 103.53%
-test_mae: 1032.967529
-test_rmse: 1518.594604
-test_medae: 662.272095
-test_smape: 76.26%
-test_per_user_nmae: 190.85%
+best_combo: [9999, 33]
+val_mae: 1405.774170
+val_rmse: 2552.674316
+val_medae: 811.750488
+val_smape: 90.07%
+val_per_user_nmae: 123.74%
+test_mae: 1037.202026
+test_rmse: 1478.127930
+test_medae: 674.370056
+test_smape: 76.73%
+test_per_user_nmae: 185.04%
 bias_correction: none（停用，實驗證明不做 correction 更佳）
 feature_type: rolling_zscore_aligned
 feature_cols: ['zscore_7d', 'zscore_14d', 'zscore_30d', 'pct_change_norm', 'volatility_7d', 'is_above_mean_30d', 'pct_rank_7d', 'pct_rank_30d', 'dow_sin', 'dow_cos']
@@ -24,10 +24,10 @@ feature_cols: ['zscore_7d', 'zscore_14d', 'zscore_30d', 'pct_change_norm', 'vola
               MAE     MedAE
   No Pretrain      :  836.29   N/A    <- 基準
   Naive TL (V5)    :  851.48   N/A    <- 有 pretrain 但無 alignment
-  Aligned Pretrain : 1032.97   662.27  <- 本方法（MMD alignment）
+  Aligned Pretrain : 1037.20   674.37  <- 本方法（MMD alignment）
 =================================================================
   Val MAE:
     No Pretrain      : 720.03
     Naive TL (V5)    : 770.02
-    Aligned Pretrain : 1427.73
+    Aligned Pretrain : 1405.77
 =================================================================

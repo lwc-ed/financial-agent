@@ -3,19 +3,19 @@ BiLSTM Aligned v2 Result
 model       : BiLSTMWithAttention + MMD loss
 features    : 10 aligned features (z-score + pct_rank)
 feature_cols: ['zscore_7d', 'zscore_14d', 'zscore_30d', 'pct_change_norm', 'volatility_7d', 'is_above_mean_30d', 'pct_rank_7d', 'pct_rank_30d', 'dow_sin', 'dow_cos']
-all_seeds   : [0, 7, 13, 21, 42, 100, 123, 314, 456, 777, 789, 999, 1234, 2024, 9999]
-best_combo  : [42, 314]
+all_seeds   : [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 2024, 9999]
+best_combo  : [21, 66]
 
-val_mae           : 1470.6824
-val_rmse          : 2609.4807
-val_medae         : 857.2720
-test_mae          : 1254.8705
-test_rmse         : 1745.7083
-test_medae        : 964.8608
-test_smape        : 85.16%
-test_per_user_nmae: 140.87%
+val_mae           : 1379.8776
+val_rmse          : 2598.9631
+val_medae         : 723.1348
+test_mae          : 1002.2757
+test_rmse         : 1455.8083
+test_medae        : 654.1682
+test_smape        : 75.87%
+test_per_user_nmae: 157.46%
 
-all_seeds_test_mae: 1299.7200
+all_seeds_test_mae: 1031.6582
 
 baseline_classmate: 743.51
-gap               : +511.36
+gap               : +258.77
