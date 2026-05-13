@@ -256,7 +256,7 @@ def handle_message(event):
             rows = (
                 db.query(Record)
                 .filter(Record.line_user_id == line_user_id)
-                .order_by(desc(Record.timestamp), desc(Record.id))
+                .order_by(desc(Record.timestamp))
                 .limit(5)
                 .all()
             )
