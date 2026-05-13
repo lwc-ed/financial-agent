@@ -6,7 +6,7 @@ from backend.database import Base   # 從 database.py 匯入 Base
 class Record(Base):
     __tablename__ = "records"
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
+    no = Column(Integer, primary_key=True, autoincrement=True)
     line_user_id = Column(String(64))
     type = Column(String(10), nullable=False)       # '支出' / '收入'
     category = Column(String(64), nullable=False)
