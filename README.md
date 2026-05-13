@@ -216,9 +216,12 @@ python3 app.py
 
 ---
 
+## 重開EC2
+去NameCheap更改DNS，換Public IPv4 address
+
 ## 🖥 EC2 SSH
 ```bash
-ssh ubuntu@18.222.158.104
+ssh ubuntu@52.14.215.164
 ```
 
 ## 🗄 RDS MySQL
