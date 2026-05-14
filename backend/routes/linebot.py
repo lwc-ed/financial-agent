@@ -1,28 +1,27 @@
 from flask import Blueprint, request
 from linebot.v3.webhook import WebhookHandler
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from linebot.v3.messaging import MessagingApi, ReplyMessageRequest, TextMessage, Configuration, ApiClient
+from linebot.v3.messaging import (
+    MessagingApi, ReplyMessageRequest, PushMessageRequest,
+    TextMessage, Configuration, ApiClient,
+)
 from backend.database import SessionLocal
 from backend.models.user import User
-from datetime import datetime, timedelta
 from backend.models.wishlist import Wishlist
-
-from backend.models.record import Record   #  記帳資料表
-from sqlalchemy import desc                #  查紀錄排序用
-import re                                  #  解析「午餐 150」用
+from backend.models.record import Record
 from backend.routes.daily_news.daily_news_service import run_daily_news_pipeline
-
+from sqlalchemy import desc
+from openai import OpenAI
 from datetime import datetime
 import pytz
+import json
 import os
 from dotenv import load_dotenv
-taipei = pytz.timezone("Asia/Taipei")
-datetime.now(taipei)
 
+taipei = pytz.timezone("Asia/Taipei")
 
 linebot_bp = Blueprint("linebot", __name__)
 
-# Load environment variables from .env (if present)
 load_dotenv()
 
 CHANNEL_SECRET = os.getenv("CHANNEL_SECRET", "").strip()
@@ -37,386 +36,278 @@ handler = WebhookHandler(CHANNEL_SECRET)
 configuration = Configuration(access_token=CHANNEL_ACCESS_TOKEN)
 api_client = ApiClient(configuration)
 line_bot_api = MessagingApi(api_client)
+openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# --------------------------------------------------
+# 工具清單：新增功能時在此加入 tool 定義
+# --------------------------------------------------
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "credit_card",
+            "description": "信用卡回饋查詢，使用者詢問某商店或品牌要刷哪張卡、哪張卡回饋最高",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "query": {"type": "string", "description": "商店或品牌名稱，從使用者輸入中抽取"},
+                },
+                "required": ["query"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "expense",
+            "description": "記帳，使用者說要記錄消費、花費了多少錢",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "category": {"type": "string", "description": "消費類別，例如：午餐、交通、飲料"},
+                    "amount":   {"type": "integer", "description": "消費金額（純數字）"},
+                },
+                "required": ["category", "amount"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "query_expense",
+            "description": "查詢消費紀錄，使用者說查紀錄、我花了多少錢、最近消費",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "wishlist",
+            "description": "新增欲望清單，使用者想記錄想買的東西",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "items": {
+                        "type": "array",
+                        "description": "欲購買的品項清單",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "item":  {"type": "string",  "description": "品項名稱"},
+                                "price": {"type": "integer", "description": "價格"},
+                            },
+                            "required": ["item", "price"],
+                        },
+                    },
+                },
+                "required": ["items"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "news",
+            "description": "每日產業新聞，使用者想看新聞或指定某產業的新聞",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "topic": {"type": "string", "description": "產業主題，若無特定主題填「一般」"},
+                },
+                "required": ["topic"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "unknown",
+            "description": "無法判斷意圖，使用者說的不屬於任何已知功能（例如打招呼、閒聊）",
+            "parameters": {"type": "object", "properties": {}, "required": []},
+        },
+    },
+    # 預留：新增功能時在此解除註解並填入定義
+    # {"type": "function", "function": {"name": "saving_challenge", "description": "...", "parameters": {...}}},
+    # {"type": "function", "function": {"name": "ml_predict",       "description": "...", "parameters": {...}}},
+    # {"type": "function", "function": {"name": "budget_alert",     "description": "...", "parameters": {...}}},
+    # {"type": "function", "function": {"name": "report",           "description": "...", "parameters": {...}}},
+]
 
 
-@linebot_bp.route("/callback", methods=["POST"])
-def callback():
-    body = request.get_data(as_text=True)
-    signature = request.headers.get("X-Line-Signature")
+def orchestrate(user_msg: str) -> dict:
+    """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict}"""
     try:
-        handler.handle(body, signature)
+        response = openai_client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "user", "content": user_msg}],
+            tools=TOOLS,
+            tool_choice="required",
+        )
+        tool_call = response.choices[0].message.tool_calls[0]
+        return {
+            "intent": tool_call.function.name,
+            "params": json.loads(tool_call.function.arguments),
+        }
     except Exception as e:
-        # Make webhook failures visible in logs
-        print("[callback] handler.handle failed:", repr(e))
-        raise
-    return "OK"
+        print("[orchestrate] error:", repr(e))
+        return {"intent": "unknown", "params": {}}
 
 
-def process_credit_card_query(user_msg):
-    """
-    信用卡回饋查詢主流程：
-    1. GPT 解析意圖與正規化品牌
-    2. DB Fulltext Search 查回饋
-    3. 整理 summary
-    4. AI Reply 模組生成回應
-    """
+def _reply(reply_token: str, text: str):
+    try:
+        line_bot_api.reply_message(
+            ReplyMessageRequest(reply_token=reply_token, messages=[TextMessage(text=text)])
+        )
+    except Exception as e:
+        print("[linebot] reply failed:", repr(e))
+
+
+def _push(line_user_id: str, text: str):
+    try:
+        line_bot_api.push_message(
+            PushMessageRequest(to=line_user_id, messages=[TextMessage(text=text)])
+        )
+    except Exception as e:
+        print("[linebot] push failed:", repr(e))
+
+
+def process_credit_card_query(user_msg: str) -> str:
+    """信用卡回饋查詢：GPT 解析品牌 → 查 DB → GPT 生成回覆"""
     from backend.ai.ai_parser import normalize_input
     from backend.ai.benefit_query import query_benefits
     from backend.ai.format_benefit_summary import build_summary
     from backend.ai.ai_reply import generate_reply
 
-
-
-
-    # Step 1：解析輸入
-    parsed = normalize_input(user_msg)
-    brand = parsed.get("brand_name")
-    category = parsed.get("category")
-    candidates = parsed.get("candidates", [])
-
-    # Step 2：查 DB
-    results = query_benefits(
-        brand_name=brand,
-        category=category,
-        candidates=candidates
+    parsed    = normalize_input(user_msg)
+    results   = query_benefits(
+        brand_name=parsed.get("brand_name"),
+        category=parsed.get("category"),
+        candidates=parsed.get("candidates", []),
     )
+    summary   = build_summary(parsed, results)
+    return generate_reply(user_msg, results, summary)
 
-    # Step 3：生成 summary
-    summary = build_summary(parsed, results)
 
-    # Step 4：AI 最終回覆
-    reply_text = generate_reply(user_msg, results, summary)
-
-    return reply_text
-
-def parse_expense_text(text: str):
-    """
-    把像「午餐 150」這種訊息，拆成 (category, amount)
-    回傳：(category:str, amount:int) 或 (None, None) 代表不是合法記帳格式
-    """
-    text = (text or "").strip()
-    parts = text.split()
-
-    # 只接受兩個字串：「類別 金額」
-    if len(parts) != 2:
-        return None, None
-
-    category = parts[0]
-    amount_raw = parts[1]
-
-    # 把 "150"、"150元"、"$150"、"1,500" 都變成純數字字串
-    s = re.sub(r"[,\s\$＄元圓]", "", amount_raw)
-    if not re.fullmatch(r"\d+", s):
-        return None, None
-
-    return category, int(s)
+@linebot_bp.route("/callback", methods=["POST"])
+def callback():
+    body      = request.get_data(as_text=True)
+    signature = request.headers.get("X-Line-Signature")
+    try:
+        handler.handle(body, signature)
+    except Exception as e:
+        print("[callback] handler.handle failed:", repr(e))
+        raise
+    return "OK"
 
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     line_user_id = event.source.user_id
-    user_msg = event.message.text
+    user_msg     = event.message.text
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
 
-    # 從 LINE 取得 user id
+    # ---------- Google 綁定檢查 ----------
     user = db.query(User).filter_by(line_user_id=line_user_id).first()
-
-    # ---------- Google 綁定檢查（真正符合你需求的版本） ----------
     if not user:
-        # 查詢是否有任何 Google 使用者綁定過這個 LINE user_id
-        google_user = db.query(User).filter(
+        user = db.query(User).filter(
             User.provider == "google",
-            User.line_user_id == line_user_id
+            User.line_user_id == line_user_id,
         ).first()
-
-        if google_user:
-            # 找到 → 使用該 Google 綁定帳號
-            user = google_user
-        else:
-            # 找不到 → 尚未綁定 → 禁止使用
-            try:
-                line_bot_api.reply_message(
-                    ReplyMessageRequest(
-                        reply_token=event.reply_token,
-                        messages=[TextMessage(text="⚠️ 您尚未綁定帳號，請先點擊下方連接進行 Google 登入並綁定 LINE\nhttps://financial-agent.it.com/login_google\n若綁定失敗可以參照以下步驟⭣\n" \
-                        "IPhone使用者：\n主頁\n  ⭣\n設定(右上角)\n  ⭣\nLINE Labs\n  ⭣\n關閉「使用預設瀏覽器開啟連結」")]
-                    )
-                )
-            except Exception as e:
-                print("[linebot] reply_message failed (bind check):", repr(e))
+        if not user:
+            _reply(event.reply_token,
+                   "⚠️ 您尚未綁定帳號，請先點擊下方連接進行 Google 登入並綁定 LINE\n"
+                   "https://financial-agent.it.com/login_google\n"
+                   "若綁定失敗可以參照以下步驟⭣\n"
+                   "IPhone使用者：\n主頁\n  ⭣\n設定(右上角)\n  ⭣\nLINE Labs\n  ⭣\n關閉「使用預設瀏覽器開啟連結」")
             db.close()
             return
     # ---------- 綁定檢查完成 ----------
 
-    # 超過 10 分鐘沒互動 → 重置
-    if user.last_activity_time:
-        db_time = user.last_activity_time.replace(tzinfo=taipei)
-        if datetime.now(taipei) - db_time > timedelta(minutes=10):
-            user.current_function = None
-            db.commit()
+    # ---------- Orchestrator ----------
+    result = orchestrate(user_msg)
+    intent = result["intent"]
+    params = result["params"]
+    print(f"[orchestrate] intent={intent}, params={params}")
 
-    # 功能別名對應表
-    function_alias = {
-        "信用卡回饋查詢": "功能 A",
-        "欲望清單": "功能 B",
-        "紀錄消費": "功能 C",
-        "其他": "功能 D",
-        "每日產業新聞": "功能 E"
-    }
+    if intent == "credit_card":
+        _reply(event.reply_token, "🔍 正在為您查詢中，請稍候…")
+        _push(line_user_id, process_credit_card_query(params.get("query", user_msg)))
 
-    # 如果 user_msg 在 function_alias，則轉換為對應功能
-    if user_msg in function_alias:
-        user_msg = function_alias[user_msg]
-
-    # 功能對應表
-    function_map = {
-        "功能 A": "💳 信用卡回饋查詢（AI+DB搜尋回饋",
-
-        "功能 B": "📉 欲望清單（待接 DB）",
-        "功能 C": "🧾 記帳功能：可輸入「午餐 150」或「查紀錄」",
-
-
-        "功能 D": "其他功能",
-        "功能 E": "每日產業新聞",
-    }
-
-    # 回覆文字
-    if not user.current_function and user_msg not in function_map:
-        reply_text = "請先點選功能"
-    elif user_msg in ["功能 A", "功能 B", "功能 C", "功能 D", "功能 E"]:
-        user.current_function = user_msg
-        user.last_activity_time = datetime.now(taipei)
-        db.commit()
-        if user_msg == "功能 A":
-            user.current_function = "信用卡回饋查詢"  # 強制轉為 信用卡回饋查詢 狀態
-            reply_text = "💳 已進入信用卡回饋查詢模式，請輸入商店名稱（例如：遠百、星巴克）"
-        elif user_msg == "功能 B":
-            print("進入欲望清單模式")
-            user.current_function = "wishlist"  # 強制轉為 wishlist 狀態
-            db.commit()
-            reply_text = (
-                "✍️ 請輸入欲望清單項目，格式：品項,價格\n"
-                "支援一次輸入多筆 (用空白或換行隔開)！\n\n"
-                "例如：\n"
-                "iPhone,35000 滑鼠,1000"
-            )
-        elif user_msg == "功能 C":
-            print("進入記帳模式")
-            user.current_function = "expense"   # 👈 記帳模式
-            db.commit()
-            reply_text = (
-                "🧾 已進入記帳模式：\n"
-                "・記帳：直接輸入「午餐 150」\n"
-                "・查紀錄：輸入「查紀錄」會顯示最近 5 筆\n"
-                "・離開記帳：輸入「離開」"
-            )
-        elif user_msg == "功能 E":
-            print("為您提供每日產業新聞")
-            user.current_function = "daily_news"
-            reply_text = (
-                "為您提供每日產業新聞，\n"
-                "請問您今天有興趣讀哪方面的產業新聞呢？（若無請填無）"
-            )
-        else:
-            reply_text = f"✅ 你選擇了 {function_map[user_msg]}"
-    elif user.current_function == "信用卡回饋查詢":
-
-        print("👉 信用卡回饋查詢已啟動，收到使用者輸入 =", user_msg)
-
-        # ⭐ 第 1 段：立即回覆避免 LINE Timeout
+    elif intent == "expense":
         try:
-            line_bot_api.reply_message(
-                ReplyMessageRequest(
-                    reply_token=event.reply_token,
-                    messages=[TextMessage(text="🔍 正在為您查詢中，請稍候…")]
-                )
-            )
+            db.add(Record(
+                line_user_id=line_user_id,
+                type="支出",
+                category=params["category"],
+                amount=params["amount"],
+                note="",
+            ))
+            db.commit()
+            reply_text = f"已幫你記錄：{params['category']} {params['amount']} 元 ✅"
         except Exception as e:
-            print("[linebot] reply_message failed (query ack):", repr(e))
+            db.rollback()
+            print("[linebot] expense write error:", repr(e))
+            reply_text = "記帳失敗 QQ，等等再試試看。"
+        _reply(event.reply_token, reply_text)
 
-        # ⭐ 第 2 段：後台執行真正查詢
-        final_reply = process_credit_card_query(user_msg)
-
-        # ⭐ 第 3 段：push 第二段訊息（查詢結果）
-        from linebot.v3.messaging import PushMessageRequest
-
+    elif intent == "query_expense":
         try:
-            line_bot_api.push_message(
-                PushMessageRequest(
-                    to=line_user_id,
-                    messages=[TextMessage(text=final_reply)]
-                )
+            rows = (
+                db.query(Record)
+                .filter(Record.line_user_id == line_user_id)
+                .order_by(desc(Record.timestamp), desc(Record.no))
+                .limit(5)
+                .all()
             )
-        except Exception as e:
-            print("[linebot] push_message failed (query result):", repr(e))
-        return   # ⚠️ 不要再往下執行
-
-    elif user.current_function == "wishlist":
-        print(f"處理欲望清單輸入: {user_msg}")
-        
-        # 使用正規表達式抓取所有符合 "文字,數字" 的組合
-        pattern = r"([^,，\n]+)[,，]\s*(\d+)"
-        matches = re.findall(pattern, user_msg)
-
-        if not matches:
-            reply_text = (
-                "格式看起來不太對喔 😅\n"
-                "請確認格式為「品項,價格」，支援一次輸入多筆！\n\n"
-                "例如：\n"
-                "iPhone, 35000\n"
-                "滑鼠, 1000"
-            )
-        else:
-            try:
-                added_items = []
-                for item_name, price_str in matches:
-                    clean_name = item_name.strip()
-                    clean_price = int(price_str)
-                    
-                    if not clean_name: continue
-
-                    new_item = Wishlist(
-                        user_id=user.id,
-                        item_name=clean_name,
-                        price=clean_price
-                    )
-                    db.add(new_item)
-                    added_items.append(f"{clean_name} (${clean_price})")  
-
-                if not added_items:
-                    reply_text = "找不到有效的品項，請重新輸入。"
-                else:
-                    db.commit() # 全部加完再一次 commit
-                    
-                    items_str = "\n".join([f"✅ {item}" for item in added_items])
-                    reply_text = f"已為您一口氣新增 {len(added_items)} 筆清單！\n{items_str}"
-
-                    # 完成後重置
-                    user.current_function = None
-                    db.commit()  
-            except Exception as e:
-                db.rollback()
-                reply_text = f"資料庫錯誤：{str(e)}"
-                print(f"Wishlist Batch Add Error: {e}")                                   
-
-    elif user.current_function == "daily_news":
-        topic = user_msg.strip()
-
-        if topic == "離開":
-            user.current_function = None
-            db.commit()
-            reply_text = "已離開每日產業新聞模式。"
-        else:
-            # 先回覆受理，避免 LINE webhook timeout
-            try:
-                line_bot_api.reply_message(
-                    ReplyMessageRequest(
-                        reply_token=event.reply_token,
-                        messages=[TextMessage(text="📰 正在整理今日產業新聞，請稍候…")]
-                    )
-                )
-            except Exception as e:
-                print("[linebot] reply_message failed (daily news ack):", repr(e))
-
-            final_reply = run_daily_news_pipeline(
-                db=db,
-                user_id=user.id,
-                topic=topic,
-            )
-
-            from linebot.v3.messaging import PushMessageRequest
-            try:
-                line_bot_api.push_message(
-                    PushMessageRequest(
-                        to=line_user_id,
-                        messages=[TextMessage(text=final_reply)]
-                    )
-                )
-            except Exception as e:
-                print("[linebot] push_message failed (daily news result):", repr(e))
-
-            user.current_function = None
-            user.last_activity_time = datetime.now(taipei)
-            db.commit()
-            return
-
-    elif user.current_function == "expense":
-        text = user_msg.strip()
-
-        if text == "離開":
-            user.current_function = None
-            db.commit()
-            reply_text = "已離開記帳模式，之後可以再點「紀錄消費」回來記帳～"
-
-        elif text == "查紀錄":
-            try:
-                q = (
-                    db.query(Record)
-                    .filter(Record.line_user_id == line_user_id)
-                    .order_by(desc(Record.timestamp), desc(Record.id))
-                    .limit(5)
-                )
-                rows = q.all()
-
-                if not rows:
-                    reply_text = "你目前還沒有任何記帳紀錄喔～\n可以試試輸入：午餐 150"
-                else:
-                    lines = ["你最近的記帳紀錄："]
-                    for r in rows:
-                        line = f"- {r.category} {r.amount} 元"
-                        if r.note:
-                            line += f"（{r.note}）"
-                        lines.append(line)
-                    reply_text = "\n".join(lines)
-            except Exception as e:
-                print("查紀錄錯誤：", e)
-                reply_text = "查詢紀錄時發生錯誤 QQ，等等再試試。"
-
-        else:
-            # 嘗試把輸入當成「午餐 150」這種記帳格式
-            category, amount = parse_expense_text(text)
-            if category is None or amount is None:
-                reply_text = (
-                    "記帳格式是：「項目 金額」，例如：\n"
-                    "・午餐 150\n"
-                    "・飲料 60\n"
-                    "也可以輸入「查紀錄」或「離開」。"
-                )
+            if not rows:
+                reply_text = "你目前還沒有任何記帳紀錄喔～\n可以試試說：午餐 150"
             else:
-                try:
-                    rec = Record(
-                        line_user_id=line_user_id,
-                        type="支出",    # 目前全部先當支出
-                        category=category,
-                        amount=amount,
-                        note="",
-                    )
-                    db.add(rec)
-                    db.commit()
-                    reply_text = f"已幫你記錄：{category} {amount} 元 ✅"
-                except Exception as e:
-                    print("記帳寫入錯誤：", e)
-                    db.rollback()
-                    reply_text = "記帳失敗 QQ，等等再試試看。"   
-    
-    
-    else:
-        reply_text = function_map.get(
-            user_msg,
-            f"你說的是：「{user_msg}」"
-        )
+                lines = ["你最近的記帳紀錄："]
+                for r in rows:
+                    line = f"- {r.category} {r.amount} 元"
+                    if r.note:
+                        line += f"（{r.note}）"
+                    lines.append(line)
+                reply_text = "\n".join(lines)
+        except Exception as e:
+            print("[linebot] query_expense error:", repr(e))
+            reply_text = "查詢失敗，請稍後再試。"
+        _reply(event.reply_token, reply_text)
 
-    # 更新最後互動時間
+    elif intent == "wishlist":
+        try:
+            added = []
+            for item_data in params.get("items", []):
+                db.add(Wishlist(user_id=user.id, item_name=item_data["item"], price=item_data["price"]))
+                added.append(f"{item_data['item']} (${item_data['price']})")
+            db.commit()
+            if added:
+                reply_text = f"已新增 {len(added)} 筆清單！\n" + "\n".join(f"✅ {i}" for i in added)
+            else:
+                reply_text = "沒有找到有效的品項，請重新輸入。"
+        except Exception as e:
+            db.rollback()
+            print("[linebot] wishlist error:", repr(e))
+            reply_text = f"新增失敗：{str(e)}"
+        _reply(event.reply_token, reply_text)
+
+    elif intent == "news":
+        _reply(event.reply_token, "📰 正在整理今日產業新聞，請稍候…")
+        final_reply = run_daily_news_pipeline(
+            db=db, user_id=user.id, topic=params.get("topic", "一般")
+        )
+        _push(line_user_id, final_reply)
+
+    else:  # unknown
+        _reply(event.reply_token,
+               "你好！我可以幫你：\n"
+               "💳 查信用卡回饋（例如：星巴克刷哪張卡）\n"
+               "🧾 記帳（例如：午餐 150）\n"
+               "📋 查消費紀錄（例如：查紀錄）\n"
+               "🛍 欲望清單（例如：幫我加 AirPods 35000）\n"
+               "📰 每日產業新聞（例如：我想看科技產業新聞）")
+
     user.last_activity_time = datetime.now(taipei)
     db.commit()
-
-    try:
-        line_bot_api.reply_message(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text=reply_text)]
-            )
-        )
-    except Exception as e:
-        print("[linebot] reply_message failed (final):", repr(e))
+    db.close()

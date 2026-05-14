@@ -9,7 +9,7 @@ build_ibm_daily.py
 輸出欄位：
   user_id          int    IBM 原始 User 欄位（0~1999）
   date             date   交易日期
-  daily_expense    float  當日支出總和（log1p 壓縮，clip at 0）
+  daily_expense    float  當日支出總和（raw USD）
   daily_income     float  固定為 0（IBM 無收入資料）
   txn_count        int    當日交易筆數
   daily_net        float  = -daily_expense（income=0）
@@ -24,7 +24,7 @@ build_ibm_daily.py
   zscore_7d        float  7 日 z-score（幣值對齊用）
   zscore_14d       float  14 日 z-score
   zscore_30d       float  30 日 z-score
-  target           float  未來 7 天支出總和（log1p，pretrain 用）
+  target           float  未來 7 天支出總和（raw USD）
 """
 
 from pathlib import Path
@@ -101,19 +101,16 @@ def compute_features(daily: pd.DataFrame) -> pd.DataFrame:
         grp = grp.sort_values("date").reset_index(drop=True)
         s = grp["daily_expense"]
 
-        # log1p 壓縮（幣值縮放）
-        s_log = np.log1p(s)
+        # Rolling 特徵（raw 金額空間）
+        grp["expense_7d_sum"]  = s.rolling(7,  min_periods=1).sum()
+        grp["expense_7d_mean"] = s.rolling(7,  min_periods=1).mean()
+        grp["expense_30d_sum"] = s.rolling(30, min_periods=1).sum()
+        grp["expense_30d_mean"]= s.rolling(30, min_periods=1).mean()
 
-        # Rolling 特徵（在 log1p 空間計算，再存回去）
-        grp["expense_7d_sum"]  = s_log.rolling(7,  min_periods=1).sum()
-        grp["expense_7d_mean"] = s_log.rolling(7,  min_periods=1).mean()
-        grp["expense_30d_sum"] = s_log.rolling(30, min_periods=1).sum()
-        grp["expense_30d_mean"]= s_log.rolling(30, min_periods=1).mean()
-
-        # Z-score（抹除 USD/TWD 幣值差異）
-        grp["zscore_7d"]  = compute_zscore(s_log, 7)
-        grp["zscore_14d"] = compute_zscore(s_log, 14)
-        grp["zscore_30d"] = compute_zscore(s_log, 30)
+        # Z-score（抹除 USD/TWD 幣值差異，用 raw 金額計算）
+        grp["zscore_7d"]  = compute_zscore(s, 7)
+        grp["zscore_14d"] = compute_zscore(s, 14)
+        grp["zscore_30d"] = compute_zscore(s, 30)
 
         # 日期特徵
         grp["dow"]        = grp["date"].dt.dayofweek
@@ -125,11 +122,11 @@ def compute_features(daily: pd.DataFrame) -> pd.DataFrame:
         grp["daily_income"] = 0.0
         grp["daily_net"]    = -s
 
-        # daily_expense 轉 log1p
-        grp["daily_expense"] = s_log
+        # daily_expense 保持 raw 金額
+        grp["daily_expense"] = s
 
-        # Target：未來 7 天支出總和（log1p 空間）
-        grp["target"] = s_log.rolling(7).sum().shift(-7)
+        # Target：未來 7 天支出總和（raw 金額空間）
+        grp["target"] = s.rolling(7).sum().shift(-7)
 
         parts.append(grp)
 
@@ -189,9 +186,9 @@ def main():
     print(f"[STATS] 總筆數：{len(daily):,}")
     print(f"[STATS] 用戶數：{daily['user_id'].nunique():,}")
     print(f"[STATS] 日期範圍：{daily['date'].min()} ~ {daily['date'].max()}")
-    print(f"\n[STATS] daily_expense（log1p）描述：")
+    print(f"\n[STATS] daily_expense（raw USD）描述：")
     print(daily["daily_expense"].describe())
-    print(f"\n[STATS] target（log1p）描述：")
+    print(f"\n[STATS] target（raw USD）描述：")
     print(daily["target"].describe())
 
 

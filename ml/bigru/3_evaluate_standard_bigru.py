@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 
-from ml.output_eval_utils import run_output_evaluation
+from ml.output_eval_utils import run_output_evaluation, compute_per_seed_metrics
 
 
 # ── 1. 重新定義相同的模型架構 ──────────────────────────────────────────
@@ -46,151 +46,109 @@ class MyBiGRU(nn.Module):
         return predictions
 
 
-def main():
-    print("🚀 [Step 3] 開始進行 Bi-GRU 模型期末考 (最終評估)...")
+SEEDS = [
+    42, 123, 777, 456, 789, 999, 2024,
+    0, 7, 13, 21, 100, 314, 1234, 9999,
+    11, 22, 33, 44, 55, 66, 77, 88, 99,
+    111, 222, 333, 444, 555, 666,
+]
 
-    # ── 2. 路徑設定與載入測試資料 ────────────────────────────────────────
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
+
+
+def get_all_preds(X: np.ndarray, artifacts_dir: Path, input_size: int) -> dict:
+    X_t = torch.tensor(X, dtype=torch.float32).to(device)
+    all_preds = {}
+    for seed in SEEDS:
+        ckpt  = torch.load(artifacts_dir / f"bigru_seed{seed}.pth", map_location=device)
+        model = MyBiGRU(input_size, 64, 2, 1).to(device)
+        model.load_state_dict(ckpt["model_state"])
+        model.eval()
+        with torch.no_grad():
+            all_preds[seed] = model(X_t).cpu().numpy()
+    return all_preds
+
+
+def main():
+    print("🚀 [Step 3] Bi-GRU baseline 評估（30 seeds）...")
+
     ARTIFACTS_DIR = Path(__file__).resolve().parent / "artifacts"
 
-    X_test = np.load(ARTIFACTS_DIR / "my_X_test.npy").astype(np.float32)
-    y_test_raw = np.load(ARTIFACTS_DIR / "my_y_test_raw.npy").astype(np.float32)
+    X_val         = np.load(ARTIFACTS_DIR / "my_X_val.npy").astype(np.float32)
+    X_test        = np.load(ARTIFACTS_DIR / "my_X_test.npy").astype(np.float32)
+    y_val_scaled  = np.load(ARTIFACTS_DIR / "my_y_val_scaled.npy").astype(np.float32)
+    y_test_raw    = np.load(ARTIFACTS_DIR / "my_y_test_raw.npy").astype(np.float32).ravel()
+    input_size    = X_test.shape[2]
 
     with open(ARTIFACTS_DIR / "my_target_scaler.pkl", "rb") as f:
         target_scaler = pickle.load(f)
 
-    metadata_path = ARTIFACTS_DIR / "sample_metadata.csv"
-    if not metadata_path.exists():
-        raise FileNotFoundError(f"找不到 sample metadata: {metadata_path}")
-
-    metadata_df = pd.read_csv(metadata_path)
-    required_meta_cols = {"user_id", "date", "split"}
-    if not required_meta_cols.issubset(metadata_df.columns):
-        raise ValueError(f"sample_metadata.csv 缺少必要欄位: {required_meta_cols - set(metadata_df.columns)}")
-
+    metadata_df       = pd.read_csv(ARTIFACTS_DIR / "sample_metadata.csv")
     split_metadata_df = metadata_df[["user_id", "date", "split"]].copy()
-    split_metadata_df["date"] = pd.to_datetime(split_metadata_df["date"]).dt.strftime("%Y-%m-%d")
-
+    split_metadata_df["date"] = pd.to_datetime(split_metadata_df["date"])
     test_meta = split_metadata_df[split_metadata_df["split"] == "test"].reset_index(drop=True)
 
-    # ── 3. 載入訓練好的模型權重 ──────────────────────────────────────────
-    INPUT_SIZE = X_test.shape[2]
-    HIDDEN_SIZE = 64
-    NUM_LAYERS = 2
-    OUTPUT_SIZE = 1
+    y_val_raw = target_scaler.inverse_transform(y_val_scaled)
 
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    elif torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
-    model = MyBiGRU(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE).to(device)
+    print("🔮 推論所有 seed...")
+    val_preds_all  = get_all_preds(X_val,  ARTIFACTS_DIR, input_size)
+    test_preds_all = get_all_preds(X_test, ARTIFACTS_DIR, input_size)
 
-    model_path = ARTIFACTS_DIR / "best_standard_bigru.pth"
-    model.load_state_dict(torch.load(model_path, map_location=device, weights_only=True))
-    model.eval()
+    print("🔍 貪婪搜尋最佳 seed 組合（依 val MAE）...")
+    best_val_mae = float("inf")
+    best_combo   = []
+    remaining    = list(SEEDS)
+    for _ in range(len(SEEDS)):
+        best_new = None
+        for cand in remaining:
+            combo_try = best_combo + [cand]
+            val_pred  = target_scaler.inverse_transform(
+                np.mean([val_preds_all[s] for s in combo_try], axis=0))
+            mae = float(np.mean(np.abs(y_val_raw - val_pred)))
+            if mae < best_val_mae:
+                best_val_mae = mae
+                best_new     = cand
+        if best_new is None:
+            break
+        best_combo.append(best_new)
+        remaining.remove(best_new)
+    print(f"  最佳 combo: seeds={best_combo}  val MAE={best_val_mae:.2f}")
 
-    print(f"🔮 正在對 {len(X_test)} 筆未知的測試集進行預測...")
+    test_preds = target_scaler.inverse_transform(
+        np.mean([test_preds_all[s] for s in best_combo], axis=0)).ravel()
+    test_preds = np.maximum(test_preds, 0.0)
 
-    # ── 4. 進行預測 ──────────────────────────────────────────────────────
-    X_test_tensor = torch.tensor(X_test).to(device)
-    with torch.no_grad():
-        predictions_scaled = model(X_test_tensor).cpu().numpy()
+    mae  = float(mean_absolute_error(y_test_raw, test_preds))
+    rmse = float(np.sqrt(mean_squared_error(y_test_raw, test_preds)))
+    print(f"  Test MAE={mae:.2f}  RMSE={rmse:.2f}")
 
-    # ── 5. 反標準化 ──────────────────────────────────────────────────────
-    predictions_real = target_scaler.inverse_transform(predictions_scaled)
+    prediction_input_df = pd.DataFrame({
+        "user_id": test_meta["user_id"].values,
+        "date":    pd.to_datetime(test_meta["date"].values),
+        "y_true":  y_test_raw,
+        "y_pred":  test_preds,
+    })
 
-    # flatten
-    y_test_raw = y_test_raw.reshape(-1)
-    predictions_real = predictions_real.reshape(-1)
-
-    if len(test_meta) != len(y_test_raw):
-        raise ValueError(
-            f"test metadata 筆數 ({len(test_meta)}) 與 y_test_raw 筆數 ({len(y_test_raw)}) 不一致"
-        )
-    if len(test_meta) != len(predictions_real):
-        raise ValueError(
-            f"test metadata 筆數 ({len(test_meta)}) 與 predictions_real 筆數 ({len(predictions_real)}) 不一致"
-        )
-
-    # 支出不應為負值
-    predictions_real = np.maximum(predictions_real, 0.0)
-
-    # ── 6. 計算最終誤差 ──────────────────────────────────────────────────
-    mae = mean_absolute_error(y_test_raw, predictions_real)
-    rmse = np.sqrt(mean_squared_error(y_test_raw, predictions_real))
-    smape = np.mean(
-        2.0 * np.abs(predictions_real - y_test_raw) /
-        (np.abs(predictions_real) + np.abs(y_test_raw) + 1e-8)
-    ) * 100
-
-    mask = y_test_raw > 0
-    if mask.sum() > 0:
-        mape = np.mean(np.abs((predictions_real[mask] - y_test_raw[mask]) / y_test_raw[mask])) * 100
-    else:
-        mape = np.nan
-
-    # ── 7. 組 spec 所需 dataframe ───────────────────────────────────────
-    prediction_input_df = test_meta[["user_id", "date"]].copy()
-    prediction_input_df["y_true"] = y_test_raw
-    prediction_input_df["y_pred"] = predictions_real
-
-    # ── 8. 本地輸出（debug 用） ─────────────────────────────────────────
-    local_pred_path = ARTIFACTS_DIR / "bigru_prediction_input.csv"
-    local_metrics_path = ARTIFACTS_DIR / "bigru_local_metrics.json"
-
-    prediction_input_df.to_csv(local_pred_path, index=False, encoding="utf-8-sig")
-
-    local_metrics = {
-        "model_name": "bigru",
-        "mae": float(mae),
-        "rmse": float(rmse),
-        "mape": None if np.isnan(mape) else float(mape),
-        "smape": float(smape),
-        "rows": int(len(prediction_input_df)),
-    }
-
-    with open(local_metrics_path, "w", encoding="utf-8") as f:
-        json.dump(local_metrics, f, indent=2, ensure_ascii=False)
-
-    # ── 9. 舊 txt 報告（保留） ───────────────────────────────────────────
-    report_content = f"""Bi-GRU Baseline Result
-model_name: bigru
-version: v2_with_spec
-pretrained: False (Trained from scratch)
-test_mae: {mae:.2f}
-test_rmse: {rmse:.2f}
-test_mape: {mape:.2f}%
-test_smape: {smape:.2f}%
-
-==============================================================
-            My Standard Bi-GRU 獨立作戰結果 (越低越好)
-==============================================================
-  Test MAE   : {mae:.2f}
-  Test RMSE  : {rmse:.2f}
-  Test MAPE  : {mape:.2f}%
-  Test sMAPE : {smape:.2f}%
-==============================================================
-"""
-
-    print(report_content)
-
-    report_path = ARTIFACTS_DIR / "standard_bigru_report.txt"
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(report_content)
-
-    print(f"💾 本地 prediction_input 已儲存：{local_pred_path}")
-    print(f"💾 本地 metrics 已儲存：{local_metrics_path}")
-    print(f"💾 報告已成功儲存：{report_path}")
-
-    # ── 10. 呼叫共用 evaluator（正式 spec） ─────────────────────────────
     run_output_evaluation(
         model_name="bigru",
         prediction_input_df=prediction_input_df,
         split_metadata_df=split_metadata_df,
     )
 
-    print("✅ 已完成 shared evaluator 正式輸出 -> ml/model_outputs/bigru/")
+    print("\n📊 計算每個 seed 個別指標...")
+    compute_per_seed_metrics(
+        seed_preds_dict=test_preds_all,
+        target_scaler=target_scaler,
+        prediction_input_df=prediction_input_df,
+        split_metadata_df=split_metadata_df,
+        output_dir=Path(__file__).resolve().parents[1] / "model_outputs" / "bigru",
+    )
+
     print("🎉 標準版 Bi-GRU baseline 評估完成。")
 
 
