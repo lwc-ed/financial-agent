@@ -44,6 +44,9 @@ ml/ml_alignment_kyh_v3/
 # ---- Conda 環境 ----
 mlenv/
 .mlenv/
+.mlenv_bilstm/
+mlenv_bilstm/
+
 
 
 
