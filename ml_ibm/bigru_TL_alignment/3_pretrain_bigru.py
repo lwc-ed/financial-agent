@@ -23,8 +23,8 @@ NUM_LAYERS = 2
 DROPOUT = 0.4
 OUTPUT_SIZE = 1
 BATCH_SIZE = 512
-EPOCHS = 30 
-LEARNING_RATE = 0.0005
+EPOCHS = 150
+LEARNING_RATE = 0.00003
 HUBER_DELTA = 1.0
 
 device = torch.device("cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu")

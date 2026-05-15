@@ -150,6 +150,7 @@ ml/ml_alignment_lwc/artifacts_aligned/metrics_aligned.json
 # ---- Claude ----
 logs/.claude/
 .claude/
+CLAUDE.md
 
 
 # ---- allow selected model outputs ----
