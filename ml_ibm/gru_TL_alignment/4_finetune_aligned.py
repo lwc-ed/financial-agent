@@ -32,6 +32,8 @@ NUM_CLASSES   = 4
 BATCH_SIZE    = 32
 EPOCHS        = 80
 LEARNING_RATE = 1e-4
+ENCODER_LR    = 1e-6   # phase 2：unfreeze 後 encoder 用極小 LR
+FREEZE_EPOCHS = 10     # 前 N epoch freeze encoder，讓 regression head 先穩定
 PATIENCE      = 20
 WEIGHT_DECAY  = 1e-4
 HUBER_DELTA   = 1.0
@@ -148,8 +150,20 @@ for seed in SEEDS:
     model      = load_pretrained_mt().to(device)
     huber_crit = nn.HuberLoss(delta=HUBER_DELTA)
     ce_crit    = FocalLoss(gamma=FOCAL_GAMMA, weight=class_weights.to(device))
-    optimizer  = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
-    scheduler  = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=7)
+
+    encoder_params = (list(model.gru.parameters()) +
+                      list(model.attention.parameters()) +
+                      list(model.layer_norm.parameters()))
+    head_params    = (list(model.fc1.parameters()) +
+                      list(model.fc2.parameters()) +
+                      list(model.cls_head.parameters()))
+
+    # Phase 1：freeze encoder，只訓練 heads
+    for p in encoder_params:
+        p.requires_grad = False
+    optimizer = torch.optim.AdamW(head_params, lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=7)
+    phase2_started = False
 
     train_loader = DataLoader(
         TensorDataset(
@@ -172,6 +186,19 @@ for seed in SEEDS:
     patience_counter = 0
 
     for epoch in range(1, EPOCHS + 1):
+        # Phase 2：unfreeze encoder，切換為 differential LR optimizer
+        if epoch == FREEZE_EPOCHS + 1 and not phase2_started:
+            for p in encoder_params:
+                p.requires_grad = True
+            current_head_lr = optimizer.param_groups[0]["lr"]
+            optimizer = torch.optim.AdamW([
+                {"params": encoder_params, "lr": ENCODER_LR},
+                {"params": head_params,    "lr": current_head_lr},
+            ], weight_decay=WEIGHT_DECAY)
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=7)
+            phase2_started = True
+            print(f"  🔓 Phase 2 開始：unfreeze encoder（encoder_lr={ENCODER_LR}, head_lr={current_head_lr:.2e}）")
+
         model.train()
         epoch_huber = epoch_cls = 0.0
 
@@ -201,8 +228,8 @@ for seed in SEEDS:
 
         scheduler.step(val_loss)
         if epoch % 10 == 0:
-            lr = optimizer.param_groups[0]["lr"]
-            print(f"  Epoch {epoch:3d}  Huber: {epoch_huber:.4f}  CE: {epoch_cls:.4f}  Val: {val_loss:.6f}  LR: {lr:.6f}")
+            head_lr = optimizer.param_groups[-1]["lr"]
+            print(f"  Epoch {epoch:3d}  Huber: {epoch_huber:.4f}  CE: {epoch_cls:.4f}  Val: {val_loss:.6f}  LR: {head_lr:.6f}")
 
         if val_loss < best_val_loss:
             best_val_loss    = val_loss
