@@ -1,3 +1,4 @@
+from typing import Optional
 """
 ml vs ml_ibm 同名模型的統計檢定（Wilcoxon Signed-Rank Test，雙尾）
 輸出：ml_ibm/statistical_test/output/
@@ -61,7 +62,7 @@ def conclude(p_value: float, mean_ml: float, mean_ibm: float, direction: str, al
         return "顯著提升" if ibm_larger else "顯著變差"
 
 
-def run_test(model_name: str) -> dict | None:
+def run_test(model_name: str) -> Optional[dict]:
     ml_csv = get_latest_per_seed_csv(ML_OUTPUT / model_name)
     ibm_csv = get_latest_per_seed_csv(ML_IBM_OUTPUT / model_name)
 

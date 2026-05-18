@@ -1,3 +1,4 @@
+from typing import Optional
 """
 統計檢定（Paired t-test，雙尾）
 比較：ml/ no-TL baseline vs ml_ibm/ TL 版本
@@ -72,7 +73,7 @@ def conclude(p_value: float, mean_baseline: float, mean_tl: float, direction: st
         return "顯著提升" if tl_larger else "顯著變差"
 
 
-def run_test(baseline_name: str, tl_name: str) -> dict | None:
+def run_test(baseline_name: str, tl_name: str) -> Optional[dict]:
     baseline_csv = get_latest_per_seed_csv(ML_OUTPUT / baseline_name)
     tl_csv       = get_latest_per_seed_csv(ML_IBM_OUTPUT / tl_name)
 
