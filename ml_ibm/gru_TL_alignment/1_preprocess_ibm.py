@@ -98,8 +98,10 @@ def build_features(grp: pd.DataFrame) -> pd.DataFrame:
     })[ALIGNED_FEATURE_COLS]
 
 
-def build_windows(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
-    X_list, y_list = [], []
+def build_windows_per_user(df: pd.DataFrame):
+    X_train_list, y_train_list = [], []
+    X_val_list,   y_val_list   = [], []
+    X_test_list,  y_test_list  = [], []
     skipped = 0
 
     for uid, grp in df.groupby("user_id"):
@@ -113,14 +115,30 @@ def build_windows(df: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
         feat_arr   = feats.values.astype(np.float32)
         target_arr = grp["target"].values.astype(np.float32)
 
+        windows_X, windows_y = [], []
         for t in range(INPUT_DAYS, len(grp)):
             if np.isnan(target_arr[t]):
                 continue
-            X_list.append(feat_arr[t - INPUT_DAYS : t])
-            y_list.append([target_arr[t]])
+            windows_X.append(feat_arr[t - INPUT_DAYS : t])
+            windows_y.append([target_arr[t]])
+
+        n = len(windows_X)
+        if n < 5:
+            skipped += 1
+            continue
+
+        t_end = int(n * 0.70)
+        v_end = int(n * 0.85)
+
+        X_train_list.extend(windows_X[:t_end]);      y_train_list.extend(windows_y[:t_end])
+        X_val_list.extend(windows_X[t_end:v_end]);   y_val_list.extend(windows_y[t_end:v_end])
+        X_test_list.extend(windows_X[v_end:]);       y_test_list.extend(windows_y[v_end:])
 
     print(f"[INFO] 跳過資料不足的用戶：{skipped} 位")
-    return np.array(X_list, dtype=np.float32), np.array(y_list, dtype=np.float32)
+    to_arr = lambda lst: np.array(lst, dtype=np.float32)
+    return (to_arr(X_train_list), to_arr(y_train_list),
+            to_arr(X_val_list),   to_arr(y_val_list),
+            to_arr(X_test_list),  to_arr(y_test_list))
 
 
 def main():
@@ -128,17 +146,11 @@ def main():
 
     df = load_ibm_daily()
 
-    print(f"\n📊 組合 {len(ALIGNED_FEATURE_COLS)} 個 aligned 特徵並建立滑動視窗...")
-    X, y = build_windows(df)
-    print(f"[INFO] 全部視窗數：{len(X):,}，shape: {X.shape}")
-
-    train_end = int(len(X) * 0.70)
-    val_end   = int(len(X) * 0.85)
-    X_train, X_val, X_test = X[:train_end], X[train_end:val_end], X[val_end:]
-    y_train, y_val, y_test = y[:train_end], y[train_end:val_end], y[val_end:]
+    print(f"\n📊 組合 {len(ALIGNED_FEATURE_COLS)} 個 aligned 特徵並建立滑動視窗（per-user 70/15/15）...")
+    X_train, y_train, X_val, y_val, X_test, y_test = build_windows_per_user(df)
     print(f"[INFO] Train: {X_train.shape}  Val: {X_val.shape}  Test: {X_test.shape}")
 
-    print("\n📐 標準化 IBM Target...")
+    print("\n📐 標準化 IBM Target（fit on train only）...")
     target_scaler = StandardScaler()
     target_scaler.fit(y_train)
     y_train_s = target_scaler.transform(y_train).astype(np.float32)
