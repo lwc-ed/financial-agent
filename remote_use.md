@@ -2,10 +2,9 @@
 ## 進虛擬環境
 所有訓練套件都裝在虛擬環境裡了，不管跑哪個模型都進入下方虛擬環境
 ```bash
-git checkout ... #切到自己的branch
 tmux new -s lwc #建立自己的session，防止遠端掉線
 cd financial-agent
-conda activate ./mlenv #如果有缺套件就直接pip install
+source mlenv/bin/activate #如果有缺套件就直接pip install
 ```
 ## 跑訓練程式
 ```bash
@@ -15,7 +14,7 @@ bash run_all.sh
 
 ## 離開虛擬環境
 ```bash
-conda deactivate
+deactivate
 ```
 
 ## 訓練跑著時，如果想離開遠端但保留程式：
