@@ -1,0 +1,1747 @@
+(base) server_605_4090@server4090-3:~/financial-agent$ tmux rename-window gru_TL
+(base) server_605_4090@server4090-3:~/financial-agent$ conda activate ./mlenv #如果有缺套件就直接pip install
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent$ cd ml_ibm/gru_TL_alignment/
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ bash run_all.sh
+
+════════════════════════════════════════════════════
+  ▶  1_preprocess_ibm.py
+════════════════════════════════════════════════════
+📂 工作目錄：/home/server_605_4090/financial-agent/ml_ibm/gru_TL_alignment
+[INFO] ibm_daily 載入：8,300,196 筆，使用 2,000 位用戶（共 2,000 位）
+
+📊 組合 13 個 aligned 特徵並建立滑動視窗...
+[INFO] 跳過資料不足的用戶：142 位
+[INFO] 全部視窗數：8,241,351，shape: (8241351, 30, 13)
+[INFO] Train: (5768945, 30, 13)  Val: (1236203, 30, 13)  Test: (1236203, 30, 13)
+
+📐 標準化 IBM Target...
+
+💾 儲存至 /home/server_605_4090/financial-agent/ml_ibm/gru_TL_alignment/artifacts_aligned...
+
+✅ IBM 前處理完成！
+   y_train mean=28.0890  std=8.5655
+
+════════════════════════════════════════════════════
+  ▶  2_preprocess_personal_aligned.py
+════════════════════════════════════════════════════
+📂 載入個人資料...
+  共 5,328 筆 | 13 位用戶
+
+📊 計算 Aligned 特徵與 Target...
+  計算完後：5,328 → 5,237 筆
+
+🪟 建立滑動視窗（INPUT_DAYS=30，per-user 70/15/15）...
+  Train: (3386, 30, 13)  Val: (727, 30, 13)  Test: (734, 30, 13)
+  Train risk 分佈: {0: 2215, 1: 375, 2: 286, 3: 510}
+
+📐 標準化 Target（fit on personal train only）...
+  Target scaler mean=2119.59, std=3060.69
+
+💾 儲存至 artifacts_aligned/...
+  ✅ personal_aligned_X_train/val/test.npy
+  ✅ personal_aligned_y_train/val/test.npy（scaled）
+  ✅ personal_aligned_y_test_raw.npy
+  ✅ personal_aligned_y_train_risk_labels.npy  ← 新增 MT label
+  ✅ personal_aligned_y_val_risk_labels.npy    ← 新增 MT label
+
+🎉 完成！下一步：執行 3_pretrain_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  3_pretrain_aligned.py
+════════════════════════════════════════════════════
+✅ 使用 CUDA
+
+📂 載入 IBM 資料...
+  X_train: (5768945, 30, 13)  y_train: (5768945, 1)
+
+🏗️   模型參數量 : 42,434
+
+🚀 開始 GRU IBM Pretrain...
+=======================================================
+  Epoch   HuberLoss         Val        LR
+=======================================================
+      1    0.156896    0.146472  0.000100
+             ✅ 儲存最佳模型（val_loss=0.146472）
+      2    0.150958    0.150997  0.000100
+      3    0.149224    0.160338  0.000100
+      4    0.148293    0.167540  0.000100
+      5    0.147673    0.172739  0.000100
+      6    0.147206    0.172958  0.000100
+      7    0.146863    0.180415  0.000100
+      8    0.146593    0.184169  0.000100
+      9    0.146357    0.181049  0.000100
+     10    0.146155    0.182833  0.000100
+     11    0.145985    0.188229  0.000100
+     12    0.145812    0.184529  0.000100
+     13    0.145679    0.186898  0.000100
+     14    0.145522    0.185732  0.000100
+     15    0.145387    0.185232  0.000100
+     16    0.145246    0.190293  0.000100
+     17    0.145126    0.187406  0.000050
+     18    0.144714    0.191595  0.000050
+     19    0.144627    0.190970  0.000050
+     20    0.144544    0.191239  0.000050
+     21    0.144475    0.191934  0.000050
+
+⏹️   Early stopping（patience=20）
+===========================================================================
+
+🎉 Aligned Pretrain 完成！最佳 Val Loss：0.146472
+   💡 Loss = HuberLoss only（MMD 已移除）
+  ✅ pretrain_aligned_gru.pth
+  ✅ pretrain_aligned_history.pkl
+
+下一步：執行 4_finetune_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  4_finetune_aligned.py
+════════════════════════════════════════════════════
+run_all.sh: line 14: /home/server_605_4090/financial-agent/mlenv/bin/python: No such file or directory
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ cat ~/financial-agent/ml_ibm/gru_
+TL_alignment/run_all.sh
+#!/usr/bin/env bash
+# gru_TL_alignment 完整流程
+# 用法：cd ml_ibm/gru_TL_alignment && bash run_all.sh
+set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+run_step() {
+    local step="$1"
+    echo ""
+    echo "════════════════════════════════════════════════════"
+    echo "  ▶  $step"
+    echo "════════════════════════════════════════════════════"
+    python "$step"
+}
+
+run_step 1_preprocess_ibm.py
+run_step 2_preprocess_personal_aligned.py
+run_step 3_pretrain_aligned.py
+run_step 4_finetune_aligned.py
+run_step 5_predict_aligned.py
+run_step 6_evaluate_decisions.py
+run_step 7_threshold_sweep.py
+run_step 8_tiered_alert.py
+
+echo ""
+echo "🎉  gru_TL_alignment 全部完成！"
+
+
+
+#caffeinate -i bash -c "cd /Users/liweichen/financial-agent/ml_ibm/gru_TL_alignment && python 1_preprocess_ibm.py && rm -f artifacts_aligned/pretrain_a
+ligned_gru.pth artifacts_aligned/pretrain_aligned_history.pkl artifacts_aligned/finetune_aligned_gru_seed*.pth && python 3_pretrain_aligned.py && pytho
+n 4_finetune_aligned.py && python 5_predict_aligned.py && python 6_evaluate_decisions.py && python 7_threshold_sweep.py && python 8_tiered_alert.py"
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ which python
+/usr/bin/python
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ ~/financial-agent/mlenv/bin/pytho
+n --version
+-bash: /home/server_605_4090/financial-agent/mlenv/bin/python: No such file or directory
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ ~/financial-agent/mlenv/bin/pytho
+n --version
+-bash: /home/server_605_4090/financial-agent/mlenv/bin/python: No such file or directory
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ find ~/financial-agent/mlenv -nam
+e "python*" -type f 2>/dev/null | head -5
+/home/server_605_4090/financial-agent/mlenv/conda-meta/python-3.9.25-h0dcde21_1.json
+/home/server_605_4090/financial-agent/mlenv/share/man/man1/python3.9.1
+/home/server_605_4090/financial-agent/mlenv/lib/pkgconfig/python-3.9-embed.pc
+/home/server_605_4090/financial-agent/mlenv/lib/pkgconfig/python-3.9.pc
+/home/server_605_4090/financial-agent/mlenv/lib/python3.9/site-packages/torch/_dispatch/__pycache__/python.cpython-39.pyc
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ ls ~/financial-agent/mlenv/bin/py
+thon*
+/home/server_605_4090/financial-agent/mlenv/bin/python3.9  /home/server_605_4090/financial-agent/mlenv/bin/python3.9-config
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ ln -s ~/financial-agent/mlenv/bin
+/python3.9 ~/financial-agent/mlenv/bin/python
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ which python
+/home/server_605_4090/financial-agent/mlenv/bin/python
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ cd ~/financial-agent/ml_ibm/gru_T
+L_alignment
+
+rm -f artifacts_aligned/pretrain_aligned_gru.pth \
+      artifacts_aligned/pretrain_aligned_history.pkl \
+      artifacts_aligned/finetune_aligned_gru_seed*.pth
+
+bash run_all.sh
+
+════════════════════════════════════════════════════
+  ▶  1_preprocess_ibm.py
+════════════════════════════════════════════════════
+📂 工作目錄：/home/server_605_4090/financial-agent/ml_ibm/gru_TL_alignment
+[INFO] ibm_daily 載入：8,300,196 筆，使用 2,000 位用戶（共 2,000 位）
+
+📊 組合 13 個 aligned 特徵並建立滑動視窗...
+^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[B^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A^[[A
+^Bd[INFO] 跳過資料不足的用戶：142 位
+[INFO] 全部視窗數：8,241,351，shape: (8241351, 30, 13)
+[INFO] Train: (5768945, 30, 13)  Val: (1236203, 30, 13)  Test: (1236203, 30, 13)
+
+📐 標準化 IBM Target...
+
+💾 儲存至 /home/server_605_4090/financial-agent/ml_ibm/gru_TL_alignment/artifacts_aligned...
+
+✅ IBM 前處理完成！
+   y_train mean=28.0890  std=8.5655
+
+════════════════════════════════════════════════════
+  ▶  2_preprocess_personal_aligned.py
+════════════════════════════════════════════════════
+📂 載入個人資料...
+  共 5,328 筆 | 13 位用戶
+
+📊 計算 Aligned 特徵與 Target...
+  計算完後：5,328 → 5,237 筆
+
+🪟 建立滑動視窗（INPUT_DAYS=30，per-user 70/15/15）...
+  Train: (3386, 30, 13)  Val: (727, 30, 13)  Test: (734, 30, 13)
+  Train risk 分佈: {0: 2215, 1: 375, 2: 286, 3: 510}
+
+📐 標準化 Target（fit on personal train only）...
+  Target scaler mean=2119.59, std=3060.69
+
+💾 儲存至 artifacts_aligned/...
+  ✅ personal_aligned_X_train/val/test.npy
+  ✅ personal_aligned_y_train/val/test.npy（scaled）
+  ✅ personal_aligned_y_test_raw.npy
+  ✅ personal_aligned_y_train_risk_labels.npy  ← 新增 MT label
+  ✅ personal_aligned_y_val_risk_labels.npy    ← 新增 MT label
+
+🎉 完成！下一步：執行 3_pretrain_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  3_pretrain_aligned.py
+════════════════════════════════════════════════════
+✅ 使用 CUDA
+
+📂 載入 IBM 資料...
+  X_train: (5768945, 30, 13)  y_train: (5768945, 1)
+
+🏗️   模型參數量 : 42,434
+
+🚀 開始 GRU IBM Pretrain...
+=======================================================
+  Epoch   HuberLoss         Val        LR
+=======================================================
+      1    0.157099    0.146329  0.000100
+             ✅ 儲存最佳模型（val_loss=0.146329）
+^[[B      2    0.151268    0.150523  0.000100
+      3    0.149404    0.167423  0.000100
+      4    0.148394    0.165603  0.000100
+      5    0.147747    0.176114  0.000100
+      6    0.147284    0.175870  0.000100
+      7    0.146930    0.179165  0.000100
+      8    0.146644    0.178880  0.000100
+      9    0.146412    0.181688  0.000100
+     10    0.146185    0.185941  0.000100
+     11    0.145997    0.184325  0.000100
+     12    0.145840    0.185635  0.000100
+     13    0.145658    0.187470  0.000100
+     14    0.145526    0.184792  0.000100
+     15    0.145383    0.184265  0.000100
+     16    0.145261    0.184976  0.000100
+     17    0.145113    0.187899  0.000050
+     18    0.144707    0.187558  0.000050
+     19    0.144592    0.187592  0.000050
+     20    0.144521    0.187759  0.000050
+     21    0.144456    0.188261  0.000050
+
+⏹️   Early stopping（patience=20）
+===========================================================================
+
+🎉 Aligned Pretrain 完成！最佳 Val Loss：0.146329
+   💡 Loss = HuberLoss only（MMD 已移除）
+  ✅ pretrain_aligned_gru.pth
+  ✅ pretrain_aligned_history.pkl
+
+下一步：執行 4_finetune_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  4_finetune_aligned.py
+════════════════════════════════════════════════════
+📂 載入個人資料...
+  X_train: (3386, 30, 13)  X_val: (727, 30, 13)
+  Train risk 分佈: {0: 2215, 1: 375, 2: 286, 3: 510}
+  Focal class weights: [0.38 2.26 2.96 1.66]
+
+🚀 Ensemble MT Finetune（seeds=[42, 123, 777, 456, 789, 999, 2024, 0, 7, 13, 21, 100, 314, 1234, 9999, 11, 22, 33, 44, 55, 66, 77, 88, 99, 111, 222, 33
+3, 444, 555, 666]，MT_ALPHA=0.5）...
+
+=======================================================
+  Seed 42
+=======================================================
+  Epoch  10  Huber: 0.2138  CE: 0.9333  Val: 0.213674  LR: 0.000100
+  Epoch  20  Huber: 0.1855  CE: 0.9134  Val: 0.194543  LR: 0.000100
+  Epoch  30  Huber: 0.1613  CE: 0.8888  Val: 0.196894  LR: 0.000100
+  Epoch  40  Huber: 0.1474  CE: 0.8666  Val: 0.202679  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 42 最佳 Val Loss: 0.190074
+
+=======================================================
+  Seed 123
+=======================================================
+  Epoch  10  Huber: 0.2132  CE: 0.9301  Val: 0.212430  LR: 0.000100
+  Epoch  20  Huber: 0.1890  CE: 0.9174  Val: 0.196553  LR: 0.000100
+  Epoch  30  Huber: 0.1636  CE: 0.9032  Val: 0.193482  LR: 0.000100
+  Epoch  40  Huber: 0.1425  CE: 0.8729  Val: 0.211399  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 123 最佳 Val Loss: 0.187655
+
+=======================================================
+  Seed 777
+=======================================================
+  Epoch  10  Huber: 0.2100  CE: 0.9288  Val: 0.211692  LR: 0.000100
+  Epoch  20  Huber: 0.1831  CE: 0.9126  Val: 0.196304  LR: 0.000100
+  Epoch  30  Huber: 0.1614  CE: 0.8942  Val: 0.194891  LR: 0.000100
+  Epoch  40  Huber: 0.1446  CE: 0.8712  Val: 0.198037  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 777 最佳 Val Loss: 0.191373
+
+=======================================================
+  Seed 456
+=======================================================
+  Epoch  10  Huber: 0.2130  CE: 0.9273  Val: 0.214423  LR: 0.000100
+  Epoch  20  Huber: 0.1890  CE: 0.9089  Val: 0.199063  LR: 0.000100
+  Epoch  30  Huber: 0.1672  CE: 0.8956  Val: 0.198520  LR: 0.000100
+  Epoch  40  Huber: 0.1412  CE: 0.8661  Val: 0.205205  LR: 0.000050
+  Epoch  50  Huber: 0.1358  CE: 0.8508  Val: 0.207447  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 456 最佳 Val Loss: 0.194563
+
+=======================================================
+  Seed 789
+=======================================================
+  Epoch  10  Huber: 0.2156  CE: 0.9264  Val: 0.216234  LR: 0.000100
+  Epoch  20  Huber: 0.1913  CE: 0.9143  Val: 0.199222  LR: 0.000100
+  Epoch  30  Huber: 0.1657  CE: 0.8887  Val: 0.198785  LR: 0.000100
+  Epoch  40  Huber: 0.1515  CE: 0.8683  Val: 0.208366  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 789 最佳 Val Loss: 0.196274
+
+=======================================================
+  Seed 999
+=======================================================
+  Epoch  10  Huber: 0.2130  CE: 0.9285  Val: 0.212166  LR: 0.000100
+  Epoch  20  Huber: 0.1888  CE: 0.9140  Val: 0.198180  LR: 0.000100
+  Epoch  30  Huber: 0.1672  CE: 0.8915  Val: 0.193507  LR: 0.000100
+  Epoch  40  Huber: 0.1512  CE: 0.8759  Val: 0.201757  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 999 最佳 Val Loss: 0.191248
+
+=======================================================
+  Seed 2024
+=======================================================
+  Epoch  10  Huber: 0.2109  CE: 0.9298  Val: 0.209387  LR: 0.000100
+  Epoch  20  Huber: 0.1904  CE: 0.9135  Val: 0.200765  LR: 0.000100
+  Epoch  30  Huber: 0.1690  CE: 0.8920  Val: 0.192389  LR: 0.000100
+  Epoch  40  Huber: 0.1456  CE: 0.8683  Val: 0.198270  LR: 0.000100
+  Epoch  50  Huber: 0.1370  CE: 0.8504  Val: 0.218279  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 2024 最佳 Val Loss: 0.188885
+
+=======================================================
+  Seed 0
+=======================================================
+  Epoch  10  Huber: 0.2127  CE: 0.9241  Val: 0.210666  LR: 0.000100
+  Epoch  20  Huber: 0.1913  CE: 0.9146  Val: 0.196696  LR: 0.000100
+  Epoch  30  Huber: 0.1666  CE: 0.8932  Val: 0.188552  LR: 0.000100
+  Epoch  40  Huber: 0.1469  CE: 0.8758  Val: 0.199457  LR: 0.000050
+  Epoch  50  Huber: 0.1413  CE: 0.8650  Val: 0.204624  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 0 最佳 Val Loss: 0.188552
+
+=======================================================
+  Seed 7
+=======================================================
+  Epoch  10  Huber: 0.2130  CE: 0.9252  Val: 0.213163  LR: 0.000100
+  Epoch  20  Huber: 0.1904  CE: 0.9145  Val: 0.201440  LR: 0.000100
+  Epoch  30  Huber: 0.1612  CE: 0.8922  Val: 0.200859  LR: 0.000100
+  Epoch  40  Huber: 0.1428  CE: 0.8656  Val: 0.205136  LR: 0.000100
+  Epoch  50  Huber: 0.1350  CE: 0.8469  Val: 0.205524  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 7 最佳 Val Loss: 0.192264
+
+=======================================================
+  Seed 13
+=======================================================
+  Epoch  10  Huber: 0.2160  CE: 0.9249  Val: 0.212190  LR: 0.000100
+  Epoch  20  Huber: 0.1931  CE: 0.9159  Val: 0.194982  LR: 0.000100
+  Epoch  30  Huber: 0.1728  CE: 0.9045  Val: 0.192491  LR: 0.000100
+  Epoch  40  Huber: 0.1577  CE: 0.8854  Val: 0.192148  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 13 最佳 Val Loss: 0.186777
+
+=======================================================
+  Seed 21
+=======================================================
+  Epoch  10  Huber: 0.2111  CE: 0.9299  Val: 0.210201  LR: 0.000100
+  Epoch  20  Huber: 0.1838  CE: 0.9164  Val: 0.194477  LR: 0.000100
+  Epoch  30  Huber: 0.1610  CE: 0.8898  Val: 0.192467  LR: 0.000100
+  Epoch  40  Huber: 0.1471  CE: 0.8671  Val: 0.204868  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 21 最佳 Val Loss: 0.190623
+
+=======================================================
+  Seed 100
+=======================================================
+  Epoch  10  Huber: 0.2115  CE: 0.9250  Val: 0.211471  LR: 0.000100
+  Epoch  20  Huber: 0.1881  CE: 0.9093  Val: 0.198851  LR: 0.000100
+  Epoch  30  Huber: 0.1640  CE: 0.8843  Val: 0.198426  LR: 0.000100
+  Epoch  40  Huber: 0.1507  CE: 0.8629  Val: 0.205089  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 100 最佳 Val Loss: 0.196101
+
+=======================================================
+  Seed 314
+=======================================================
+  Epoch  10  Huber: 0.2145  CE: 0.9239  Val: 0.215443  LR: 0.000100
+  Epoch  20  Huber: 0.1877  CE: 0.9091  Val: 0.202177  LR: 0.000100
+  Epoch  30  Huber: 0.1653  CE: 0.8892  Val: 0.196799  LR: 0.000100
+  Epoch  40  Huber: 0.1487  CE: 0.8597  Val: 0.196676  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 314 最佳 Val Loss: 0.192153
+
+=======================================================
+  Seed 1234
+=======================================================
+  Epoch  10  Huber: 0.2148  CE: 0.9285  Val: 0.215190  LR: 0.000100
+  Epoch  20  Huber: 0.1875  CE: 0.9094  Val: 0.202953  LR: 0.000100
+  Epoch  30  Huber: 0.1687  CE: 0.8886  Val: 0.195313  LR: 0.000100
+  Epoch  40  Huber: 0.1495  CE: 0.8654  Val: 0.197319  LR: 0.000050
+  Epoch  50  Huber: 0.1412  CE: 0.8509  Val: 0.201582  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 1234 最佳 Val Loss: 0.195313
+
+=======================================================
+  Seed 9999
+=======================================================
+  Epoch  10  Huber: 0.2106  CE: 0.9282  Val: 0.211302  LR: 0.000100
+  Epoch  20  Huber: 0.1858  CE: 0.9107  Val: 0.194875  LR: 0.000100
+  Epoch  30  Huber: 0.1600  CE: 0.8857  Val: 0.191009  LR: 0.000100
+  Epoch  40  Huber: 0.1474  CE: 0.8674  Val: 0.210322  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 9999 最佳 Val Loss: 0.190500
+
+=======================================================
+  Seed 11
+=======================================================
+  Epoch  10  Huber: 0.2130  CE: 0.9324  Val: 0.210597  LR: 0.000100
+  Epoch  20  Huber: 0.1927  CE: 0.9256  Val: 0.201955  LR: 0.000100
+  Epoch  30  Huber: 0.1711  CE: 0.9037  Val: 0.190898  LR: 0.000100
+  Epoch  40  Huber: 0.1521  CE: 0.8769  Val: 0.194174  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 11 最佳 Val Loss: 0.186154
+
+=======================================================
+  Seed 22
+=======================================================
+  Epoch  10  Huber: 0.2140  CE: 0.9246  Val: 0.212240  LR: 0.000100
+  Epoch  20  Huber: 0.1918  CE: 0.8981  Val: 0.203483  LR: 0.000100
+  Epoch  30  Huber: 0.1693  CE: 0.8697  Val: 0.206663  LR: 0.000100
+  Epoch  40  Huber: 0.1508  CE: 0.8474  Val: 0.215789  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 22 最佳 Val Loss: 0.200123
+
+=======================================================
+  Seed 33
+=======================================================
+  Epoch  10  Huber: 0.2159  CE: 0.9279  Val: 0.215079  LR: 0.000100
+  Epoch  20  Huber: 0.1930  CE: 0.9088  Val: 0.202587  LR: 0.000100
+  Epoch  30  Huber: 0.1690  CE: 0.8812  Val: 0.196866  LR: 0.000100
+  Epoch  40  Huber: 0.1486  CE: 0.8590  Val: 0.212340  LR: 0.000050
+  Epoch  50  Huber: 0.1383  CE: 0.8514  Val: 0.216485  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 33 最佳 Val Loss: 0.196866
+
+=======================================================
+  Seed 44
+=======================================================
+  Epoch  10  Huber: 0.2131  CE: 0.9275  Val: 0.211696  LR: 0.000100
+  Epoch  20  Huber: 0.1902  CE: 0.9161  Val: 0.202004  LR: 0.000100
+  Epoch  30  Huber: 0.1714  CE: 0.8913  Val: 0.195665  LR: 0.000100
+  Epoch  40  Huber: 0.1507  CE: 0.8666  Val: 0.197092  LR: 0.000100
+  Epoch  50  Huber: 0.1378  CE: 0.8421  Val: 0.205639  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 44 最佳 Val Loss: 0.192692
+
+=======================================================
+  Seed 55
+=======================================================
+  Epoch  10  Huber: 0.2126  CE: 0.9263  Val: 0.213886  LR: 0.000100
+  Epoch  20  Huber: 0.1877  CE: 0.9119  Val: 0.197081  LR: 0.000100
+  Epoch  30  Huber: 0.1657  CE: 0.8967  Val: 0.203729  LR: 0.000100
+  Epoch  40  Huber: 0.1508  CE: 0.8839  Val: 0.199801  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 55 最佳 Val Loss: 0.195865
+
+=======================================================
+  Seed 66
+=======================================================
+  Epoch  10  Huber: 0.2136  CE: 0.9307  Val: 0.214286  LR: 0.000100
+  Epoch  20  Huber: 0.1879  CE: 0.9149  Val: 0.204240  LR: 0.000100
+  Epoch  30  Huber: 0.1656  CE: 0.8959  Val: 0.195984  LR: 0.000100
+  Epoch  40  Huber: 0.1506  CE: 0.8780  Val: 0.210105  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 66 最佳 Val Loss: 0.194004
+
+=======================================================
+  Seed 77
+=======================================================
+  Epoch  10  Huber: 0.2133  CE: 0.9318  Val: 0.213171  LR: 0.000100
+  Epoch  20  Huber: 0.1891  CE: 0.9118  Val: 0.203689  LR: 0.000100
+  Epoch  30  Huber: 0.1662  CE: 0.8849  Val: 0.199845  LR: 0.000100
+  Epoch  40  Huber: 0.1464  CE: 0.8631  Val: 0.198857  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 77 最佳 Val Loss: 0.195532
+
+=======================================================
+  Seed 88
+=======================================================
+  Epoch  10  Huber: 0.2134  CE: 0.9269  Val: 0.215206  LR: 0.000100
+  Epoch  20  Huber: 0.1929  CE: 0.9073  Val: 0.206325  LR: 0.000100
+  Epoch  30  Huber: 0.1713  CE: 0.8755  Val: 0.202272  LR: 0.000100
+  Epoch  40  Huber: 0.1525  CE: 0.8426  Val: 0.206418  LR: 0.000100
+  Epoch  50  Huber: 0.1432  CE: 0.8246  Val: 0.224914  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 88 最佳 Val Loss: 0.197080
+
+=======================================================
+  Seed 99
+=======================================================
+  Epoch  10  Huber: 0.2145  CE: 0.9315  Val: 0.210322  LR: 0.000100
+  Epoch  20  Huber: 0.1869  CE: 0.9137  Val: 0.195108  LR: 0.000100
+  Epoch  30  Huber: 0.1617  CE: 0.8856  Val: 0.201376  LR: 0.000100
+  Epoch  40  Huber: 0.1519  CE: 0.8626  Val: 0.200760  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 99 最佳 Val Loss: 0.192128
+
+=======================================================
+  Seed 111
+=======================================================
+  Epoch  10  Huber: 0.2110  CE: 0.9301  Val: 0.212305  LR: 0.000100
+  Epoch  20  Huber: 0.1880  CE: 0.9179  Val: 0.199011  LR: 0.000100
+  Epoch  30  Huber: 0.1651  CE: 0.8966  Val: 0.188579  LR: 0.000100
+  Epoch  40  Huber: 0.1429  CE: 0.8801  Val: 0.199477  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 111 最佳 Val Loss: 0.187722
+
+=======================================================
+  Seed 222
+=======================================================
+  Epoch  10  Huber: 0.2150  CE: 0.9298  Val: 0.212070  LR: 0.000100
+  Epoch  20  Huber: 0.1885  CE: 0.9136  Val: 0.200081  LR: 0.000100
+  Epoch  30  Huber: 0.1666  CE: 0.8947  Val: 0.203305  LR: 0.000100
+  Epoch  40  Huber: 0.1492  CE: 0.8740  Val: 0.204901  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 222 最佳 Val Loss: 0.196549
+
+=======================================================
+  Seed 333
+=======================================================
+  Epoch  10  Huber: 0.2148  CE: 0.9274  Val: 0.210535  LR: 0.000100
+  Epoch  20  Huber: 0.1868  CE: 0.9110  Val: 0.197066  LR: 0.000100
+  Epoch  30  Huber: 0.1662  CE: 0.8865  Val: 0.196465  LR: 0.000050
+  Epoch  40  Huber: 0.1553  CE: 0.8734  Val: 0.199873  LR: 0.000050
+  Epoch  50  Huber: 0.1484  CE: 0.8594  Val: 0.200408  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 333 最佳 Val Loss: 0.194741
+
+=======================================================
+  Seed 444
+=======================================================
+  Epoch  10  Huber: 0.2116  CE: 0.9285  Val: 0.213625  LR: 0.000100
+  Epoch  20  Huber: 0.1869  CE: 0.9099  Val: 0.200750  LR: 0.000100
+  Epoch  30  Huber: 0.1649  CE: 0.8888  Val: 0.191466  LR: 0.000100
+  Epoch  40  Huber: 0.1466  CE: 0.8638  Val: 0.198603  LR: 0.000050
+  Epoch  50  Huber: 0.1388  CE: 0.8547  Val: 0.201388  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 444 最佳 Val Loss: 0.190529
+
+=======================================================
+  Seed 555
+=======================================================
+  Epoch  10  Huber: 0.2159  CE: 0.9278  Val: 0.213779  LR: 0.000100
+  Epoch  20  Huber: 0.1967  CE: 0.9172  Val: 0.200002  LR: 0.000100
+  Epoch  30  Huber: 0.1751  CE: 0.8975  Val: 0.190656  LR: 0.000100
+  Epoch  40  Huber: 0.1547  CE: 0.8797  Val: 0.198349  LR: 0.000050
+  Epoch  50  Huber: 0.1451  CE: 0.8686  Val: 0.200568  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 555 最佳 Val Loss: 0.190656
+
+=======================================================
+  Seed 666
+=======================================================
+  Epoch  10  Huber: 0.2142  CE: 0.9304  Val: 0.215696  LR: 0.000100
+  Epoch  20  Huber: 0.1899  CE: 0.9163  Val: 0.199460  LR: 0.000100
+  Epoch  30  Huber: 0.1679  CE: 0.8960  Val: 0.205783  LR: 0.000100
+  Epoch  40  Huber: 0.1568  CE: 0.8787  Val: 0.201726  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 666 最佳 Val Loss: 0.192419
+
+🎉 MT Finetune 完成！→ 下一步：執行 5_predict_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  5_predict_aligned.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 ensemble seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999,
+ 1234, 2024, 9999]
+📂 載入個人 Aligned 測試資料...
+
+🔮 取得所有 seed 的推論結果...
+
+🔍 貪婪搜尋最佳 seed 組合（依 val MAE）...
+  最佳 combo: seeds=[11, 123, 2024, 13]  val MAE=1314.70
+
+📊 計算評估指標...
+
+  Val  MAE  : 1314.70
+  Test MAE  : 1232.27
+  Test RMSE : 1759.19
+  Test MedAE: 742.81  ← 不受極端值影響
+  Test SMAPE: 82.46%
+  💡 若 MAE >> MedAE，代表有少數極端誤差在拉高 MAE
+
+📋 三方比較（No Pretrain vs Naive TL vs Aligned Pretrain）...
+  ⚠️   找不到 /home/server_605_4090/financial-agent/ml_ibm/legacy_models/ml_gru/artificats/metrics_nopretrain.json，跳過
+  ⚠️   找不到 /home/server_605_4090/financial-agent/ml_ibm/legacy_models/ml_gru/artificats/metrics_vv5.json，跳過
+
+=================================================================
+           方法比較（Test MAE / MedAE，越低越好）
+=================================================================
+              MAE     MedAE
+  No Pretrain      :     N/A   N/A    <- 基準
+  Naive TL (V5)    :     N/A   N/A    <- 有 pretrain 但無 alignment
+  Aligned Pretrain : 1232.27   742.81  <- 本方法（MMD alignment）
+=================================================================
+  Val MAE:
+    No Pretrain      : N/A
+    Naive TL (V5)    : N/A
+    Aligned Pretrain : 1314.70
+=================================================================
+
+✅ 結果儲存至 artifacts_aligned/aligned_result.txt
+✅ Metrics 儲存至 artifacts_aligned/aligned_metrics.json
+
+📊 呼叫共用評估器...
+
+📊 計算每個 seed 個別指標...
+✅ per_seed_metrics_20260514_210830.csv 已儲存（30 個 seed）→ /home/server_605_4090/financial-agent/ml_ibm/model_outputs/gru_TL_alignment/per_seed_metr
+ics_20260514_210830.csv
+
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  6_evaluate_decisions.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+📂 載入資料...
+📊 計算個人30日基線...
+  預警正例：21.1%  (155/734)
+
+🔮 推論（seeds=[0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 2024, 9999
+]）...
+
+==============================================================
+  GRU Aligned（10 features，all seeds）
+==============================================================
+  MAE=1208.83  RMSE=1733.06  sMAPE=81.88%
+  Precision=0.2764  Recall=0.3548  F1=0.3107
+  FNR=0.6452  FPR=0.2487  Cost=0.6049
+  Per-user MAE：avg=1089.25  max=2477.19  std=631.40
+  Per-user F1 ：avg=0.1936  min=0.0000
+  Per-user FNR：avg=0.7259  max=1.0000
+  Per-user Cost：avg=0.5923  max=0.9583
+
+  各 user 詳細：
+    user1       MAE= 464.32  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.200
+    user10      MAE= 616.75  F1=0.250  Recall=0.250  FNR=0.750  Cost=0.581
+    user11      MAE= 680.63  F1=0.250  Recall=0.250  FNR=0.750  Cost=0.735
+    user12      MAE= 685.34  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.612
+    user13      MAE=2071.51  F1=0.368  Recall=0.438  FNR=0.562  Cost=0.560
+    user14      MAE=2477.19  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.326
+    user15      MAE=1195.18  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.500
+    user16      MAE= 871.61  F1=0.308  Recall=0.200  FNR=0.800  Cost=0.943
+    user2       MAE= 827.54  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.660
+    user3       MAE= 634.02  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.240
+    user7       MAE=1282.98  F1=0.643  Recall=0.643  FNR=0.357  Cost=0.784
+    user8       MAE=1869.55  F1=0.643  Recall=0.783  FNR=0.217  Cost=0.600
+    user9       MAE= 483.58  F1=0.055  Recall=1.000  FNR=0.000  Cost=0.958
+
+✅ 儲存至 artifacts_aligned/decision_evaluation.json
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  7_threshold_sweep.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+📂 載入資料...
+🔮 推論...
+📊 計算個人30日基線...
+
+🔍 Threshold Sweep（0.8× ~ 2.5×）
+=====================================================================================
+   Ratio   Alert%   Precision   Recall       F1      FNR      FPR     Cost
+-------------------------------------------------------------------------------------
+    0.8×    50.7%      0.4904   0.6210   0.5480   0.3790   0.6630   0.9033
+    0.9×    44.4%      0.4211   0.5153   0.4634   0.4847   0.5662   0.9605
+    1.0×    38.7%      0.3895   0.4718   0.4268   0.5282   0.4667   0.8992
+    1.1×    33.5%      0.3625   0.4553   0.4036   0.5447   0.4037   0.8161
+    1.2×    30.0%      0.3308   0.4000   0.3621   0.6000   0.3463   0.7820
+    1.3×    25.9%      0.2936   0.3632   0.3247   0.6368   0.3051   0.7207
+    1.4×    23.7%      0.2804   0.3448   0.3093   0.6552   0.2750   0.6757
+    1.5×    21.1%      0.2764   0.3548   0.3107   0.6452   0.2487   0.6049
+    1.6×    18.9%      0.2802   0.3669   0.3178   0.6331   0.2202   0.5381
+    1.7×    17.3%      0.2882   0.3858   0.3300   0.6142   0.1993   0.4837
+    1.8×    15.1%      0.2857   0.4144   0.3382   0.5856   0.1846   0.4223
+    1.9×    13.8%      0.2857   0.4356   0.3451   0.5644   0.1738   0.3828
+    2.0×    12.7%      0.2817   0.4301   0.3404   0.5699   0.1591   0.3556
+    2.1×    11.8%      0.2901   0.4368   0.3486   0.5632   0.1437   0.3270
+    2.2×    10.9%      0.2880   0.4500   0.3512   0.5500   0.1361   0.3011
+    2.3×    10.8%      0.2869   0.4430   0.3483   0.5570   0.1328   0.2984
+    2.4×    10.1%      0.2833   0.4595   0.3505   0.5405   0.1303   0.2807
+    2.5×    10.0%      0.2773   0.4521   0.3437   0.5479   0.1301   0.2807
+=====================================================================================
+
+  🏆 最佳 F1  ：ratio=0.8×  F1=0.5480  Recall=0.6210  Cost=0.9033
+  🏆 最低 Cost：ratio=2.4×  Cost=0.2807  F1=0.3505  Recall=0.4595
+
+  （原本 1.5× → F1=0.3107，Cost=0.6049）
+
+✅ 儲存至 artifacts_aligned/threshold_sweep.json
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  8_tiered_alert.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+
+真實分佈：🟢 正常=514(70.0%)  🟡 低度=109(14.9%)  🔴 高度=111(15.1%)
+預測分佈：🟢 正常=468(63.8%)  🟡 低度=105(14.3%)  🔴 高度=161(21.9%)
+
+=================================================================
+  三級警報評估（GRU Aligned，thresholds: 1.2× / 1.8×）
+=================================================================
+
+  混淆矩陣（行=真實，列=預測）：
+                     🟢預測正常       🟡預測低度       🔴預測高度
+  🟢 正常                 336          71         107
+  🟡 低度                  74          27           8
+  🔴 高度                  58           7          46
+
+  Per-level 指標（one-vs-rest）：
+  🟢 正常  Precision=0.7179  Recall=0.6537  F1=0.6843  (support=514)
+  🟡 低度  Precision=0.2571  Recall=0.2477  F1=0.2523  (support=109)
+  🔴 高度  Precision=0.2857  Recall=0.4144  F1=0.3382  (support=111)
+
+  整體指標：
+  Exact Accuracy   ：0.5572  （預測等級完全正確）
+  Ordinal Accuracy ：0.7752  （差 ≤ 1 級都算可接受）
+  Severe Error Rate：0.2248  （跨兩級的嚴重誤判）
+  Expected Cost    ：0.9762  （三級成本矩陣）
+  高度警告 FNR     ：0.5856  （高度未被偵測的比例）
+
+  成本矩陣說明：
+                       預測正常      預測低度      預測高度
+  真實🟢 正常             0.0       0.5       2.0
+  真實🟡 低度             2.0       0.0       1.0
+  真實🔴 高度             5.0       3.0       0.0
+
+  Per-user 三級摘要：
+  user1       n= 15  OrdAcc=1.000  Cost=0.133  HighFNR=N/A
+    真實分佈：{'🟢 正常': 14, '🟡 低度': 1, '🔴 高度': 0}  →  預測分佈：{'🟢 正常': 15, '🟡 低度': 0, '🔴 高度': 0}
+  user10      n= 62  OrdAcc=0.887  Cost=0.653  HighFNR=0.750
+    真實分佈：{'🟢 正常': 43, '🟡 低度': 15, '🔴 高度': 4}  →  預測分佈：{'🟢 正常': 41, '🟡 低度': 14, '🔴 高度': 7}
+  user11      n= 49  OrdAcc=0.918  Cost=0.775  HighFNR=0.833
+    真實分佈：{'🟢 正常': 26, '🟡 低度': 17, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 26, '🟡 低度': 19, '🔴 高度': 4}
+  user12      n= 49  OrdAcc=0.959  Cost=0.857  HighFNR=1.000
+    真實分佈：{'🟢 正常': 31, '🟡 低度': 16, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 49, '🟡 低度': 0, '🔴 高度': 0}
+  user13      n= 75  OrdAcc=0.840  Cost=0.887  HighFNR=0.600
+    真實分佈：{'🟢 正常': 58, '🟡 低度': 2, '🔴 高度': 15}  →  預測分佈：{'🟢 正常': 36, '🟡 低度': 29, '🔴 高度': 10}
+  user14      n= 92  OrdAcc=0.935  Cost=0.690  HighFNR=1.000
+    真實分佈：{'🟢 正常': 69, '🟡 低度': 17, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 78, '🟡 低度': 14, '🔴 高度': 0}
+  user15      n= 66  OrdAcc=0.803  Cost=0.901  HighFNR=1.000
+    真實分佈：{'🟢 正常': 49, '🟡 低度': 15, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 47, '🟡 低度': 7, '🔴 高度': 12}
+  user16      n= 53  OrdAcc=0.698  Cost=1.500  HighFNR=0.789
+    真實分佈：{'🟢 正常': 33, '🟡 低度': 1, '🔴 高度': 19}  →  預測分佈：{'🟢 正常': 47, '🟡 低度': 1, '🔴 高度': 5}
+  user2       n= 50  OrdAcc=0.900  Cost=1.020  HighFNR=1.000
+    真實分佈：{'🟢 正常': 30, '🟡 低度': 14, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 44, '🟡 低度': 6, '🔴 高度': 0}
+  user3       n= 50  OrdAcc=0.960  Cost=0.360  HighFNR=1.000
+    真實分佈：{'🟢 正常': 44, '🟡 低度': 4, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 50, '🟡 低度': 0, '🔴 高度': 0}
+  user7       n= 51  OrdAcc=0.784  Cost=1.157  HighFNR=0.385
+    真實分佈：{'🟢 正常': 23, '🟡 低度': 2, '🔴 高度': 26}  →  預測分佈：{'🟢 正常': 19, '🟡 低度': 13, '🔴 高度': 19}
+  user8       n= 50  OrdAcc=0.640  Cost=1.180  HighFNR=0.238
+    真實分佈：{'🟢 正常': 24, '🟡 低度': 5, '🔴 高度': 21}  →  預測分佈：{'🟢 正常': 15, '🟡 低度': 2, '🔴 高度': 33}
+  user9       n= 72  OrdAcc=0.042  Cost=1.917  HighFNR=0.000
+    真實分佈：{'🟢 正常': 70, '🟡 低度': 0, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 1, '🟡 低度': 0, '🔴 高度': 71}
+
+✅ 儲存至 artifacts_aligned/tiered_alert_evaluation.json
+🎉 完成！
+
+🎉  gru_TL_alignment 全部完成！
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ bash run_all.sh
+
+════════════════════════════════════════════════════
+  ▶  1_preprocess_ibm.py
+════════════════════════════════════════════════════
+📂 工作目錄：/home/server_605_4090/financial-agent/ml_ibm/gru_TL_alignment
+[INFO] ibm_daily 載入：8,300,196 筆，使用 2,000 位用戶（共 2,000 位）
+
+📊 組合 13 個 aligned 特徵並建立滑動視窗...
+[INFO] 跳過資料不足的用戶：142 位
+[INFO] 全部視窗數：8,241,351，shape: (8241351, 30, 13)
+[INFO] Train: (5768945, 30, 13)  Val: (1236203, 30, 13)  Test: (1236203, 30, 13)
+
+📐 標準化 IBM Target...
+
+💾 儲存至 /home/server_605_4090/financial-agent/ml_ibm/gru_TL_alignment/artifacts_aligned...
+
+✅ IBM 前處理完成！
+   y_train mean=28.0890  std=8.5655
+
+════════════════════════════════════════════════════
+  ▶  2_preprocess_personal_aligned.py
+════════════════════════════════════════════════════
+📂 載入個人資料...
+  共 5,328 筆 | 13 位用戶
+
+📊 計算 Aligned 特徵與 Target...
+  計算完後：5,328 → 5,237 筆
+
+🪟 建立滑動視窗（INPUT_DAYS=30，per-user 70/15/15）...
+  Train: (3386, 30, 13)  Val: (727, 30, 13)  Test: (734, 30, 13)
+  Train risk 分佈: {0: 2215, 1: 375, 2: 286, 3: 510}
+
+📐 標準化 Target（fit on personal train only）...
+  Target scaler mean=2119.59, std=3060.69
+
+💾 儲存至 artifacts_aligned/...
+  ✅ personal_aligned_X_train/val/test.npy
+  ✅ personal_aligned_y_train/val/test.npy（scaled）
+  ✅ personal_aligned_y_test_raw.npy
+  ✅ personal_aligned_y_train_risk_labels.npy  ← 新增 MT label
+  ✅ personal_aligned_y_val_risk_labels.npy    ← 新增 MT label
+
+🎉 完成！下一步：執行 3_pretrain_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  3_pretrain_aligned.py
+════════════════════════════════════════════════════
+✅ 使用 CUDA
+
+📂 載入 IBM 資料...
+  X_train: (5768945, 30, 13)  y_train: (5768945, 1)
+
+🏗️   模型參數量 : 42,434
+
+🚀 開始 GRU IBM Pretrain...
+=======================================================
+  Epoch   HuberLoss         Val        LR
+=======================================================
+      1    0.156796    0.148182  0.000100
+             ✅ 儲存最佳模型（val_loss=0.148182）
+      2    0.150982    0.152005  0.000100
+      3    0.149344    0.156601  0.000100
+      4    0.148417    0.163458  0.000100
+      5    0.147807    0.162443  0.000100
+      6    0.147360    0.171442  0.000100
+      7    0.147008    0.177518  0.000100
+      8    0.146743    0.170351  0.000100
+      9    0.146511    0.170109  0.000100
+     10    0.146321    0.174525  0.000100
+     11    0.146096    0.174953  0.000100
+     12    0.145924    0.176439  0.000100
+     13    0.145761    0.178555  0.000100
+     14    0.145610    0.179236  0.000100
+     15    0.145480    0.175781  0.000100
+     16    0.145364    0.173822  0.000100
+     17    0.145237    0.179031  0.000050
+     18    0.144811    0.179656  0.000050
+     19    0.144722    0.180061  0.000050
+     20    0.144644    0.181980  0.000050
+     21    0.144567    0.178719  0.000050
+
+⏹️   Early stopping（patience=20）
+===========================================================================
+
+🎉 Aligned Pretrain 完成！最佳 Val Loss：0.148182
+   💡 Loss = HuberLoss only（MMD 已移除）
+  ✅ pretrain_aligned_gru.pth
+  ✅ pretrain_aligned_history.pkl
+
+下一步：執行 4_finetune_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  4_finetune_aligned.py
+════════════════════════════════════════════════════
+📂 載入個人資料...
+  X_train: (3386, 30, 13)  X_val: (727, 30, 13)
+  Train risk 分佈: {0: 2215, 1: 375, 2: 286, 3: 510}
+  Focal class weights: [0.38 2.26 2.96 1.66]
+
+🚀 Ensemble MT Finetune（seeds=[42, 123, 777, 456, 789, 999, 2024, 0, 7, 13, 21, 100, 314, 1234, 9999, 11, 22, 33, 44, 55, 66, 77, 88, 99, 111, 222, 33
+3, 444, 555, 666]，MT_ALPHA=0.5）...
+
+  Seed 42：已存在，跳過
+
+  Seed 123：已存在，跳過
+
+  Seed 777：已存在，跳過
+
+  Seed 456：已存在，跳過
+
+  Seed 789：已存在，跳過
+
+  Seed 999：已存在，跳過
+
+  Seed 2024：已存在，跳過
+
+  Seed 0：已存在，跳過
+
+  Seed 7：已存在，跳過
+
+  Seed 13：已存在，跳過
+
+  Seed 21：已存在，跳過
+
+  Seed 100：已存在，跳過
+
+  Seed 314：已存在，跳過
+
+  Seed 1234：已存在，跳過
+
+  Seed 9999：已存在，跳過
+
+  Seed 11：已存在，跳過
+
+  Seed 22：已存在，跳過
+
+  Seed 33：已存在，跳過
+
+  Seed 44：已存在，跳過
+
+  Seed 55：已存在，跳過
+
+  Seed 66：已存在，跳過
+
+  Seed 77：已存在，跳過
+
+  Seed 88：已存在，跳過
+
+  Seed 99：已存在，跳過
+
+  Seed 111：已存在，跳過
+
+  Seed 222：已存在，跳過
+
+  Seed 333：已存在，跳過
+
+  Seed 444：已存在，跳過
+
+  Seed 555：已存在，跳過
+
+  Seed 666：已存在，跳過
+
+🎉 MT Finetune 完成！→ 下一步：執行 5_predict_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  5_predict_aligned.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 ensemble seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999,
+ 1234, 2024, 9999]
+📂 載入個人 Aligned 測試資料...
+
+🔮 取得所有 seed 的推論結果...
+
+🔍 貪婪搜尋最佳 seed 組合（依 val MAE）...
+  最佳 combo: seeds=[11, 123, 2024, 13]  val MAE=1314.70
+
+📊 計算評估指標...
+
+  Val  MAE  : 1314.70
+  Test MAE  : 1232.27
+  Test RMSE : 1759.19
+  Test MedAE: 742.81  ← 不受極端值影響
+  Test SMAPE: 82.46%
+  💡 若 MAE >> MedAE，代表有少數極端誤差在拉高 MAE
+
+📋 三方比較（No Pretrain vs Naive TL vs Aligned Pretrain）...
+  ⚠️   找不到 /home/server_605_4090/financial-agent/ml_ibm/legacy_models/ml_gru/artificats/metrics_nopretrain.json，跳過
+  ⚠️   找不到 /home/server_605_4090/financial-agent/ml_ibm/legacy_models/ml_gru/artificats/metrics_vv5.json，跳過
+
+=================================================================
+           方法比較（Test MAE / MedAE，越低越好）
+=================================================================
+              MAE     MedAE
+  No Pretrain      :     N/A   N/A    <- 基準
+  Naive TL (V5)    :     N/A   N/A    <- 有 pretrain 但無 alignment
+  Aligned Pretrain : 1232.27   742.81  <- 本方法（MMD alignment）
+=================================================================
+  Val MAE:
+    No Pretrain      : N/A
+    Naive TL (V5)    : N/A
+    Aligned Pretrain : 1314.70
+=================================================================
+
+✅ 結果儲存至 artifacts_aligned/aligned_result.txt
+✅ Metrics 儲存至 artifacts_aligned/aligned_metrics.json
+
+📊 呼叫共用評估器...
+
+📊 計算每個 seed 個別指標...
+✅ per_seed_metrics_20260514_220116.csv 已儲存（30 個 seed）→ /home/server_605_4090/financial-agent/ml_ibm/model_outputs/gru_TL_alignment/per_seed_metr
+ics_20260514_220116.csv
+
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  6_evaluate_decisions.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+📂 載入資料...
+📊 計算個人30日基線...
+  預警正例：21.1%  (155/734)
+
+🔮 推論（seeds=[0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 2024, 9999
+]）...
+
+==============================================================
+  GRU Aligned（10 features，all seeds）
+==============================================================
+  MAE=1208.83  RMSE=1733.06  sMAPE=81.88%
+  Precision=0.2764  Recall=0.3548  F1=0.3107
+  FNR=0.6452  FPR=0.2487  Cost=0.6049
+  Per-user MAE：avg=1089.25  max=2477.19  std=631.40
+  Per-user F1 ：avg=0.1936  min=0.0000
+  Per-user FNR：avg=0.7259  max=1.0000
+  Per-user Cost：avg=0.5923  max=0.9583
+
+  各 user 詳細：
+    user1       MAE= 464.32  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.200
+    user10      MAE= 616.75  F1=0.250  Recall=0.250  FNR=0.750  Cost=0.581
+    user11      MAE= 680.63  F1=0.250  Recall=0.250  FNR=0.750  Cost=0.735
+    user12      MAE= 685.34  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.612
+    user13      MAE=2071.51  F1=0.368  Recall=0.438  FNR=0.562  Cost=0.560
+    user14      MAE=2477.19  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.326
+    user15      MAE=1195.18  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.500
+    user16      MAE= 871.61  F1=0.308  Recall=0.200  FNR=0.800  Cost=0.943
+    user2       MAE= 827.54  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.660
+    user3       MAE= 634.02  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.240
+    user7       MAE=1282.98  F1=0.643  Recall=0.643  FNR=0.357  Cost=0.784
+    user8       MAE=1869.55  F1=0.643  Recall=0.783  FNR=0.217  Cost=0.600
+    user9       MAE= 483.58  F1=0.055  Recall=1.000  FNR=0.000  Cost=0.958
+
+✅ 儲存至 artifacts_aligned/decision_evaluation.json
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  7_threshold_sweep.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+📂 載入資料...
+🔮 推論...
+📊 計算個人30日基線...
+
+🔍 Threshold Sweep（0.8× ~ 2.5×）
+=====================================================================================
+   Ratio   Alert%   Precision   Recall       F1      FNR      FPR     Cost
+-------------------------------------------------------------------------------------
+    0.8×    50.7%      0.4904   0.6210   0.5480   0.3790   0.6630   0.9033
+    0.9×    44.4%      0.4211   0.5153   0.4634   0.4847   0.5662   0.9605
+    1.0×    38.7%      0.3895   0.4718   0.4268   0.5282   0.4667   0.8992
+    1.1×    33.5%      0.3625   0.4553   0.4036   0.5447   0.4037   0.8161
+    1.2×    30.0%      0.3308   0.4000   0.3621   0.6000   0.3463   0.7820
+    1.3×    25.9%      0.2936   0.3632   0.3247   0.6368   0.3051   0.7207
+    1.4×    23.7%      0.2804   0.3448   0.3093   0.6552   0.2750   0.6757
+    1.5×    21.1%      0.2764   0.3548   0.3107   0.6452   0.2487   0.6049
+    1.6×    18.9%      0.2802   0.3669   0.3178   0.6331   0.2202   0.5381
+    1.7×    17.3%      0.2882   0.3858   0.3300   0.6142   0.1993   0.4837
+    1.8×    15.1%      0.2857   0.4144   0.3382   0.5856   0.1846   0.4223
+    1.9×    13.8%      0.2857   0.4356   0.3451   0.5644   0.1738   0.3828
+    2.0×    12.7%      0.2817   0.4301   0.3404   0.5699   0.1591   0.3556
+    2.1×    11.8%      0.2901   0.4368   0.3486   0.5632   0.1437   0.3270
+    2.2×    10.9%      0.2880   0.4500   0.3512   0.5500   0.1361   0.3011
+    2.3×    10.8%      0.2869   0.4430   0.3483   0.5570   0.1328   0.2984
+    2.4×    10.1%      0.2833   0.4595   0.3505   0.5405   0.1303   0.2807
+    2.5×    10.0%      0.2773   0.4521   0.3437   0.5479   0.1301   0.2807
+=====================================================================================
+
+  🏆 最佳 F1  ：ratio=0.8×  F1=0.5480  Recall=0.6210  Cost=0.9033
+  🏆 最低 Cost：ratio=2.4×  Cost=0.2807  F1=0.3505  Recall=0.4595
+
+  （原本 1.5× → F1=0.3107，Cost=0.6049）
+
+✅ 儲存至 artifacts_aligned/threshold_sweep.json
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  8_tiered_alert.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+
+真實分佈：🟢 正常=514(70.0%)  🟡 低度=109(14.9%)  🔴 高度=111(15.1%)
+預測分佈：🟢 正常=468(63.8%)  🟡 低度=105(14.3%)  🔴 高度=161(21.9%)
+
+=================================================================
+  三級警報評估（GRU Aligned，thresholds: 1.2× / 1.8×）
+=================================================================
+
+  混淆矩陣（行=真實，列=預測）：
+                     🟢預測正常       🟡預測低度       🔴預測高度
+  🟢 正常                 336          71         107
+  🟡 低度                  74          27           8
+  🔴 高度                  58           7          46
+
+  Per-level 指標（one-vs-rest）：
+  🟢 正常  Precision=0.7179  Recall=0.6537  F1=0.6843  (support=514)
+  🟡 低度  Precision=0.2571  Recall=0.2477  F1=0.2523  (support=109)
+  🔴 高度  Precision=0.2857  Recall=0.4144  F1=0.3382  (support=111)
+
+  整體指標：
+  Exact Accuracy   ：0.5572  （預測等級完全正確）
+  Ordinal Accuracy ：0.7752  （差 ≤ 1 級都算可接受）
+  Severe Error Rate：0.2248  （跨兩級的嚴重誤判）
+  Expected Cost    ：0.9762  （三級成本矩陣）
+  高度警告 FNR     ：0.5856  （高度未被偵測的比例）
+
+  成本矩陣說明：
+                       預測正常      預測低度      預測高度
+  真實🟢 正常             0.0       0.5       2.0
+  真實🟡 低度             2.0       0.0       1.0
+  真實🔴 高度             5.0       3.0       0.0
+
+  Per-user 三級摘要：
+  user1       n= 15  OrdAcc=1.000  Cost=0.133  HighFNR=N/A
+    真實分佈：{'🟢 正常': 14, '🟡 低度': 1, '🔴 高度': 0}  →  預測分佈：{'🟢 正常': 15, '🟡 低度': 0, '🔴 高度': 0}
+  user10      n= 62  OrdAcc=0.887  Cost=0.653  HighFNR=0.750
+    真實分佈：{'🟢 正常': 43, '🟡 低度': 15, '🔴 高度': 4}  →  預測分佈：{'🟢 正常': 41, '🟡 低度': 14, '🔴 高度': 7}
+  user11      n= 49  OrdAcc=0.918  Cost=0.775  HighFNR=0.833
+    真實分佈：{'🟢 正常': 26, '🟡 低度': 17, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 26, '🟡 低度': 19, '🔴 高度': 4}
+  user12      n= 49  OrdAcc=0.959  Cost=0.857  HighFNR=1.000
+    真實分佈：{'🟢 正常': 31, '🟡 低度': 16, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 49, '🟡 低度': 0, '🔴 高度': 0}
+  user13      n= 75  OrdAcc=0.840  Cost=0.887  HighFNR=0.600
+    真實分佈：{'🟢 正常': 58, '🟡 低度': 2, '🔴 高度': 15}  →  預測分佈：{'🟢 正常': 36, '🟡 低度': 29, '🔴 高度': 10}
+  user14      n= 92  OrdAcc=0.935  Cost=0.690  HighFNR=1.000
+    真實分佈：{'🟢 正常': 69, '🟡 低度': 17, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 78, '🟡 低度': 14, '🔴 高度': 0}
+  user15      n= 66  OrdAcc=0.803  Cost=0.901  HighFNR=1.000
+    真實分佈：{'🟢 正常': 49, '🟡 低度': 15, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 47, '🟡 低度': 7, '🔴 高度': 12}
+  user16      n= 53  OrdAcc=0.698  Cost=1.500  HighFNR=0.789
+    真實分佈：{'🟢 正常': 33, '🟡 低度': 1, '🔴 高度': 19}  →  預測分佈：{'🟢 正常': 47, '🟡 低度': 1, '🔴 高度': 5}
+  user2       n= 50  OrdAcc=0.900  Cost=1.020  HighFNR=1.000
+    真實分佈：{'🟢 正常': 30, '🟡 低度': 14, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 44, '🟡 低度': 6, '🔴 高度': 0}
+  user3       n= 50  OrdAcc=0.960  Cost=0.360  HighFNR=1.000
+    真實分佈：{'🟢 正常': 44, '🟡 低度': 4, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 50, '🟡 低度': 0, '🔴 高度': 0}
+  user7       n= 51  OrdAcc=0.784  Cost=1.157  HighFNR=0.385
+    真實分佈：{'🟢 正常': 23, '🟡 低度': 2, '🔴 高度': 26}  →  預測分佈：{'🟢 正常': 19, '🟡 低度': 13, '🔴 高度': 19}
+  user8       n= 50  OrdAcc=0.640  Cost=1.180  HighFNR=0.238
+    真實分佈：{'🟢 正常': 24, '🟡 低度': 5, '🔴 高度': 21}  →  預測分佈：{'🟢 正常': 15, '🟡 低度': 2, '🔴 高度': 33}
+  user9       n= 72  OrdAcc=0.042  Cost=1.917  HighFNR=0.000
+    真實分佈：{'🟢 正常': 70, '🟡 低度': 0, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 1, '🟡 低度': 0, '🔴 高度': 71}
+
+✅ 儲存至 artifacts_aligned/tiered_alert_evaluation.json
+🎉 完成！
+
+🎉  gru_TL_alignment 全部完成！
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ rm -f artifacts_aligned/*
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ bash run_all.sh
+
+════════════════════════════════════════════════════
+  ▶  1_preprocess_ibm.py
+════════════════════════════════════════════════════
+📂 工作目錄：/home/server_605_4090/financial-agent/ml_ibm/gru_TL_alignment
+[INFO] ibm_daily 載入：8,300,196 筆，使用 2,000 位用戶（共 2,000 位）
+
+📊 組合 13 個 aligned 特徵並建立滑動視窗...
+[INFO] 跳過資料不足的用戶：142 位
+[INFO] 全部視窗數：8,241,351，shape: (8241351, 30, 13)
+[INFO] Train: (5768945, 30, 13)  Val: (1236203, 30, 13)  Test: (1236203, 30, 13)
+
+📐 標準化 IBM Target...
+
+💾 儲存至 /home/server_605_4090/financial-agent/ml_ibm/gru_TL_alignment/artifacts_aligned...
+
+✅ IBM 前處理完成！
+   y_train mean=1022.3624  std=771.6657
+
+════════════════════════════════════════════════════
+  ▶  2_preprocess_personal_aligned.py
+════════════════════════════════════════════════════
+📂 載入個人資料...
+  共 5,328 筆 | 13 位用戶
+
+📊 計算 Aligned 特徵與 Target...
+  計算完後：5,328 → 5,237 筆
+
+🪟 建立滑動視窗（INPUT_DAYS=30，per-user 70/15/15）...
+  Train: (3386, 30, 13)  Val: (727, 30, 13)  Test: (734, 30, 13)
+  Train risk 分佈: {0: 2215, 1: 375, 2: 286, 3: 510}
+
+📐 標準化 Target（fit on personal train only）...
+  Target scaler mean=2119.59, std=3060.69
+
+💾 儲存至 artifacts_aligned/...
+  ✅ personal_aligned_X_train/val/test.npy
+  ✅ personal_aligned_y_train/val/test.npy（scaled）
+  ✅ personal_aligned_y_test_raw.npy
+  ✅ personal_aligned_y_train_risk_labels.npy  ← 新增 MT label
+  ✅ personal_aligned_y_val_risk_labels.npy    ← 新增 MT label
+
+🎉 完成！下一步：執行 3_pretrain_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  3_pretrain_aligned.py
+════════════════════════════════════════════════════
+✅ 使用 CUDA
+
+📂 載入 IBM 資料...
+  X_train: (5768945, 30, 13)  y_train: (5768945, 1)
+
+🏗️   模型參數量 : 42,434
+
+🚀 開始 GRU IBM Pretrain...
+=======================================================
+  Epoch   HuberLoss         Val        LR
+=======================================================
+      1    0.243312    0.212640  0.000100
+             ✅ 儲存最佳模型（val_loss=0.212640）
+      2    0.237467    0.209165  0.000100
+             ✅ 儲存最佳模型（val_loss=0.209165）
+      3    0.235806    0.205806  0.000100
+             ✅ 儲存最佳模型（val_loss=0.205806）
+      4    0.234719    0.209250  0.000100
+      5    0.233815    0.208772  0.000100
+      6    0.233005    0.207262  0.000100
+      7    0.232244    0.209222  0.000100
+      8    0.231490    0.211817  0.000100
+      9    0.230797    0.215090  0.000100
+     10    0.230142    0.207663  0.000100
+     11    0.229397    0.210645  0.000100
+     12    0.228613    0.212130  0.000100
+     13    0.227837    0.215346  0.000100
+     14    0.227060    0.212532  0.000100
+     15    0.226259    0.212729  0.000100
+     16    0.225464    0.214822  0.000100
+     17    0.224651    0.217191  0.000100
+     18    0.223941    0.212651  0.000100
+     19    0.223266    0.214385  0.000050
+     20    0.221839    0.217256  0.000050
+     21    0.221456    0.219024  0.000050
+     22    0.221098    0.216436  0.000050
+     23    0.220747    0.218393  0.000050
+
+⏹️   Early stopping（patience=20）
+===========================================================================
+
+🎉 Aligned Pretrain 完成！最佳 Val Loss：0.205806
+   💡 Loss = HuberLoss only（MMD 已移除）
+  ✅ pretrain_aligned_gru.pth
+  ✅ pretrain_aligned_history.pkl
+
+下一步：執行 4_finetune_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  4_finetune_aligned.py
+════════════════════════════════════════════════════
+📂 載入個人資料...
+  X_train: (3386, 30, 13)  X_val: (727, 30, 13)
+  Train risk 分佈: {0: 2215, 1: 375, 2: 286, 3: 510}
+  Focal class weights: [0.38 2.26 2.96 1.66]
+
+🚀 Ensemble MT Finetune（seeds=[42, 123, 777, 456, 789, 999, 2024, 0, 7, 13, 21, 100, 314, 1234, 9999, 11, 22, 33, 44, 55, 66, 77, 88, 99, 111, 222, 33
+3, 444, 555, 666]，MT_ALPHA=0.5）...
+
+=======================================================
+  Seed 42
+=======================================================
+  Epoch  10  Huber: 0.2004  CE: 0.9229  Val: 0.212439  LR: 0.000100
+  Epoch  20  Huber: 0.1745  CE: 0.9070  Val: 0.211031  LR: 0.000100
+  Epoch  30  Huber: 0.1588  CE: 0.8946  Val: 0.218089  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 42 最佳 Val Loss: 0.208711
+
+=======================================================
+  Seed 123
+=======================================================
+  Epoch  10  Huber: 0.2027  CE: 0.9300  Val: 0.208657  LR: 0.000100
+  Epoch  20  Huber: 0.1774  CE: 0.9061  Val: 0.194022  LR: 0.000100
+  Epoch  30  Huber: 0.1532  CE: 0.8884  Val: 0.202562  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 123 最佳 Val Loss: 0.193731
+
+=======================================================
+  Seed 777
+=======================================================
+  Epoch  10  Huber: 0.1960  CE: 0.9258  Val: 0.210287  LR: 0.000100
+  Epoch  20  Huber: 0.1651  CE: 0.9104  Val: 0.210717  LR: 0.000100
+  Epoch  30  Huber: 0.1416  CE: 0.8966  Val: 0.227434  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 777 最佳 Val Loss: 0.199979
+
+=======================================================
+  Seed 456
+=======================================================
+  Epoch  10  Huber: 0.2001  CE: 0.9208  Val: 0.208139  LR: 0.000100
+  Epoch  20  Huber: 0.1740  CE: 0.9061  Val: 0.203262  LR: 0.000100
+  Epoch  30  Huber: 0.1567  CE: 0.8849  Val: 0.207017  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 456 最佳 Val Loss: 0.200352
+
+=======================================================
+  Seed 789
+=======================================================
+  Epoch  10  Huber: 0.1974  CE: 0.9191  Val: 0.206387  LR: 0.000100
+  Epoch  20  Huber: 0.1689  CE: 0.8959  Val: 0.204991  LR: 0.000100
+  Epoch  30  Huber: 0.1536  CE: 0.8803  Val: 0.203589  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 789 最佳 Val Loss: 0.199814
+
+=======================================================
+  Seed 999
+=======================================================
+  Epoch  10  Huber: 0.2014  CE: 0.9240  Val: 0.209574  LR: 0.000100
+  Epoch  20  Huber: 0.1731  CE: 0.9069  Val: 0.205095  LR: 0.000100
+  Epoch  30  Huber: 0.1555  CE: 0.8898  Val: 0.207643  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 999 最佳 Val Loss: 0.199942
+
+=======================================================
+  Seed 2024
+=======================================================
+  Epoch  10  Huber: 0.1985  CE: 0.9203  Val: 0.206848  LR: 0.000100
+  Epoch  20  Huber: 0.1740  CE: 0.8988  Val: 0.210110  LR: 0.000050
+  Epoch  30  Huber: 0.1651  CE: 0.8905  Val: 0.211053  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 2024 最佳 Val Loss: 0.206848
+
+=======================================================
+  Seed 0
+=======================================================
+  Epoch  10  Huber: 0.2014  CE: 0.9297  Val: 0.213272  LR: 0.000100
+  Epoch  20  Huber: 0.1735  CE: 0.9127  Val: 0.206066  LR: 0.000100
+  Epoch  30  Huber: 0.1460  CE: 0.8935  Val: 0.223955  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 0 最佳 Val Loss: 0.202858
+
+=======================================================
+  Seed 7
+=======================================================
+  Epoch  10  Huber: 0.2015  CE: 0.9242  Val: 0.209640  LR: 0.000100
+  Epoch  20  Huber: 0.1743  CE: 0.9085  Val: 0.205278  LR: 0.000100
+  Epoch  30  Huber: 0.1540  CE: 0.8883  Val: 0.219529  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 7 最佳 Val Loss: 0.202616
+
+=======================================================
+  Seed 13
+=======================================================
+  Epoch  10  Huber: 0.1993  CE: 0.9257  Val: 0.203967  LR: 0.000100
+  Epoch  20  Huber: 0.1719  CE: 0.9109  Val: 0.204134  LR: 0.000100
+  Epoch  30  Huber: 0.1488  CE: 0.8932  Val: 0.193943  LR: 0.000100
+  Epoch  40  Huber: 0.1295  CE: 0.8680  Val: 0.204588  LR: 0.000050
+  Epoch  50  Huber: 0.1210  CE: 0.8541  Val: 0.217528  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 13 最佳 Val Loss: 0.193459
+
+=======================================================
+  Seed 21
+=======================================================
+  Epoch  10  Huber: 0.2018  CE: 0.9236  Val: 0.213084  LR: 0.000100
+  Epoch  20  Huber: 0.1753  CE: 0.9008  Val: 0.219178  LR: 0.000100
+  Epoch  30  Huber: 0.1628  CE: 0.8924  Val: 0.218022  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 21 最佳 Val Loss: 0.209146
+
+=======================================================
+  Seed 100
+=======================================================
+  Epoch  10  Huber: 0.1979  CE: 0.9279  Val: 0.207191  LR: 0.000100
+  Epoch  20  Huber: 0.1734  CE: 0.9082  Val: 0.207729  LR: 0.000100
+  Epoch  30  Huber: 0.1648  CE: 0.8921  Val: 0.210081  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 100 最佳 Val Loss: 0.203821
+
+=======================================================
+  Seed 314
+=======================================================
+  Epoch  10  Huber: 0.2001  CE: 0.9214  Val: 0.204957  LR: 0.000100
+  Epoch  20  Huber: 0.1760  CE: 0.8990  Val: 0.209793  LR: 0.000100
+  Epoch  30  Huber: 0.1613  CE: 0.8821  Val: 0.213976  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 314 最佳 Val Loss: 0.202580
+
+=======================================================
+  Seed 1234
+=======================================================
+  Epoch  10  Huber: 0.2027  CE: 0.9204  Val: 0.210299  LR: 0.000100
+  Epoch  20  Huber: 0.1785  CE: 0.9014  Val: 0.207161  LR: 0.000100
+  Epoch  30  Huber: 0.1599  CE: 0.8781  Val: 0.216357  LR: 0.000050
+  Epoch  40  Huber: 0.1513  CE: 0.8677  Val: 0.215148  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 1234 最佳 Val Loss: 0.207161
+
+=======================================================
+  Seed 9999
+=======================================================
+  Epoch  10  Huber: 0.1967  CE: 0.9242  Val: 0.209352  LR: 0.000100
+  Epoch  20  Huber: 0.1694  CE: 0.8990  Val: 0.206656  LR: 0.000100
+  Epoch  30  Huber: 0.1540  CE: 0.8824  Val: 0.212359  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 9999 最佳 Val Loss: 0.201996
+
+=======================================================
+  Seed 11
+=======================================================
+  Epoch  10  Huber: 0.1990  CE: 0.9282  Val: 0.209170  LR: 0.000100
+  Epoch  20  Huber: 0.1681  CE: 0.9152  Val: 0.200909  LR: 0.000100
+  Epoch  30  Huber: 0.1484  CE: 0.8987  Val: 0.225183  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 11 最佳 Val Loss: 0.199103
+
+=======================================================
+  Seed 22
+=======================================================
+  Epoch  10  Huber: 0.2063  CE: 0.9178  Val: 0.216024  LR: 0.000100
+  Epoch  20  Huber: 0.1796  CE: 0.8910  Val: 0.219199  LR: 0.000050
+  Epoch  30  Huber: 0.1683  CE: 0.8797  Val: 0.224683  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 22 最佳 Val Loss: 0.213191
+
+=======================================================
+  Seed 33
+=======================================================
+  Epoch  10  Huber: 0.1973  CE: 0.9199  Val: 0.209680  LR: 0.000100
+  Epoch  20  Huber: 0.1691  CE: 0.8954  Val: 0.209767  LR: 0.000100
+  Epoch  30  Huber: 0.1491  CE: 0.8799  Val: 0.215410  LR: 0.000100
+  Epoch  40  Huber: 0.1385  CE: 0.8680  Val: 0.218817  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 33 最佳 Val Loss: 0.203632
+
+=======================================================
+  Seed 44
+=======================================================
+  Epoch  10  Huber: 0.1995  CE: 0.9180  Val: 0.212963  LR: 0.000100
+  Epoch  20  Huber: 0.1751  CE: 0.8934  Val: 0.211406  LR: 0.000100
+  Epoch  30  Huber: 0.1596  CE: 0.8754  Val: 0.206788  LR: 0.000100
+  Epoch  40  Huber: 0.1458  CE: 0.8566  Val: 0.213290  LR: 0.000100
+  Epoch  50  Huber: 0.1363  CE: 0.8415  Val: 0.212289  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 44 最佳 Val Loss: 0.201510
+
+=======================================================
+  Seed 55
+=======================================================
+  Epoch  10  Huber: 0.2026  CE: 0.9193  Val: 0.209501  LR: 0.000100
+  Epoch  20  Huber: 0.1761  CE: 0.9059  Val: 0.198800  LR: 0.000100
+  Epoch  30  Huber: 0.1594  CE: 0.8856  Val: 0.203055  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 55 最佳 Val Loss: 0.197425
+
+=======================================================
+  Seed 66
+=======================================================
+  Epoch  10  Huber: 0.2032  CE: 0.9269  Val: 0.211920  LR: 0.000100
+  Epoch  20  Huber: 0.1769  CE: 0.9097  Val: 0.205958  LR: 0.000100
+  Epoch  30  Huber: 0.1564  CE: 0.8914  Val: 0.211345  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 66 最佳 Val Loss: 0.204353
+
+=======================================================
+  Seed 77
+=======================================================
+  Epoch  10  Huber: 0.1979  CE: 0.9264  Val: 0.205910  LR: 0.000100
+  Epoch  20  Huber: 0.1705  CE: 0.9053  Val: 0.210565  LR: 0.000100
+  Epoch  30  Huber: 0.1537  CE: 0.8848  Val: 0.219260  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 77 最佳 Val Loss: 0.201855
+
+=======================================================
+  Seed 88
+=======================================================
+  Epoch  10  Huber: 0.2003  CE: 0.9257  Val: 0.209345  LR: 0.000100
+  Epoch  20  Huber: 0.1760  CE: 0.9017  Val: 0.208935  LR: 0.000100
+  Epoch  30  Huber: 0.1563  CE: 0.8800  Val: 0.216757  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 88 最佳 Val Loss: 0.204926
+
+=======================================================
+  Seed 99
+=======================================================
+  Epoch  10  Huber: 0.1992  CE: 0.9226  Val: 0.210755  LR: 0.000100
+  Epoch  20  Huber: 0.1706  CE: 0.9064  Val: 0.196529  LR: 0.000100
+  Epoch  30  Huber: 0.1525  CE: 0.8907  Val: 0.203808  LR: 0.000050
+  Epoch  40  Huber: 0.1473  CE: 0.8780  Val: 0.205019  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 99 最佳 Val Loss: 0.196529
+
+=======================================================
+  Seed 111
+=======================================================
+  Epoch  10  Huber: 0.2009  CE: 0.9221  Val: 0.211948  LR: 0.000100
+  Epoch  20  Huber: 0.1704  CE: 0.9059  Val: 0.209289  LR: 0.000100
+  Epoch  30  Huber: 0.1522  CE: 0.8808  Val: 0.210301  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 111 最佳 Val Loss: 0.205902
+
+=======================================================
+  Seed 222
+=======================================================
+  Epoch  10  Huber: 0.2009  CE: 0.9210  Val: 0.211711  LR: 0.000100
+  Epoch  20  Huber: 0.1723  CE: 0.8993  Val: 0.210710  LR: 0.000100
+  Epoch  30  Huber: 0.1542  CE: 0.8751  Val: 0.225956  LR: 0.000050
+  Epoch  40  Huber: 0.1458  CE: 0.8687  Val: 0.230439  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 222 最佳 Val Loss: 0.210710
+
+=======================================================
+  Seed 333
+=======================================================
+  Epoch  10  Huber: 0.2017  CE: 0.9202  Val: 0.211695  LR: 0.000100
+  Epoch  20  Huber: 0.1746  CE: 0.8990  Val: 0.209247  LR: 0.000100
+  Epoch  30  Huber: 0.1567  CE: 0.8762  Val: 0.206441  LR: 0.000050
+  Epoch  40  Huber: 0.1495  CE: 0.8683  Val: 0.209752  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 333 最佳 Val Loss: 0.203071
+
+=======================================================
+  Seed 444
+=======================================================
+  Epoch  10  Huber: 0.1997  CE: 0.9164  Val: 0.205695  LR: 0.000100
+  Epoch  20  Huber: 0.1729  CE: 0.8988  Val: 0.209344  LR: 0.000100
+  Epoch  30  Huber: 0.1564  CE: 0.8796  Val: 0.213298  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 444 最佳 Val Loss: 0.202713
+
+=======================================================
+  Seed 555
+=======================================================
+  Epoch  10  Huber: 0.1998  CE: 0.9269  Val: 0.211094  LR: 0.000100
+  Epoch  20  Huber: 0.1701  CE: 0.9127  Val: 0.211846  LR: 0.000100
+  Epoch  30  Huber: 0.1470  CE: 0.8926  Val: 0.221864  LR: 0.000050
+  ⏹️   Early stopping
+  Seed 555 最佳 Val Loss: 0.201919
+
+=======================================================
+  Seed 666
+=======================================================
+  Epoch  10  Huber: 0.1984  CE: 0.9235  Val: 0.208627  LR: 0.000100
+  Epoch  20  Huber: 0.1718  CE: 0.9012  Val: 0.205565  LR: 0.000100
+  Epoch  30  Huber: 0.1545  CE: 0.8837  Val: 0.211869  LR: 0.000050
+  Epoch  40  Huber: 0.1495  CE: 0.8745  Val: 0.212297  LR: 0.000025
+  ⏹️   Early stopping
+  Seed 666 最佳 Val Loss: 0.205565
+
+🎉 MT Finetune 完成！→ 下一步：執行 5_predict_aligned.py
+
+════════════════════════════════════════════════════
+  ▶  5_predict_aligned.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 ensemble seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999,
+ 1234, 2024, 9999]
+📂 載入個人 Aligned 測試資料...
+
+🔮 取得所有 seed 的推論結果...
+
+🔍 貪婪搜尋最佳 seed 組合（依 val MAE）...
+  最佳 combo: seeds=[13, 444, 123, 33, 99]  val MAE=1348.45
+
+📊 計算評估指標...
+
+  Val  MAE  : 1348.45
+  Test MAE  : 1123.90
+  Test RMSE : 1669.04
+  Test MedAE: 720.31  ← 不受極端值影響
+  Test SMAPE: 80.03%
+  💡 若 MAE >> MedAE，代表有少數極端誤差在拉高 MAE
+
+📋 三方比較（No Pretrain vs Naive TL vs Aligned Pretrain）...
+  ⚠️   找不到 /home/server_605_4090/financial-agent/ml_ibm/legacy_models/ml_gru/artificats/metrics_nopretrain.json，跳過
+  ⚠️   找不到 /home/server_605_4090/financial-agent/ml_ibm/legacy_models/ml_gru/artificats/metrics_vv5.json，跳過
+
+=================================================================
+           方法比較（Test MAE / MedAE，越低越好）
+=================================================================
+              MAE     MedAE
+  No Pretrain      :     N/A   N/A    <- 基準
+  Naive TL (V5)    :     N/A   N/A    <- 有 pretrain 但無 alignment
+  Aligned Pretrain : 1123.90   720.31  <- 本方法（MMD alignment）
+=================================================================
+  Val MAE:
+    No Pretrain      : N/A
+    Naive TL (V5)    : N/A
+    Aligned Pretrain : 1348.45
+=================================================================
+
+✅ 結果儲存至 artifacts_aligned/aligned_result.txt
+✅ Metrics 儲存至 artifacts_aligned/aligned_metrics.json
+
+📊 呼叫共用評估器...
+
+📊 計算每個 seed 個別指標...
+✅ per_seed_metrics_20260515_001139.csv 已儲存（30 個 seed）→ /home/server_605_4090/financial-agent/ml_ibm/model_outputs/gru_TL_alignment/per_seed_metr
+ics_20260515_001139.csv
+
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  6_evaluate_decisions.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+📂 載入資料...
+📊 計算個人30日基線...
+  預警正例：21.1%  (155/734)
+
+🔮 推論（seeds=[0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 2024, 9999
+]）...
+
+==============================================================
+  GRU Aligned（10 features，all seeds）
+==============================================================
+  MAE=1129.05  RMSE=1675.14  sMAPE=79.74%
+  Precision=0.2660  Recall=0.3484  F1=0.3017
+  FNR=0.6516  FPR=0.2573  Cost=0.6158
+  Per-user MAE：avg=1043.70  max=2334.71  std=514.39
+  Per-user F1 ：avg=0.1967  min=0.0000
+  Per-user FNR：avg=0.7134  max=1.0000
+  Per-user Cost：avg=0.6032  max=1.0189
+
+  各 user 詳細：
+    user1       MAE= 560.60  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.200
+    user10      MAE= 705.72  F1=0.207  Recall=0.250  FNR=0.750  Cost=0.661
+    user11      MAE=1235.35  F1=0.320  Recall=0.667  FNR=0.333  Cost=0.857
+    user12      MAE= 620.06  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.612
+    user13      MAE=1458.54  F1=0.118  Recall=0.062  FNR=0.938  Cost=0.600
+    user14      MAE=2334.71  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.326
+    user15      MAE= 946.81  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.409
+    user16      MAE= 996.71  F1=0.182  Recall=0.100  FNR=0.900  Cost=1.019
+    user2       MAE= 921.41  F1=0.429  Recall=0.273  FNR=0.727  Cost=0.480
+    user3       MAE= 513.18  F1=0.000  Recall=0.000  FNR=1.000  Cost=0.240
+    user7       MAE=1247.66  F1=0.655  Recall=0.679  FNR=0.321  Cost=0.745
+    user8       MAE=1599.22  F1=0.593  Recall=0.696  FNR=0.304  Cost=0.720
+    user9       MAE= 428.09  F1=0.054  Recall=1.000  FNR=0.000  Cost=0.972
+
+✅ 儲存至 artifacts_aligned/decision_evaluation.json
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  7_threshold_sweep.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+📂 載入資料...
+🔮 推論...
+📊 計算個人30日基線...
+
+🔍 Threshold Sweep（0.8× ~ 2.5×）
+=====================================================================================
+   Ratio   Alert%   Precision   Recall       F1      FNR      FPR     Cost
+-------------------------------------------------------------------------------------
+    0.8×    50.7%      0.5430   0.7124   0.6163   0.2876   0.6160   0.7411
+    0.9×    44.4%      0.4854   0.6626   0.5603   0.3374   0.5613   0.7616
+    1.0×    38.7%      0.4361   0.6373   0.5179   0.3627   0.5200   0.7398
+    1.1×    33.5%      0.3941   0.5976   0.4750   0.4024   0.4631   0.7125
+    1.2×    30.0%      0.3562   0.5182   0.4222   0.4818   0.4008   0.7139
+    1.3×    25.9%      0.3346   0.4789   0.3939   0.5211   0.3327   0.6512
+    1.4×    23.7%      0.2944   0.3908   0.3358   0.6092   0.2911   0.6553
+    1.5×    21.1%      0.2660   0.3484   0.3017   0.6516   0.2573   0.6158
+    1.6×    18.9%      0.2554   0.3381   0.2910   0.6619   0.2303   0.5627
+    1.7×    17.3%      0.2635   0.3465   0.2993   0.6535   0.2026   0.5068
+    1.8×    15.1%      0.2273   0.3153   0.2642   0.6847   0.1910   0.4728
+    1.9×    13.8%      0.2394   0.3366   0.2798   0.6634   0.1706   0.4210
+    2.0×    12.7%      0.2296   0.3333   0.2719   0.6667   0.1622   0.3951
+    2.1×    11.8%      0.2366   0.3563   0.2844   0.6437   0.1546   0.3651
+    2.2×    10.9%      0.2419   0.3750   0.2941   0.6250   0.1437   0.3324
+    2.3×    10.8%      0.2377   0.3671   0.2886   0.6329   0.1420   0.3311
+    2.4×    10.1%      0.2437   0.3919   0.3005   0.6081   0.1364   0.3065
+    2.5×    10.0%      0.2348   0.3699   0.2872   0.6301   0.1331   0.3079
+=====================================================================================
+
+  🏆 最佳 F1  ：ratio=0.8×  F1=0.6163  Recall=0.7124  Cost=0.7411
+  🏆 最低 Cost：ratio=2.4×  Cost=0.3065  F1=0.3005  Recall=0.3919
+
+  （原本 1.5× → F1=0.3017，Cost=0.6158）
+
+✅ 儲存至 artifacts_aligned/threshold_sweep.json
+🎉 完成！
+
+════════════════════════════════════════════════════
+  ▶  8_tiered_alert.py
+════════════════════════════════════════════════════
+🔍 偵測到 30 個 seeds: [0, 7, 11, 13, 21, 22, 33, 42, 44, 55, 66, 77, 88, 99, 100, 111, 123, 222, 314, 333, 444, 456, 555, 666, 777, 789, 999, 1234, 20
+24, 9999]
+
+真實分佈：🟢 正常=514(70.0%)  🟡 低度=109(14.9%)  🔴 高度=111(15.1%)
+預測分佈：🟢 正常=414(56.4%)  🟡 低度=166(22.6%)  🔴 高度=154(21.0%)
+
+=================================================================
+  三級警報評估（GRU Aligned，thresholds: 1.2× / 1.8×）
+=================================================================
+
+  混淆矩陣（行=真實，列=預測）：
+                     🟢預測正常       🟡預測低度       🔴預測高度
+  🟢 正常                 308          99         107
+  🟡 低度                  61          36          12
+  🔴 高度                  45          31          35
+
+  Per-level 指標（one-vs-rest）：
+  🟢 正常  Precision=0.7440  Recall=0.5992  F1=0.6638  (support=514)
+  🟡 低度  Precision=0.2169  Recall=0.3303  F1=0.2618  (support=109)
+  🔴 高度  Precision=0.2273  Recall=0.3153  F1=0.2642  (support=111)
+
+  整體指標：
+  Exact Accuracy   ：0.5163  （預測等級完全正確）
+  Ordinal Accuracy ：0.7929  （差 ≤ 1 級都算可接受）
+  Severe Error Rate：0.2071  （跨兩級的嚴重誤判）
+  Expected Cost    ：0.9748  （三級成本矩陣）
+  高度警告 FNR     ：0.6847  （高度未被偵測的比例）
+
+  成本矩陣說明：
+                       預測正常      預測低度      預測高度
+  真實🟢 正常             0.0       0.5       2.0
+  真實🟡 低度             2.0       0.0       1.0
+  真實🔴 高度             5.0       3.0       0.0
+
+  Per-user 三級摘要：
+  user1       n= 15  OrdAcc=1.000  Cost=0.067  HighFNR=N/A
+    真實分佈：{'🟢 正常': 14, '🟡 低度': 1, '🔴 高度': 0}  →  預測分佈：{'🟢 正常': 12, '🟡 低度': 3, '🔴 高度': 0}
+  user10      n= 62  OrdAcc=1.000  Cost=0.694  HighFNR=1.000
+    真實分佈：{'🟢 正常': 43, '🟡 低度': 15, '🔴 高度': 4}  →  預測分佈：{'🟢 正常': 21, '🟡 低度': 41, '🔴 高度': 0}
+  user11      n= 49  OrdAcc=0.633  Cost=1.276  HighFNR=0.833
+    真實分佈：{'🟢 正常': 26, '🟡 低度': 17, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 3, '🟡 低度': 20, '🔴 高度': 26}
+  user12      n= 49  OrdAcc=0.980  Cost=0.827  HighFNR=1.000
+    真實分佈：{'🟢 正常': 31, '🟡 低度': 16, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 37, '🟡 低度': 12, '🔴 高度': 0}
+  user13      n= 75  OrdAcc=0.840  Cost=0.947  HighFNR=1.000
+    真實分佈：{'🟢 正常': 58, '🟡 低度': 2, '🔴 高度': 15}  →  預測分佈：{'🟢 正常': 71, '🟡 低度': 4, '🔴 高度': 0}
+  user14      n= 92  OrdAcc=0.935  Cost=0.696  HighFNR=1.000
+    真實分佈：{'🟢 正常': 69, '🟡 低度': 17, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 92, '🟡 低度': 0, '🔴 高度': 0}
+  user15      n= 66  OrdAcc=1.000  Cost=0.538  HighFNR=1.000
+    真實分佈：{'🟢 正常': 49, '🟡 低度': 15, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 32, '🟡 低度': 33, '🔴 高度': 1}
+  user16      n= 53  OrdAcc=0.698  Cost=1.604  HighFNR=0.895
+    真實分佈：{'🟢 正常': 33, '🟡 低度': 1, '🔴 高度': 19}  →  預測分佈：{'🟢 正常': 50, '🟡 低度': 1, '🔴 高度': 2}
+  user2       n= 50  OrdAcc=1.000  Cost=0.720  HighFNR=1.000
+    真實分佈：{'🟢 正常': 30, '🟡 低度': 14, '🔴 高度': 6}  →  預測分佈：{'🟢 正常': 19, '🟡 低度': 31, '🔴 高度': 0}
+  user3       n= 50  OrdAcc=1.000  Cost=0.240  HighFNR=1.000
+    真實分佈：{'🟢 正常': 44, '🟡 低度': 4, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 47, '🟡 低度': 3, '🔴 高度': 0}
+  user7       n= 51  OrdAcc=0.784  Cost=1.118  HighFNR=0.346
+    真實分佈：{'🟢 正常': 23, '🟡 低度': 2, '🔴 高度': 26}  →  預測分佈：{'🟢 正常': 15, '🟡 低度': 13, '🔴 高度': 23}
+  user8       n= 50  OrdAcc=0.640  Cost=1.360  HighFNR=0.381
+    真實分佈：{'🟢 正常': 24, '🟡 低度': 5, '🔴 高度': 21}  →  預測分佈：{'🟢 正常': 15, '🟡 低度': 5, '🔴 高度': 30}
+  user9       n= 72  OrdAcc=0.028  Cost=1.944  HighFNR=0.000
+    真實分佈：{'🟢 正常': 70, '🟡 低度': 0, '🔴 高度': 2}  →  預測分佈：{'🟢 正常': 0, '🟡 低度': 0, '🔴 高度': 72}
+
+✅ 儲存至 artifacts_aligned/tiered_alert_evaluation.json
+🎉 完成！
+
+🎉  gru_TL_alignment 全部完成！
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ [200~# 在 server 上
+[200~#: command not found
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ tmux capture-pane -p -t lwc -S -1
+0000 > ~/gru_result.txt~
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ tmux capture-pane -p -t lwc -S -1
+0000 > ~/gru_result.txt
+(/home/server_605_4090/financial-agent/mlenv) server_605_4090@server4090-3:~/financial-agent/ml_ibm/gru_TL_alignment$ tmux capture-pane -p -t lwc -S -1
+0000 > ~/financial-agent/gru_result.txt
+
