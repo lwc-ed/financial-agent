@@ -31,8 +31,8 @@ OUTPUT_SIZE   = 1
 NUM_CLASSES   = 4
 BATCH_SIZE    = 32
 EPOCHS        = 80
-LEARNING_RATE = 5e-5
-PATIENCE      = 30
+LEARNING_RATE = 1e-4
+PATIENCE      = 20
 WEIGHT_DECAY  = 1e-4
 HUBER_DELTA   = 1.0
 MT_ALPHA      = 0.5   # classification loss 的權重
@@ -122,6 +122,9 @@ def load_pretrained_mt():
         if k in current:
             current[k] = v
     model.load_state_dict(current)
+    # Only transfer GRU encoder; reinitialize regression head to remove IBM-specific bias
+    model.fc1.reset_parameters()
+    model.fc2.reset_parameters()
     return model
 
 
