@@ -1,9 +1,10 @@
 """
-Step 4：BiGRU Aligned Finetune (IBM 版修正)
+Step 4：BiGRU Aligned Finetune (方案 1 - 完全凍結 Encoder 版)
 ==============================
-修正內容：
-1. 將 WALMART_DATA_PATH 修正為 IBM_DATA_PATH (讀取 ibm_X_train.npy)
-2. 將 MMD_LAMBDA 設為 0.0 (依據朋友建議提速)
+策略：
+1. 凍結 bigru、attention、layer_norm 等所有特徵萃取層 (Encoder)
+2. 只解凍並訓練 fc1, fc2 等全連接層 (Head)
+3. 使用 L1Loss 直球最佳化 MAE
 """
 
 import os
@@ -30,12 +31,12 @@ NUM_LAYERS = 2
 DROPOUT = 0.4
 OUTPUT_SIZE = 1
 BATCH_SIZE = 32
-EPOCHS = 50           # 微調不需要跑太久，50 輪搭配 Early Stopping 足夠
-LEARNING_RATE = 3e-4
-PATIENCE = 10         # 提早觸發 Early Stopping 節省時間
-WEIGHT_DECAY = 1e-4
-HUBER_DELTA = 1.0
-MMD_LAMBDA = 0.0      # 【核心修正】設為 0.0 以提速
+
+# 方案 1 訓練參數 (單階段，全凍結)
+EPOCHS = 50               # 讓 Head 有充足時間適應
+LEARNING_RATE = 1e-3      # 只有 FC 層要學，學習率可以給稍微大一點點
+PATIENCE = 15             # 容忍度給高一點，讓 L1 Loss 慢慢收斂
+WEIGHT_DECAY = 1e-5       # 調低正則化，避免壓抑預測數值
 
 SEEDS = [
     42, 123, 777, 456, 789, 999, 2024,
@@ -50,7 +51,7 @@ elif torch.backends.mps.is_available():
     device = torch.device("mps")
 else:
     device = torch.device("cpu")
-print(f"⚙️  使用設備: {device} | MMD_LAMBDA: {MMD_LAMBDA}")
+print(f"⚙️  使用設備: {device}")
 
 # ── 3. 載入資料 ──────────────────────────────────────────────────────────
 print(f"📂 載入個人資料...")
@@ -59,13 +60,7 @@ y_train = np.load(ARTIFACTS_DIR / "personal_y_train.npy")
 X_val   = np.load(ARTIFACTS_DIR / "personal_X_val.npy")
 y_val   = np.load(ARTIFACTS_DIR / "personal_y_val.npy")
 
-# 【路徑修正】這裡必須指向 IBM 的資料
-IBM_DATA_PATH = ARTIFACTS_DIR / "ibm_X_train.npy"
 PRETRAIN_WEIGHT_PATH = ARTIFACTS_DIR / "pretrain_bigru.pth"
-
-if not IBM_DATA_PATH.exists():
-    print(f"❌ 找不到 IBM 資料檔: {IBM_DATA_PATH}")
-    sys.exit()
 
 # ── 4. 載入預訓練模型 ──────────────────────────────────────────────────────────
 def load_pretrained():
@@ -77,7 +72,7 @@ def load_pretrained():
     return model
 
 # ── 5. 訓練迴圈 ──────────────────────────────────────────────────────────
-print(f"\n🚀 開始微調 30 個 Seeds...")
+print(f"\n🚀 開始微調 (方案1：完全凍結 Encoder，只訓練 Head)...")
 
 for seed in SEEDS:
     save_path = ARTIFACTS_DIR / f"finetune_bigru_seed{seed}.pth"
@@ -85,13 +80,27 @@ for seed in SEEDS:
         print(f"⏩ Seed {seed} 已存在，跳過")
         continue
 
-    print(f"🔥 Seed {seed} 訓練中...", end=" ")
     torch.manual_seed(seed)
     np.random.seed(seed)
 
     model = load_pretrained().to(device)
-    criterion = nn.HuberLoss(delta=HUBER_DELTA)
-    optimizer = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE)
+    
+    # 【直球對決】使用 L1 Loss 來最佳化 MAE
+    criterion = nn.L1Loss()
+    
+    # ==========================================
+    # 🛑 方案 1: 完全凍結 Encoder
+    # ==========================================
+    for name, param in model.named_parameters():
+        if "fc" not in name:  # 名稱裡沒有 fc 的一律凍結
+            param.requires_grad = False
+            
+    # Optimizer 裡面的過濾器：只給它 requires_grad=True 的參數 (即 fc1, fc2)
+    optimizer = torch.optim.AdamW(
+        filter(lambda p: p.requires_grad, model.parameters()), 
+        lr=LEARNING_RATE, 
+        weight_decay=WEIGHT_DECAY
+    )
     
     train_loader = DataLoader(TensorDataset(torch.tensor(X_train), torch.tensor(y_train)), batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(TensorDataset(torch.tensor(X_val), torch.tensor(y_val)), batch_size=BATCH_SIZE)
@@ -99,12 +108,13 @@ for seed in SEEDS:
     best_val_loss = float("inf")
     patience_counter = 0
 
+    print(f"🔥 Seed {seed} 訓練中...", end=" ")
+    
     for epoch in range(1, EPOCHS + 1):
         model.train()
         for X_b, y_b in train_loader:
             X_b, y_b = X_b.to(device), y_b.to(device)
             optimizer.zero_grad()
-            # 純 Huber Loss，不跑 MMD 數學運算
             loss = criterion(model(X_b), y_b)
             loss.backward()
             optimizer.step()
@@ -122,8 +132,9 @@ for seed in SEEDS:
             torch.save({"model_state": model.state_dict()}, save_path)
         else:
             patience_counter += 1
-            if patience_counter >= PATIENCE: break
+            if patience_counter >= PATIENCE: 
+                break
     
-    print(f"完成！最佳 Val Loss: {best_val_loss:.6f}")
+    print(f"完成！最佳 Val L1-Loss: {best_val_loss:.6f}")
 
 print("\n🎉 微調流程結束！你現在可以跑 python 5_predict_bigru.py 了！")
