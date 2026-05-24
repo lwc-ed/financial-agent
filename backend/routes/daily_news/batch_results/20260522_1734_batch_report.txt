@@ -1,0 +1,1289 @@
+批次測試報告｜20260522_1734
+======================================================================
+
+[01] 最近市場是在 fear 還是 greed？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：0 篇  [Perplexity fallback]
+broad_query：市場情緒 fear greed 指標
+Token：Perplexity（不計 token）  耗時：25s
+
+【抓到的文章：0 篇】
+
+【最終回覆】
+⚠️ 近期相關報導不足（RSS 僅找到 0 篇），以下結果來自即時網路搜尋：
+
+目前尚未確認。
+
+依你提供的即時搜尋結果，**Fear and Greed Index 顯示為 58，屬於 Greed（貪婪）**，且狀態為 unchanged。這代表**最近市場情緒偏向貪婪**，不是 fear。
+
+若你要查的是美股市場情緒，這是目前可確認的最新結果。
+─────────────────
+📰 消息來源（即時搜尋）
+・Investing.com
+・Markreadfintech
+・Feargreedmeter
+・Youtube
+・Macromicro
+
+======================================================================
+
+[02] 今天科技股氣氛怎麼樣？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：28 篇
+broad_query：今天科技股市場氣氛 technology stocks sentiment
+Token：8,295  耗時：49s
+
+【抓到的文章 28 篇】
+  [01] 0.495  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [02] 0.405  [Korea Herald Business]  2026-05-21 15:05  Seoul shares rally over 8% on tech gains after Samsung wage deal, Nvidia outlook; won rises
+  [03] 0.401  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+  [04] 0.395  [CNBC Finance]  2026-05-22 04:28  SpaceX, OpenAI valuations could mean they leapfrog Berkshire Hathaway on first day of trading
+  [05] 0.384  [SCMP Business]  2026-05-22 05:30  Not even a quick end to Iran war can save AI stock bubble now
+  [06] 0.380  [Yahoo Finance]  2026-05-21 06:07  Nvidia Beats Q1 Estimates. Stock Slips.
+  [07] 0.376  [CNBC Finance]  2026-05-19 01:28  One of the market's hottest stock themes is buying everything AI can't replace
+  [08] 0.376  [Korea Herald Business]  2026-05-22 08:13  Consumer sentiment rises at sharpest pace in 1 yr in May on robust chip exports, stock rally
+  [09] 0.362  [Yahoo Finance]  2026-05-21 05:31  The Furious Chip Rally Was Petering Out. Now Wall Street Turns to Nvidia.
+  [10] 0.359  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+  [11] 0.359  [CNBC Finance]  2026-05-17 21:36  AI-related layoffs a boost for stocks? Not necessarily
+  [12] 0.348  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+  [13] 0.347  [Yahoo Finance]  2026-05-21 05:30  Bond yields, oil fall amid hopes for Iran deal; stocks end up with chip shares
+  [14] 0.346  [CNBC Finance]  2026-05-16 17:54  Bill Ackman built Microsoft stake in first quarter during sell-off, betting on AI and cloud growth
+  [15] 0.334  [Nikkei Asia]    KOSPI jumps 8.4% on Samsung strike suspension, Nvidia results
+  [16] 0.330  [Nikkei Asia]    Nvidia reports 85% revenue jump but still excludes China in outlook
+  [17] 0.325  [Euronews Business]  2026-05-15 19:13  Stock trade disclosure reveals Trump made massive gains on Big Tech bets
+  [18] 0.323  [Yahoo Finance]  2026-05-21 06:03  Chipmaker Analog Devices Tops Quarterly Estimates, Raises Outlook. But Stock Falls.
+  [19] 0.320  [Euronews Business]  2026-05-16 13:00  Nvidia surpasses Germany: How the market caps of tech giants compare to top economies
+  [20] 0.319  [中央社 產經證券]  2026-05-22 14:02  蘇姿丰談女性進科技業：工程學不看性別、只在乎想法好壞
+  [21] 0.317  [CNA Singapore Business]  2026-05-22 07:16  Oil falls, stocks climb as investors hope for progress in Iran war talks
+  [22] 0.316  [Korea Herald Business]  2026-05-22 16:14  Kosdaq soars 5% on public investment fund hopes
+  [23] 0.314  [CNBC Finance]  2026-05-16 01:02  'Biggest bottleneck in the AI buildup' fuels DRAM ETF to record
+  [24] 0.308  [Nikkei Asia]    Japanese stocks hit record high on hopes for Iran resolution
+  [25] 0.307  [中央社 產經證券]  2026-05-22 13:55  6月台股期指漲939點
+  [26] 0.304  [Korea Herald Business]  2026-05-22 08:28  Seoul shares open higher on overnight Wall Street gains amid Iran hope
+  [27] 0.301  [Korea Herald Business]  2026-05-22 15:21  Korea&apos;s SpaceX-linked shares surge ahead of blockbuster IPO
+  [28] 0.300  [Euronews Business]  2026-05-21 22:10  Ahead of the SpaceX IPO, a look at the biggest stock market debuts ever
+
+【最終回覆】
+📌 重點摘要  
+今天科技股氣氛整體向好，受到美國科技股漲勢及市場對中東局勢改善的樂觀情緒影響。
+
+📊 市場表現  
+- 台股：加權指數收在42267.97點，上漲899.76點（+2.17%），電子類股指數上漲2.56%。
+- 美股：Nasdaq上漲22.74點（+0.09%），S&P 500上漲12.75點（+0.17%），道瓊上漲276.31點（+0.55%）。
+
+🔎 主要驅動因素  
+- 美國科技股的強勁表現，特別是Nvidia的財報超出預期，推動市場情緒。
+- 中東戰爭可望結束的預期，提升投資者信心，進一步推動股市上漲。
+
+👀 接下來看什麼  
+投資者應密切關注Nvidia及其他科技公司的後續表現，尤其是即將公布的財報，以及中東局勢的進一步發展。
+─────────────────
+📰 消息來源
+・中央社 產經證券
+・Korea Herald Business
+・Yahoo Finance
+・CNBC Finance
+・SCMP Business
+・Euronews Business
+・Nikkei Asia
+・CNA Singapore Business
+
+======================================================================
+
+[03] 最近有什麼大家突然開始關注的事？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：29 篇
+broad_query：最近熱門話題 trending news current events
+Token：9,550  耗時：41s
+
+【抓到的文章 29 篇】
+  [01] 0.405  [SCMP Business]  2026-05-22 16:56  Cuba clash, Putin visits Beijing, Xi may go to North Korea
+  [02] 0.365  [Nikkei Asia]    China to lend 2 more pandas to US in possible sign of warmer ties
+  [03] 0.344  [SCMP Business]  2026-05-22 04:08  Pair charged in US under new law for creating AI celebrity porn
+  [04] 0.335  [CNBC Finance]  2026-05-18 12:58  White House touts deals on soybeans and rare earths after Trump-Xi summit, while China talks up tariff cuts
+  [05] 0.334  [Euronews Business]  2026-05-18 13:00  Oil prices climb as Donald Trump signals tougher action on Iran
+  [06] 0.332  [SCMP Business]  2026-05-22 01:16  DR Congo police fire warning shots as protesters burn Ebola patient tents
+  [07] 0.329  [Yahoo Finance]  2026-05-21 05:31  The Furious Chip Rally Was Petering Out. Now Wall Street Turns to Nvidia.
+  [08] 0.326  [聯合早報]  2026-05-22 14:03  中东战事推升生活费 英国推出“夏季省钱计划”
+  [09] 0.325  [Yahoo Finance]  2026-05-21 05:30  Bond yields, oil fall amid hopes for Iran deal; stocks end up with chip shares
+  [10] 0.324  [Euronews Business]  2026-05-20 08:31  EU Parliament approves implementation of US tariff deal under pressure from Trump
+  [11] 0.322  [Euronews Business]  2026-05-11 13:59  Oil jumps 4% as Trump rejects Iran’s response to ceasefire proposal
+  [12] 0.322  [中央社 國際]  2026-05-22 14:05  川普支持深海採礦遭批非法　國際組織警告恐掀訴訟
+  [13] 0.321  [SCMP Business]  2026-05-22 05:16  US casts Cuba as China-linked security threat while still pushing for talks
+  [14] 0.316  [SCMP Business]  2026-05-22 03:47  Trump scraps signing AI executive order to keep ‘lead’ over China in industry
+  [15] 0.314  [Nikkei Asia]    Lynas rare earth deal with Pentagon triggers outcry in Malaysia
+  [16] 0.314  [Nikkei Asia]    US-China trade talks back in focus at APEC meeting
+  [17] 0.313  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+  [18] 0.313  [聯合早報]  2026-05-22 09:53  特朗普反武器化基金引发内讧 参院拨款法案推迟审议
+  [19] 0.312  [CNA Singapore Business]  2026-05-22 09:47  Oil prices rise as investors doubt breakthrough in US-Iran peace talks
+  [20] 0.311  [Yahoo Finance]  2026-05-21 06:07  Nvidia Beats Q1 Estimates. Stock Slips.
+  [21] 0.311  [CNBC Finance]  2026-05-15 14:46  Trump leaves China after talks dominated by trade, oil and Taiwan
+  [22] 0.310  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [23] 0.309  [Nikkei Asia]    Rohingya take to sea as UN food aid cuts hit Bangladesh refugee camps
+  [24] 0.308  [Euronews Business]  2026-05-14 20:05  World markets rise on Trump-Xi summit hopes
+  [25] 0.308  [Yahoo Finance]  2026-05-21 05:29  SpaceX files IPO paperwork with SEC, targets Nasdaq under SPCX
+  [26] 0.305  [中央社 國際]  2026-05-22 13:52  川普力推華府大凱旋門計畫　美術委員會通過惹議
+  [27] 0.305  [Euronews Business]  2026-05-11 16:58  Oil giant Saudi Aramco profits jump 25% as Iran war drives prices higher
+  [28] 0.303  [Nikkei Asia]    Speculators rush into copper as sulfur supply risk, AI drive up prices
+  [29] 0.302  [Korea Herald Business]  2026-05-21 10:44  Samsung bonus deal faces shareholder revolt
+
+【最終回覆】
+📌 重點摘要  
+最近市場關注的焦點主要集中在美伊局勢及其對油價的影響，以及中美貿易關係的變化。
+
+📰 最新消息  
+1. **美伊和平談判**：投資者對美國與伊朗的和平談判抱有希望，導致油價出現波動。雖然有消息稱談判進入最後階段，但市場仍對實際進展持懷疑態度，油價因此上升。
+2. **中美貿易進展**：在特朗普與習近平會晤後，中美貿易關係再次成為焦點。中國同意每年購買170億美元的美國農產品，並討論降低關稅的可能性。
+
+📊 市場反應  
+- 台股加權指數上漲2.17%，收於42267.97點，顯示投資者對於科技股及貿易進展的樂觀情緒。
+- 美股方面，S&P 500指數小幅上漲0.17%，道瓊指數上漲0.55%，顯示市場對於科技股的需求仍然強勁。
+
+👀 接下來看什麼  
+投資者將持續關注美伊談判的進展及其對油價的影響，同時也會留意中美貿易談判的具體細節，以評估未來市場走勢。
+─────────────────
+📰 消息來源
+・SCMP Business
+・Nikkei Asia
+・CNBC Finance
+・Euronews Business
+・Yahoo Finance
+・聯合早報
+・中央社 國際
+・CNA Singapore Business
+・中央社 產經證券
+・Korea Herald Business
+
+======================================================================
+
+[04] 最近市場是在追 AI 還是在避險？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：24 篇
+broad_query：市場趨勢 AI 投資 避險資產
+Token：12,323  耗時：56s
+
+【抓到的文章 24 篇】
+  [01] 0.487  [CNBC Finance]  2026-05-19 01:28  One of the market's hottest stock themes is buying everything AI can't replace
+  [02] 0.436  [SCMP Business]  2026-05-22 05:30  Not even a quick end to Iran war can save AI stock bubble now
+  [03] 0.435  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [04] 0.426  [CNBC Finance]  2026-05-17 21:36  AI-related layoffs a boost for stocks? Not necessarily
+  [05] 0.417  [中央社 科技]  2026-05-22 12:05  柯林研發擬強化AI導入  擴大亞利桑那與加州投資
+  [06] 0.415  [中央社 產經證券]  2026-05-22 14:19  緯穎：代理式AI交貨來不及　關注議題變成產能和電力
+  [07] 0.397  [中央社 科技]  2026-05-21 12:39  Google重金布局AI基建　皮查伊：看見實際市場需求
+  [08] 0.379  [CNBC Finance]  2026-05-16 01:02  'Biggest bottleneck in the AI buildup' fuels DRAM ETF to record
+  [09] 0.379  [Nikkei Asia]    Japan memory maker Kioxia's market cap surges on AI investment boom
+  [10] 0.359  [Nikkei Asia]    Speculators rush into copper as sulfur supply risk, AI drive up prices
+  [11] 0.343  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+  [12] 0.333  [中央社 產經證券]  2026-05-22 16:40  台灣大虛擬資產交易所週年　7成交易為小額投資
+  [13] 0.332  [中央社 產經證券]  2026-05-22 15:56  閎康3度加碼投資台灣　擬投7億打造AI智慧檢測實驗室
+  [14] 0.328  [中央社 產經證券]  2026-05-22 16:26  股東質疑能源事業黑洞　張安平：非今日投資明日獲利
+  [15] 0.318  [Yahoo Finance]  2026-05-21 05:31  Ross Gerber Says 'Pay Attention' To Nvidia And Micron As Jensen Huang Predicts AI Explosion
+  [16] 0.318  [CNBC Finance]  2026-05-21 03:05  OpenAI takes the lead in AI IPO horse race: 'Getting to public markets first is very important'
+  [17] 0.316  [SCMP Business]  2026-05-22 07:00  AI boom fuels US$11.6b data centre investment in Asia-Pacific as Hong Kong eyes niche role
+  [18] 0.310  [中央社 科技]  2026-05-19 14:52  因應現代戰爭　泰國軍方擬設聯合能力指揮部推AI系統
+  [19] 0.309  [Nikkei Asia]    Malaysia, Singapore exports surge on AI boom, defying Mideast shock
+  [20] 0.309  [中央社 科技]  2026-05-21 18:43  韓國發展AI現場應用  投入巡邏、醫療等領域
+  [21] 0.308  [CNBC Finance]  2026-05-16 17:54  Bill Ackman built Microsoft stake in first quarter during sell-off, betting on AI and cloud growth
+  [22] 0.306  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [23] 0.304  [BusinessTech South Africa]  2026-05-21 16:00  Investec as you know it is changing
+  [24] 0.302  [中央社 兩岸]  2026-05-22 13:31  中國出現融資結構轉型  信貸收縮債券融資增加
+
+【最終回覆】
+📌 重點摘要  
+近期市場表現顯示，投資者對AI的追逐仍在持續，但同時也出現避險情緒。台股加權指數上漲2.17%，而美股則相對平穩，S&P 500僅上漲0.17%。
+
+📊 市場表現  
+- 台股加權指數：42267.97 (+2.17%)  
+- 美股S&P 500：7445.72 (+0.17%)  
+- 道瓊：50285.66 (+0.55%)  
+- Nasdaq：26293.10 (+0.09%)  
+
+🔎 主要驅動因素  
+1. **AI熱潮持續**：許多公司如Google和Nvidia持續加碼AI投資，顯示市場對AI的需求仍然強勁。Google執行長表示，公司在AI基礎設施上的投資已達前20年的總和。  
+2. **避險情緒上升**：隨著國際局勢不穩定，特別是中東地區的衝突，投資者對高風險資產的興趣有所減少，部分資金流向傳統避險資產如黃金和債券。
+
+👀 接下來看什麼  
+市場將持續關注AI相關公司的業績報告及全球地緣政治的變化，這些因素將影響投資者的風險偏好。若AI股泡沫破裂，可能會導致資金快速撤出，進一步加劇避險情緒。
+─────────────────
+📰 消息來源
+・CNBC Finance
+・SCMP Business
+・中央社 兩岸
+・中央社 科技
+・中央社 產經證券
+・Nikkei Asia
+・Euronews Business
+・Yahoo Finance
+・BusinessTech South Africa
+
+======================================================================
+
+[05] 現在市場比較像牛市還是震盪？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：9 篇
+broad_query：市場趨勢 牛市 邊際震盪 market trend
+Token：5,927  耗時：40s
+
+【抓到的文章 9 篇】
+  [01] 0.348  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [02] 0.345  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [03] 0.334  [CNBC Finance]  2026-05-20 05:51  Fed to hike? When traders see a rate increase coming
+  [04] 0.326  [Yahoo Finance]  2026-05-21 05:30  Bond yields, oil fall amid hopes for Iran deal; stocks end up with chip shares
+  [05] 0.311  [中央社 產經證券]  2026-05-22 13:59  6月電子期漲　金融期跌
+  [06] 0.302  [中央社 國際]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [07] 0.302  [中央社 產經證券]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [08] 0.300  [Euronews Business]  2026-05-22 16:39  Global markets rise as Iran war uncertainty keeps oil elevated
+  [09] 0.300  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+
+【最終回覆】
+📌 重點摘要  
+目前市場呈現震盪格局，雖然台股近期出現強勁反彈，但整體情勢仍不穩定。
+
+📊 市場表現  
+- 台股加權指數：42267.97 (+899.76, +2.17%)  
+- 美股：S&P 500 上漲 0.17%，道瓊上漲 0.55%，Nasdaq 上漲 0.09%  
+- 亞洲股市普遍回升，日經指數大漲 2.68%，韓國 KOSPI 指數暴漲超過 8%  
+
+🔎 主要驅動因素  
+- 中國A股近期震盪，因獲利了結及監管傳聞影響，分析指出市場將進入整理階段。  
+- 美國科技股的漲勢及中東局勢改善的預期，對市場情緒有正面影響。  
+- 不過，油價仍高於100美元，且中東局勢不確定性仍然存在，增加市場波動性。
+
+👀 接下來看什麼  
+投資人應關注美國聯準會的利率政策及中東局勢的進展，這些因素將影響市場走向。短期內，市場可能持續震盪，需謹慎操作。
+─────────────────
+📰 消息來源
+・中央社 兩岸
+・中央社 產經證券
+・CNBC Finance
+・Yahoo Finance
+・中央社 國際
+・Euronews Business
+
+======================================================================
+
+[06] 為什麼最近 AI 股又開始漲？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：31 篇
+broad_query：AI 股票漲幅原因 technology stocks
+Token：11,764  耗時：48s
+
+【抓到的文章 31 篇】
+  [01] 0.473  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [02] 0.467  [CNBC Finance]  2026-05-19 01:28  One of the market's hottest stock themes is buying everything AI can't replace
+  [03] 0.466  [CNBC Finance]  2026-05-17 21:36  AI-related layoffs a boost for stocks? Not necessarily
+  [04] 0.465  [SCMP Business]  2026-05-22 05:30  Not even a quick end to Iran war can save AI stock bubble now
+  [05] 0.437  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [06] 0.431  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+  [07] 0.424  [CNBC Finance]  2026-05-16 17:54  Bill Ackman built Microsoft stake in first quarter during sell-off, betting on AI and cloud growth
+  [08] 0.424  [Nikkei Asia]    Japan memory maker Kioxia's market cap surges on AI investment boom
+  [09] 0.423  [CNBC Finance]  2026-05-16 01:02  'Biggest bottleneck in the AI buildup' fuels DRAM ETF to record
+  [10] 0.404  [中央社 科技]  2026-05-22 12:05  柯林研發擬強化AI導入  擴大亞利桑那與加州投資
+  [11] 0.399  [Korea Herald Business]  2026-05-21 15:05  Seoul shares rally over 8% on tech gains after Samsung wage deal, Nvidia outlook; won rises
+  [12] 0.369  [Nikkei Asia]    Malaysia, Singapore exports surge on AI boom, defying Mideast shock
+  [13] 0.365  [Nikkei Asia]    Speculators rush into copper as sulfur supply risk, AI drive up prices
+  [14] 0.363  [CNA Singapore Business]  2026-05-22 05:35  Zoom raises annual forecasts, banks on AI features to drive demand
+  [15] 0.354  [Yahoo Finance]  2026-05-21 05:31  Ross Gerber Says 'Pay Attention' To Nvidia And Micron As Jensen Huang Predicts AI Explosion
+  [16] 0.346  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+  [17] 0.342  [Nikkei Asia]    Editor's Choice: Nvidia and Asia's three chip giants cash in on AI gold rush
+  [18] 0.341  [中央社 產經證券]  2026-05-22 14:19  緯穎：代理式AI交貨來不及　關注議題變成產能和電力
+  [19] 0.339  [中央社 科技]  2026-05-21 12:39  Google重金布局AI基建　皮查伊：看見實際市場需求
+  [20] 0.339  [CNBC Finance]  2026-05-21 03:05  OpenAI takes the lead in AI IPO horse race: 'Getting to public markets first is very important'
+  [21] 0.337  [中央社 產經證券]  2026-05-22 13:55  6月台股期指漲939點
+  [22] 0.336  [SCMP Business]  2026-05-22 17:00  China’s AI start-up funding triples to US$16b in first quarter amid bets on LLMs, robotics
+  [23] 0.330  [Euronews Business]  2026-05-15 19:13  Stock trade disclosure reveals Trump made massive gains on Big Tech bets
+  [24] 0.328  [SCMP Business]  2026-05-22 07:00  AI boom fuels US$11.6b data centre investment in Asia-Pacific as Hong Kong eyes niche role
+  [25] 0.324  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+  [26] 0.312  [Nikkei Asia]    KOSPI jumps 8.4% on Samsung strike suspension, Nvidia results
+  [27] 0.308  [中央社 產經證券]  2026-05-22 15:56  閎康3度加碼投資台灣　擬投7億打造AI智慧檢測實驗室
+  [28] 0.304  [CNA Singapore Business]  2026-05-22 03:43  Spotify cranks up AI push with Universal Music deal, lays out bold growth targets
+  [29] 0.302  [Korea Herald Business]  2026-05-22 08:28  Seoul shares open higher on overnight Wall Street gains amid Iran hope
+  [30] 0.302  [CNA Singapore Business]  2026-05-22 01:10  Analysis:SpaceX IPO bets $2 trillion on Musk's ambitious rockets-to-AI vision
+  [31] 0.302  [Korea Herald Business]  2026-05-21 10:00  Seoul shares open sharply higher on US-Iran hope, Samsung wage deal
+
+【最終回覆】
+📌 重點摘要  
+最近AI股的回升主要受到市場情緒改善及大型科技公司強勁財報的推動。
+
+📰 最新消息  
+1. 中國A股在經歷大幅震盪後，近日出現反彈，特別是AI相關股票受到關注。分析指出，這次調整後的籌碼出清，為觀望資金提供了進場機會。  
+2. Nvidia報告顯示其季度收入增長85%，再次超出市場預期，這進一步推動了AI股的上漲。  
+3. 台股也因美國科技股漲勢而強勁上升，聯發科和台積電等AI相關公司表現亮眼。
+
+📊 市場反應  
+- 台股加權指數上漲899.76點，收在42267.97點，漲幅2.17%。  
+- 聯發科股價上漲310元，漲幅8.73%；台積電上漲25元，漲幅1.12%。  
+- 美國股市如S&P 500和Nasdaq也有小幅上漲，顯示出市場對科技股的信心。
+
+👀 投資人可留意  
+短期內，AI股可能會受到市場情緒和財報的影響，投資者應持續關注相關公司的表現及市場動態。
+─────────────────
+📰 消息來源
+・中央社 兩岸
+・CNBC Finance
+・SCMP Business
+・中央社 產經證券
+・Euronews Business
+・Nikkei Asia
+・中央社 科技
+・Korea Herald Business
+・CNA Singapore Business
+・Yahoo Finance
+
+======================================================================
+
+[07] 油價上漲通常會影響哪些股票？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：29 篇
+broad_query：油價上漲 影響 股票 sectors
+Token：12,099  耗時：34s
+
+【抓到的文章 29 篇】
+  [01] 0.474  [CNA Singapore Business]  2026-05-22 07:16  Oil falls, stocks climb as investors hope for progress in Iran war talks
+  [02] 0.443  [Euronews Business]  2026-05-22 16:39  Global markets rise as Iran war uncertainty keeps oil elevated
+  [03] 0.440  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [04] 0.428  [Euronews Business]  2026-05-11 13:59  Oil jumps 4% as Trump rejects Iran’s response to ceasefire proposal
+  [05] 0.425  [CNA Singapore Business]  2026-05-22 09:47  Oil prices rise as investors doubt breakthrough in US-Iran peace talks
+  [06] 0.424  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+  [07] 0.420  [Euronews Business]  2026-05-18 13:00  Oil prices climb as Donald Trump signals tougher action on Iran
+  [08] 0.400  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [09] 0.400  [Euronews Business]  2026-05-11 16:58  Oil giant Saudi Aramco profits jump 25% as Iran war drives prices higher
+  [10] 0.398  [Yahoo Finance]  2026-05-21 05:30  Bond yields, oil fall amid hopes for Iran deal; stocks end up with chip shares
+  [11] 0.374  [Korea Herald Business]  2026-05-21 15:05  Seoul shares rally over 8% on tech gains after Samsung wage deal, Nvidia outlook; won rises
+  [12] 0.357  [Korea Herald Business]  2026-05-21 10:00  Seoul shares open sharply higher on US-Iran hope, Samsung wage deal
+  [13] 0.353  [Nikkei Asia]    PTT pivots to LNG trading as Middle East turmoil drives price volatility
+  [14] 0.348  [Korea Herald Business]  2026-05-22 08:28  Seoul shares open higher on overnight Wall Street gains amid Iran hope
+  [15] 0.348  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+  [16] 0.345  [CNA Singapore Business]  2026-05-22 03:58  Oil prices close 2% lower on uncertain prospects for US-Iran deal
+  [17] 0.343  [中央社 產經證券]  2026-05-22 13:55  6月台股期指漲939點
+  [18] 0.341  [SCMP Business]  2026-05-22 05:30  Not even a quick end to Iran war can save AI stock bubble now
+  [19] 0.336  [Nikkei Asia]    KOSPI jumps 8.4% on Samsung strike suspension, Nvidia results
+  [20] 0.335  [中央社 國際]  2026-05-22 13:15  委內瑞拉油價相對較低　成印度進口第3大來源國
+  [21] 0.334  [CNBC Finance]  2026-05-17 21:36  AI-related layoffs a boost for stocks? Not necessarily
+  [22] 0.327  [中央社 產經證券]  2026-05-22 16:26  股東質疑能源事業黑洞　張安平：非今日投資明日獲利
+  [23] 0.323  [Nikkei Asia]    Japanese stocks hit record high on hopes for Iran resolution
+  [24] 0.310  [聯合早報]  2026-05-21 23:24  受中东冲突拖累 欧盟预计今年经济增长将放缓
+  [25] 0.309  [中央社 國際]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [26] 0.309  [中央社 產經證券]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [27] 0.307  [Nikkei Asia]    Speculators rush into copper as sulfur supply risk, AI drive up prices
+  [28] 0.306  [Korea Herald Business]  2026-05-22 16:14  Kosdaq soars 5% on public investment fund hopes
+  [29] 0.305  [Yahoo Finance]  2026-05-21 08:00  StanChart Says Record SPR Withdrawals Are Tightening U.S. Oil Buffers
+
+【最終回覆】
+📌 重點摘要  
+油價上漲通常會影響能源類股及與油價相關的行業，尤其是石油、天然氣及航空等產業的股票。
+
+📰 相關產業分析  
+1. **能源類股**：如沙烏地阿美（Saudi Aramco）等大型石油公司，其利潤通常隨著油價上升而增加。最近報告指出，沙烏地阿美的第一季利潤上升25%，主要因為油價因中東衝突而上漲。  
+2. **航空業**：航空公司通常會受到油價上漲的影響，因為燃料成本是其主要支出之一。油價上漲可能導致票價上調，進而影響需求。  
+3. **運輸與物流**：運輸公司如聯邦快遞（FedEx）和UPS等，隨著油價上升，運輸成本增加，可能會影響其利潤率。
+
+📊 市場反應  
+近期油價持續波動，5月22日原油價格為98.91美元，上漲2.66%。市場對於美伊和平談判的進展持謹慎樂觀，這可能會影響油價走勢及相關股票表現。
+
+👀 投資人可留意  
+投資人應關注油價走勢及相關新聞，特別是中東地區的政治情勢，因為這些因素可能直接影響能源股及其他相關行業的表現。
+─────────────────
+📰 消息來源
+・CNA Singapore Business
+・Euronews Business
+・中央社 產經證券
+・Yahoo Finance
+・中央社 兩岸
+・Korea Herald Business
+・Nikkei Asia
+・SCMP Business
+・中央社 國際
+・CNBC Finance
+・聯合早報
+
+======================================================================
+
+[08] 為什麼美元變強有時候美股反而跌？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：6 篇
+broad_query：美元強勢 美股下跌 原因 因果關係
+Token：5,392  耗時：38s
+
+【抓到的文章 6 篇】
+  [01] 0.406  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [02] 0.341  [中央社 產經證券]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [03] 0.341  [中央社 國際]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [04] 0.332  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [05] 0.325  [Yahoo Finance]  2026-05-21 05:30  Bond yields, oil fall amid hopes for Iran deal; stocks end up with chip shares
+  [06] 0.307  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+
+【最終回覆】
+📌 初步結論  
+美元變強時，美股反而下跌的情況並不罕見，這可能與市場情緒及資金流向有關。
+
+📰 目前新聞支持什麼  
+美元指數在最近交易中上升至99.33，增幅為0.14%。儘管美元強勢，部分美股指數如S&P 500和道瓊指數仍出現小幅上漲，分別上漲0.17%和0.55%。這顯示出市場對於科技股及其他特定板塊的需求仍然存在。
+
+⚠️ 尚未確認/資料不足處  
+目前資料不足以確認具體原因為何美元強勢會導致美股下跌。一般而言，美元升值可能使美國出口產品變得更貴，影響企業盈利預期，進而影響股市表現，但具體影響仍需進一步觀察。
+
+👀 後續觀察  
+建議關注美元走勢及其對企業盈利預期的影響，特別是在美國經濟數據發布及國際局勢變化的背景下，這些因素可能會影響市場情緒及資金流向。
+─────────────────
+📰 消息來源
+・中央社 產經證券
+・中央社 國際
+・中央社 兩岸
+・Yahoo Finance
+
+======================================================================
+
+[09] 為什麼外資買超台股，台幣也會升值？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：6 篇
+broad_query：外資買超台股 台幣升值 原因
+Token：5,348  耗時：29s
+
+【抓到的文章 6 篇】
+  [01] 0.536  [中央社 產經證券]  2026-05-22 15:09  三大法人買超台股破千億　外資加碼761億歷史第4大
+  [02] 0.474  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+  [03] 0.393  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [04] 0.392  [中央社 產經證券]  2026-05-22 16:03  新台幣升2.7分　收31.568元
+  [05] 0.383  [中央社 產經證券]  2026-05-22 16:40  台灣大虛擬資產交易所週年　7成交易為小額投資
+  [06] 0.362  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+
+【最終回覆】
+📌 重點摘要  
+外資近期大幅買超台股，帶動台股指數上漲，並對台幣匯率產生正面影響。
+
+📊 市場表現  
+截至2026年5月22日，台股加權指數收於42267.97點，上漲899.76點，漲幅達2.17%。外資及陸資合計買超761.37億元，為歷史第4大買超金額。台幣兌美元匯率收於31.568元，升值2.7分。
+
+🔎 主要驅動因素  
+外資的買超行為通常顯示市場對台灣經濟的信心，進而吸引更多資金流入。這樣的資金流入會增加對台幣的需求，促使台幣升值。此外，台股的強勁表現和外部市場（如美股）的穩定也可能進一步支持台幣的升值。
+
+👀 接下來看什麼  
+投資人可關注外資持續買超的趨勢及其對台股和台幣的長期影響，特別是在全球經濟環境變化的背景下。若外資持續流入，可能會進一步推升台幣價值及台股指數。
+─────────────────
+📰 消息來源
+・中央社 產經證券
+・中央社 兩岸
+
+======================================================================
+
+[10] AI 熱潮為什麼會影響台灣出口？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：20 篇
+broad_query：AI 熱潮 對台灣出口 影響 原因
+Token：10,667  耗時：53s
+
+【抓到的文章 20 篇】
+  [01] 0.460  [Nikkei Asia]    Malaysia, Singapore exports surge on AI boom, defying Mideast shock
+  [02] 0.432  [中央社 產經證券]  2026-05-22 14:19  緯穎：代理式AI交貨來不及　關注議題變成產能和電力
+  [03] 0.398  [SCMP Business]  2026-05-22 05:30  Not even a quick end to Iran war can save AI stock bubble now
+  [04] 0.388  [中央社 科技]  2026-05-20 13:12  美國會議員將推法案　削弱中國AI工具海外銷售
+  [05] 0.383  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [06] 0.370  [中央社 產經證券]  2026-05-22 15:56  閎康3度加碼投資台灣　擬投7億打造AI智慧檢測實驗室
+  [07] 0.362  [中央社 科技]  2026-05-22 12:05  柯林研發擬強化AI導入  擴大亞利桑那與加州投資
+  [08] 0.349  [SCMP Business]  2026-05-22 03:47  Trump scraps signing AI executive order to keep ‘lead’ over China in industry
+  [09] 0.344  [CNBC Finance]  2026-05-17 21:36  AI-related layoffs a boost for stocks? Not necessarily
+  [10] 0.335  [CNBC Finance]  2026-05-19 01:28  One of the market's hottest stock themes is buying everything AI can't replace
+  [11] 0.333  [CNBC Finance]  2026-05-16 01:02  'Biggest bottleneck in the AI buildup' fuels DRAM ETF to record
+  [12] 0.327  [中央社 科技]  2026-05-19 14:52  因應現代戰爭　泰國軍方擬設聯合能力指揮部推AI系統
+  [13] 0.320  [SCMP Business]  2026-05-22 09:00  China is losing the LLM race but it can still win in AI, ex-Tencent AI lead says
+  [14] 0.317  [中央社 科技]  2026-05-21 18:43  韓國發展AI現場應用  投入巡邏、醫療等領域
+  [15] 0.313  [SCMP Business]  2026-05-22 07:00  AI boom fuels US$11.6b data centre investment in Asia-Pacific as Hong Kong eyes niche role
+  [16] 0.311  [中央社 產經證券]  2026-05-22 16:40  台灣大虛擬資產交易所週年　7成交易為小額投資
+  [17] 0.308  [Nikkei Asia]    ASEAN manufacturers shed jobs as Iran war impact deepens
+  [18] 0.307  [Nikkei Asia]    Japan memory maker Kioxia's market cap surges on AI investment boom
+  [19] 0.306  [中央社 科技]  2026-05-21 12:39  Google重金布局AI基建　皮查伊：看見實際市場需求
+  [20] 0.301  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+
+【最終回覆】
+📌 重點摘要  
+AI熱潮正在全球推動電子產品需求，台灣作為半導體與電子產品的主要生產基地，受益於此趨勢，可能促進出口增長。
+
+📰 最新消息  
+根據報導，隨著全球AI需求的上升，東南亞國家的電子產品出口顯著增長，特別是馬來西亞和新加坡的出口在4月同比增長24.5%。這一熱潮也促使台灣的電子產品出貨量上升，尤其是半導體和相關技術的需求。
+
+📊 市場反應  
+台灣的主要科技公司如台積電和聯發科在AI需求上升的背景下，股價出現上漲。台積電的股價為2255元，聯發科則為3860元，分別上漲1.12%和8.73%。這反映出市場對於AI技術推動下的電子產品需求持樂觀態度。
+
+👀 投資人可留意  
+隨著AI技術的持續發展，台灣企業需關注產能和電力等基礎設施的提升，以滿足日益增長的市場需求。此外，投資者應關注台灣在全球AI供應鏈中的定位及未來的政策變化。
+─────────────────
+📰 消息來源
+・Nikkei Asia
+・中央社 產經證券
+・SCMP Business
+・中央社 科技
+・中央社 兩岸
+・CNBC Finance
+・Euronews Business
+
+======================================================================
+
+[11] 最近 AI、半導體跟聯準會之間有什麼關聯？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：10 篇
+broad_query：AI 半導體 聯準會 影響 關聯
+Token：7,965  耗時：48s
+
+【抓到的文章 10 篇】
+  [01] 0.402  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [02] 0.365  [中央社 產經證券]  2026-05-22 14:19  緯穎：代理式AI交貨來不及　關注議題變成產能和電力
+  [03] 0.362  [中央社 科技]  2026-05-22 12:05  柯林研發擬強化AI導入  擴大亞利桑那與加州投資
+  [04] 0.341  [CNBC Finance]  2026-05-16 01:02  'Biggest bottleneck in the AI buildup' fuels DRAM ETF to record
+  [05] 0.338  [中央社 科技]  2026-05-19 14:52  因應現代戰爭　泰國軍方擬設聯合能力指揮部推AI系統
+  [06] 0.333  [中央社 科技]  2026-05-20 11:03  強化半導體合作　大馬檳城議長籲更新台馬投資協議【專訪】
+  [07] 0.332  [中央社 科技]  2026-05-19 21:59  蘋果輔助使用新功能結合AI　支援自然語言操作
+  [08] 0.321  [中央社 科技]  2026-05-20 01:53  Google開發者大會發表Gemini 3.5模型　為AI代理量身強化[影]
+  [09] 0.319  [中央社 產經證券]  2026-05-22 15:56  閎康3度加碼投資台灣　擬投7億打造AI智慧檢測實驗室
+  [10] 0.303  [SCMP Business]  2026-05-22 03:47  Trump scraps signing AI executive order to keep ‘lead’ over China in industry
+
+【最終回覆】
+📌 重點摘要  
+最近，AI與半導體產業的發展受到市場關注，尤其是在聯準會的貨幣政策影響下，這些領域的動態引發了投資者的興趣。
+
+📰 最新消息  
+近期，中國A股市場出現劇烈震盪，AI及半導體相關股票因獲利了結進入整理階段。分析指出，市場情緒受到監管機構將啟動異動核查的消息影響，導致短期內的波動。另一方面，美國半導體設備供應商科林研發計劃擴大投資，並強調AI技術在提升生產效率上的重要性。
+
+📊 市場反應  
+台股在此背景下表現強勁，加權指數上漲2.17%，台積電與聯發科的股價也有所上漲，顯示市場對於半導體及AI的長期前景仍持樂觀態度。美股方面，Nasdaq指數的穩定增長顯示科技股仍具吸引力。
+
+👀 投資人可留意  
+投資者應密切關注聯準會的貨幣政策走向，因其可能影響資金流向AI及半導體產業。此外，隨著AI技術的進一步應用，相關企業的業績表現及市場需求也值得關注。
+─────────────────
+📰 消息來源
+・中央社 兩岸
+・中央社 產經證券
+・中央社 科技
+・CNBC Finance
+・SCMP Business
+
+======================================================================
+
+[12] 最近哪些事件同時影響美股和台股？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：20 篇
+broad_query：影響美股和台股的事件
+Token：10,794  耗時：20s
+
+【抓到的文章 20 篇】
+  [01] 0.454  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [02] 0.440  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+  [03] 0.433  [中央社 產經證券]  2026-05-22 15:09  三大法人買超台股破千億　外資加碼761億歷史第4大
+  [04] 0.407  [中央社 國際]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [05] 0.407  [中央社 產經證券]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [06] 0.394  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [07] 0.367  [Nikkei Asia]    Shares tied to US-alleged China shipping container 'cartel' sink
+  [08] 0.364  [Yahoo Finance]  2026-05-21 05:30  Bond yields, oil fall amid hopes for Iran deal; stocks end up with chip shares
+  [09] 0.339  [中央社 產經證券]  2026-05-22 13:55  6月台股期指漲939點
+  [10] 0.328  [中央社 兩岸]  2026-05-22 14:45  香港電影界名人黃百鳴股票內線交易罪名成立
+  [11] 0.323  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+  [12] 0.321  [Korea Herald Business]  2026-05-21 10:00  Seoul shares open sharply higher on US-Iran hope, Samsung wage deal
+  [13] 0.314  [Nikkei Asia]    Japanese stocks hit record high on hopes for Iran resolution
+  [14] 0.311  [中央社 國際]  2026-05-22 16:35  美國駐日本大使：繼續致力維持台灣海峽現狀
+  [15] 0.310  [中央社 科技]  2026-05-20 13:12  美國會議員將推法案　削弱中國AI工具海外銷售
+  [16] 0.305  [中央社 兩岸]  2026-05-22 13:31  中國出現融資結構轉型  信貸收縮債券融資增加
+  [17] 0.304  [Euronews Business]  2026-05-15 19:13  Stock trade disclosure reveals Trump made massive gains on Big Tech bets
+  [18] 0.301  [Korea Herald Business]  2026-05-22 08:28  Seoul shares open higher on overnight Wall Street gains amid Iran hope
+  [19] 0.301  [Korea Herald Business]  2026-05-21 15:05  Seoul shares rally over 8% on tech gains after Samsung wage deal, Nvidia outlook; won rises
+  [20] 0.300  [CNA Singapore Business]  2026-05-22 07:16  Oil falls, stocks climb as investors hope for progress in Iran war talks
+
+【最終回覆】
+📌 重點摘要  
+最近，美股和台股同時受到中東戰爭結束的希望及美國科技股的漲勢影響，兩市均出現顯著上漲。
+
+📊 市場表現  
+- **台股**：加權指數上漲899.76點，收在42267.97點，漲幅2.17%。  
+- **美股**：S&P 500上漲12.75點，收7445.72點，漲幅0.17%；道瓊指數上漲276.31點，收50285.66點，漲幅0.55%；Nasdaq上漲22.74點，收26293.10點，漲幅0.09%。
+
+🔎 主要驅動因素  
+- **中東局勢**：市場普遍預期美伊戰爭將結束，這促使油價回落，進而利好股市。  
+- **科技股表現**：美國科技股的漲勢，特別是與AI相關的公司，吸引了投資者的注意，進一步推動股市上漲。
+
+👀 接下來看什麼  
+投資者應持續關注中東局勢的發展及美國科技股的後續表現，這將對未來市場走勢產生重要影響。
+─────────────────
+📰 消息來源
+・中央社 產經證券
+・中央社 國際
+・中央社 兩岸
+・Nikkei Asia
+・Yahoo Finance
+・Korea Herald Business
+・中央社 科技
+・Euronews Business
+・CNA Singapore Business
+
+======================================================================
+
+[13] 最近全球市場最重要的三件事是什麼？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：41 篇
+broad_query：全球市場重要事件 news global market
+Token：11,877  耗時：23s
+
+【抓到的文章 41 篇】
+  [01] 0.437  [Euronews Business]  2026-05-22 16:39  Global markets rise as Iran war uncertainty keeps oil elevated
+  [02] 0.436  [Euronews Business]  2026-05-14 20:05  World markets rise on Trump-Xi summit hopes
+  [03] 0.404  [中央社 產經證券]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [04] 0.404  [中央社 國際]  2026-05-22 15:01  5月22日　美伊戰爭對國際經濟、財經市場與民生衝擊
+  [05] 0.404  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [06] 0.398  [中央社 產經證券]  2026-05-22 15:09  三大法人買超台股破千億　外資加碼761億歷史第4大
+  [07] 0.383  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+  [08] 0.378  [Euronews Business]  2026-05-20 17:20  Goldman Sachs reportedly selected to lead SpaceX IPO in landmark Wall Street deal
+  [09] 0.365  [Yahoo Finance]  2026-05-21 05:39  Musk’s SpaceX kicks off biggest stock market listing in history
+  [10] 0.362  [Nikkei Asia]    Japanese stocks hit record high on hopes for Iran resolution
+  [11] 0.359  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+  [12] 0.343  [Yahoo Finance]  2026-05-21 06:07  Nvidia Beats Q1 Estimates. Stock Slips.
+  [13] 0.343  [Korea Herald Business]  2026-05-21 10:00  Seoul shares open sharply higher on US-Iran hope, Samsung wage deal
+  [14] 0.343  [Korea Herald Business]  2026-05-20 13:47  Tether could be gearing up for Korean market entry
+  [15] 0.341  [CNA Singapore Business]  2026-05-22 07:16  Oil falls, stocks climb as investors hope for progress in Iran war talks
+  [16] 0.338  [Nikkei Asia]    Nvidia reports 85% revenue jump but still excludes China in outlook
+  [17] 0.338  [Euronews Business]  2026-05-11 13:59  Oil jumps 4% as Trump rejects Iran’s response to ceasefire proposal
+  [18] 0.338  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [19] 0.336  [Korea Herald Business]  2026-05-21 15:05  Seoul shares rally over 8% on tech gains after Samsung wage deal, Nvidia outlook; won rises
+  [20] 0.334  [中央社 國際]  2026-05-22 14:00  世足擴編帶動商機　碳排恐創體壇紀錄
+  [21] 0.332  [CNBC Finance]  2026-05-18 12:58  White House touts deals on soybeans and rare earths after Trump-Xi summit, while China talks up tariff cuts
+  [22] 0.331  [CNA Singapore Business]  2026-05-22 09:47  Oil prices rise as investors doubt breakthrough in US-Iran peace talks
+  [23] 0.330  [Korea Herald Business]  2026-05-22 08:28  Seoul shares open higher on overnight Wall Street gains amid Iran hope
+  [24] 0.328  [Nikkei Asia]    Elon Musk's SpaceX IPO omits China as a market but warns it is a threat
+  [25] 0.327  [Nikkei Asia]    Japan memory maker Kioxia's market cap surges on AI investment boom
+  [26] 0.327  [Yahoo Finance]  2026-05-21 05:54  GlobeFlex Exits NCR Atleos After Brink’s Buyout Deal
+  [27] 0.325  [Euronews Business]  2026-05-20 08:31  EU Parliament approves implementation of US tariff deal under pressure from Trump
+  [28] 0.323  [中央社 科技]  2026-05-20 13:58  Google智慧眼鏡挑戰Meta  Gemini加持市場矚目
+  [29] 0.322  [Nikkei Asia]    Shares tied to US-alleged China shipping container 'cartel' sink
+  [30] 0.320  [中央社 科技]  2026-05-21 13:18  Meta全球裁員8千　新加坡辦公室最早接到通知
+  [31] 0.318  [Yahoo Finance]  2026-05-21 05:39  SpaceX IPO filing brings Musk's interplanetary ambitions to Wall Street
+  [32] 0.316  [聯合早報]  2026-05-22 10:06  美日澳印5月26日举行四方安全对话外长会议
+  [33] 0.315  [中央社 兩岸]  2026-05-22 13:31  中國出現融資結構轉型  信貸收縮債券融資增加
+  [34] 0.314  [中央社 兩岸]  2026-05-22 11:29  王文濤談APEC貿易部長會議：推動區域經濟整合
+  [35] 0.314  [Korea Herald Business]  2026-05-22 15:21  Korea&apos;s SpaceX-linked shares surge ahead of blockbuster IPO
+  [36] 0.314  [CNA Singapore Business]  2026-05-22 03:58  Oil prices close 2% lower on uncertain prospects for US-Iran deal
+  [37] 0.313  [CNBC Finance]  2026-05-22 04:28  SpaceX, OpenAI valuations could mean they leapfrog Berkshire Hathaway on first day of trading
+  [38] 0.309  [中央社 科技]  2026-05-21 12:39  Google重金布局AI基建　皮查伊：看見實際市場需求
+  [39] 0.306  [中央社 產經證券]  2026-05-22 13:59  6月電子期漲　金融期跌
+  [40] 0.304  [中央社 國際]  2026-05-22 13:40  紐時：伊朗阿曼密商荷莫茲海峽新制　通行擬收費
+  [41] 0.301  [CNA Singapore Business]  2026-05-22 08:51  Japan's core inflation hits 4-year low, rebound eyed on energy shock
+
+【最終回覆】
+📌 重點摘要  
+最近全球市場的焦點主要集中在以下三個事件：美伊戰爭的進展、油價波動對經濟的影響，以及科技股的表現。
+
+🔎 主要驅動因素  
+1. **美伊戰爭**：隨著美國與伊朗的和平談判出現希望，市場情緒有所回暖。雖然仍存在不確定性，但投資者對於可能的和平協議持樂觀態度，這促使股市上漲。  
+2. **油價影響**：由於中東局勢不穩，油價仍高於每桶100美元，並且有報導指出，全球油市可能在7月或8月進入「紅色警戒區」，這將對經濟造成更大壓力。  
+3. **科技股表現**：美國科技股持續上漲，特別是Nvidia的強勁財報提振了市場信心，進一步促進了相關股市的上漲。
+
+📊 市場表現  
+- **台股**：加權指數上漲至42267.97點，漲幅達2.17%。  
+- **美股**：道瓊指數上漲276.31點，S&P 500和Nasdaq也錄得小幅上漲。  
+- **油價**：目前油價仍在高位，對經濟造成壓力。
+
+👀 接下來看什麼  
+投資者需密切關注美伊談判的進展及其對油價的影響，此外，科技股的後續表現及其對市場的影響也值得關注。
+─────────────────
+📰 消息來源
+・Euronews Business
+・中央社 產經證券
+・中央社 國際
+・Yahoo Finance
+・Nikkei Asia
+・Korea Herald Business
+・CNA Singapore Business
+・中央社 兩岸
+・CNBC Finance
+・中央社 科技
+
+======================================================================
+
+[14] 最近有哪些消息可能影響科技股估值？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：14 篇
+broad_query：科技股估值影響因素 news affecting technology stocks valuation
+Token：5,188  耗時：24s
+
+【抓到的文章 14 篇】
+  [01] 0.431  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [02] 0.405  [CNBC Finance]  2026-05-22 04:28  SpaceX, OpenAI valuations could mean they leapfrog Berkshire Hathaway on first day of trading
+  [03] 0.369  [Korea Herald Business]  2026-05-21 15:05  Seoul shares rally over 8% on tech gains after Samsung wage deal, Nvidia outlook; won rises
+  [04] 0.366  [Yahoo Finance]  2026-05-21 06:07  Nvidia Beats Q1 Estimates. Stock Slips.
+  [05] 0.338  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [06] 0.328  [SCMP Business]  2026-05-22 05:30  Not even a quick end to Iran war can save AI stock bubble now
+  [07] 0.328  [CNBC Finance]  2026-05-17 21:36  AI-related layoffs a boost for stocks? Not necessarily
+  [08] 0.326  [Nikkei Asia]    Nvidia reports 85% revenue jump but still excludes China in outlook
+  [09] 0.326  [Yahoo Finance]  2026-05-21 05:31  The Furious Chip Rally Was Petering Out. Now Wall Street Turns to Nvidia.
+  [10] 0.313  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+  [11] 0.308  [Euronews Business]  2026-05-15 19:13  Stock trade disclosure reveals Trump made massive gains on Big Tech bets
+  [12] 0.306  [CNBC Finance]  2026-05-16 17:54  Bill Ackman built Microsoft stake in first quarter during sell-off, betting on AI and cloud growth
+  [13] 0.306  [CNBC Finance]  2026-05-16 01:02  'Biggest bottleneck in the AI buildup' fuels DRAM ETF to record
+  [14] 0.304  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+
+【最終回覆】
+📌 重點摘要  
+近期科技股估值受到多重因素影響，包括中東局勢、企業財報及市場情緒等。
+
+📰 最新消息  
+1. **中東戰爭結束預期**：市場預期美伊戰爭可望結束，推動美國科技股上漲，進而帶動日本股市日經指數上漲2.68%。
+2. **企業財報表現**：Nvidia報告第一季營收增長85%，但因未來展望中排除中國市場，導致股價反而下滑，顯示市場對AI泡沫的擔憂。
+3. **AI相關公司IPO**：SpaceX已提交上市申請，OpenAI和Anthropic也可能在2026年內上市，這些潛在的高估值將影響市場情緒。
+
+📊 市場反應  
+- 美股方面，S&P 500小幅上漲0.17%，Nasdaq則微增0.09%，顯示科技股仍受到關注。
+- 韓國股市因三星電子工資協議及Nvidia的強勁表現，股指上漲超過8%。
+
+👀 投資人可留意  
+- 中東局勢發展及其對全球經濟的影響。
+- Nvidia及其他科技企業的後續財報及市場反應。
+- AI相關公司的上市動態及其對科技股估值的潛在影響。
+─────────────────
+📰 消息來源
+・中央社 產經證券
+・CNBC Finance
+・Korea Herald Business
+・Yahoo Finance
+・中央社 兩岸
+・SCMP Business
+・Nikkei Asia
+・Euronews Business
+
+======================================================================
+
+[15] 最近有哪些新聞會影響 NVIDIA？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：26 篇
+broad_query：NVIDIA 最新新聞 影響股價
+Token：10,610  耗時：29s
+
+【抓到的文章 26 篇】
+  [01] 0.513  [Yahoo Finance]  2026-05-21 06:07  Nvidia Beats Q1 Estimates. Stock Slips.
+  [02] 0.511  [Nikkei Asia]    Nvidia reports 85% revenue jump but still excludes China in outlook
+  [03] 0.504  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+  [04] 0.478  [Yahoo Finance]  2026-05-21 05:54  4 important takeaways from Nvidia's earnings
+  [05] 0.461  [Yahoo Finance]  2026-05-20 06:27  Stock market today: Dow jumps 600 points, S&P 500 and Nasdaq rally as oil falls in countdown to Nvidia earnings
+  [06] 0.459  [Yahoo Finance]  2026-05-21 05:46  Nvidia Q1 FY2027 earnings: record revenue, dividend hike
+  [07] 0.426  [Yahoo Finance]  2026-05-21 06:11  Nvidia says it will see $20 billion in CPU sales this year
+  [08] 0.415  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [09] 0.403  [Nikkei Asia]    KOSPI jumps 8.4% on Samsung strike suspension, Nvidia results
+  [10] 0.389  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [11] 0.384  [CNBC Finance]  2026-05-21 02:26  Nvidia earnings call drama: Will Jensen Huang talk 'Trump' and China chips after Xi summit?
+  [12] 0.369  [Korea Herald Business]  2026-05-21 15:05  Seoul shares rally over 8% on tech gains after Samsung wage deal, Nvidia outlook; won rises
+  [13] 0.362  [Euronews Business]  2026-05-16 13:00  Nvidia surpasses Germany: How the market caps of tech giants compare to top economies
+  [14] 0.360  [中央社 產經證券]  2026-05-22 14:31  美國政府將投資20億美元入股9量子運算公司　IBM、格羅方德受益
+  [15] 0.359  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+  [16] 0.346  [Nikkei Asia]    Editor's Choice: Nvidia and Asia's three chip giants cash in on AI gold rush
+  [17] 0.328  [CNBC Finance]  2026-05-16 01:02  'Biggest bottleneck in the AI buildup' fuels DRAM ETF to record
+  [18] 0.326  [中央社 產經證券]  2026-05-22 13:55  6月台股期指漲939點
+  [19] 0.323  [Nikkei Asia]    Kawasaki Heavy to partner with Nvidia on physical AI, open US robot center
+  [20] 0.320  [中央社 產經證券]  2026-05-22 15:09  三大法人買超台股破千億　外資加碼761億歷史第4大
+  [21] 0.319  [中央社 科技]  2026-05-20 01:53  Google開發者大會發表Gemini 3.5模型　為AI代理量身強化[影]
+  [22] 0.319  [CNBC Finance]  2026-05-17 21:36  AI-related layoffs a boost for stocks? Not necessarily
+  [23] 0.307  [中央社 科技]  2026-05-21 12:39  Google重金布局AI基建　皮查伊：看見實際市場需求
+  [24] 0.306  [中央社 科技]  2026-05-22 12:05  柯林研發擬強化AI導入  擴大亞利桑那與加州投資
+  [25] 0.306  [Euronews Business]  2026-05-15 19:13  Stock trade disclosure reveals Trump made massive gains on Big Tech bets
+  [26] 0.305  [CNBC Finance]  2026-05-22 04:28  SpaceX, OpenAI valuations could mean they leapfrog Berkshire Hathaway on first day of trading
+
+【最終回覆】
+📌 重點摘要  
+近期有多則新聞報導可能影響NVIDIA的股價與市場情緒，特別是其最新財報與市場競爭情況。
+
+📰 最新消息  
+1. **財報亮眼**：NVIDIA報告第一季營收達到816億美元，同比增長85%，超過市場預期的792億美元。淨利潤為583.2億美元，每股收益為2.39美元，顯示出強勁的AI晶片需求。  
+2. **市場反應**：儘管財報表現優異，NVIDIA的股價在盤後交易中下跌，顯示出市場對未來的擔憂，特別是對於中國市場的展望，因為公司在財報中排除了中國的數據中心營收預測。  
+3. **競爭壓力**：隨著AI市場的競爭加劇，NVIDIA的股價受到了壓力，投資者對於公司未來的增長潛力持謹慎態度。
+
+📊 市場反應  
+NVIDIA的股價在最新財報公布後出現小幅下滑，反映出投資者對於未來市場競爭及中國市場不確定性的擔憂。
+
+👀 投資人可留意  
+接下來，投資者應密切關注NVIDIA在AI市場的競爭動態及其對中國市場的策略調整，這些因素可能會進一步影響其股價走勢。
+─────────────────
+📰 消息來源
+・Yahoo Finance
+・Nikkei Asia
+・Euronews Business
+・中央社 兩岸
+・中央社 產經證券
+・CNBC Finance
+・Korea Herald Business
+・中央社 科技
+
+======================================================================
+
+[16] 老黃最近又講了什麼？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：9 篇
+broad_query：黃仁勳 Jensen Huang NVIDIA CEO 最新言論
+Token：3,508  耗時：18s
+
+【抓到的文章 9 篇】
+  [01] 0.419  [CNBC Finance]  2026-05-21 02:26  Nvidia earnings call drama: Will Jensen Huang talk 'Trump' and China chips after Xi summit?
+  [02] 0.414  [Yahoo Finance]  2026-05-21 05:31  Ross Gerber Says 'Pay Attention' To Nvidia And Micron As Jensen Huang Predicts AI Explosion
+  [03] 0.396  [Yahoo Finance]  2026-05-21 06:11  Nvidia says it will see $20 billion in CPU sales this year
+  [04] 0.362  [Nikkei Asia]    Nvidia reports 85% revenue jump but still excludes China in outlook
+  [05] 0.339  [Yahoo Finance]  2026-05-21 05:54  4 important takeaways from Nvidia's earnings
+  [06] 0.322  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+  [07] 0.317  [Yahoo Finance]  2026-05-21 05:31  The Furious Chip Rally Was Petering Out. Now Wall Street Turns to Nvidia.
+  [08] 0.311  [Euronews Business]  2026-05-13 15:49  Trump's China visit: US CEOs Musk, Cook and Nvidia’s Huang join trade talks
+  [09] 0.310  [CNA Singapore Business]  2026-05-22 10:13  AMD asking partners to ramp up production, CEO says
+
+【最終回覆】
+📌 初步結論  
+是，Nvidia CEO Jensen Huang 最近在多個場合提到有關人工智慧的未來和公司業務的展望。
+
+📰 目前新聞支持什麼  
+Huang 在Nvidia的財報會上表示，預計今年CPU銷售將達到200億美元，並強調AI市場的潛力。他提到，Nvidia正致力於成為全球領先的CPU供應商，並且在AI芯片需求上持續強勁。此外，Huang還參加了美國總統特朗普的中國峰會，這次會議的重點是推動美國科技公司的進入中國市場。
+
+⚠️ 尚未確認/資料不足處  
+目前尚無具體消息指出Huang是否會在即將舉行的財報會上談及特朗普或中國市場的具體情況，相關討論仍在準備中。
+
+👀 後續觀察  
+投資者應持續關注Nvidia的財報會，特別是Huang對於AI市場的看法及未來策略，同時留意中美貿易政策的變化對公司業務的影響。
+─────────────────
+📰 消息來源
+・CNBC Finance
+・Yahoo Finance
+・Nikkei Asia
+・Euronews Business
+・CNA Singapore Business
+
+======================================================================
+
+[17] 蘇姿丰最近在推什麼？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：6 篇
+broad_query：蘇姿丰 Lisa Su AMD CEO 最新動態
+Token：4,817  耗時：15s
+
+【抓到的文章 6 篇】
+  [01] 0.427  [CNA Singapore Business]  2026-05-22 10:13  AMD asking partners to ramp up production, CEO says
+  [02] 0.404  [Nikkei Asia]    AMD CEO says unexpected CPU demand surge to last 5 years
+  [03] 0.377  [中央社 產經證券]  2026-05-22 14:02  蘇姿丰談女性進科技業：工程學不看性別、只在乎想法好壞
+  [04] 0.304  [中央社 兩岸]  2026-05-22 14:25  楊珍妮出席蘇州APEC會議　桌牌名稱維持慣例
+  [05] 0.303  [中央社 國際]  2026-05-22 15:09  日閣員出席蘇州APEC會議  能否接觸王文濤成焦點
+  [06] 0.303  [中央社 兩岸]  2026-05-22 15:09  日閣員出席蘇州APEC會議  能否接觸王文濤成焦點
+
+【最終回覆】
+📌 重點摘要  
+蘇姿丰（Lisa Su），超微（AMD）執行長，近期在台北出席論壇，強調公司正在推動生產以應對AI需求的激增。
+
+📰 最新消息  
+1. 蘇姿丰表示，AMD正在要求其合作夥伴增加生產，以滿足市場對AI的強勁需求。  
+2. 她預測，中央處理器（CPU）的需求將在未來五年內持續增長，這一增長是業界未曾預料到的。
+
+📊 市場反應  
+目前，AMD的策略可能會對其主要供應商台積電（TSMC）產生正面影響，因為AMD是台積電的重要客戶。台積電近期股價為2255.0元，上漲1.12%。
+
+👀 投資人可留意  
+投資人應關注AMD在AI領域的進一步發展及其對半導體市場的影響，特別是對台積電的業務影響。
+─────────────────
+📰 消息來源
+・CNA Singapore Business
+・Nikkei Asia
+・中央社 產經證券
+・中央社 兩岸
+・中央社 國際
+
+======================================================================
+
+[18] OpenAI 最近最大的新聞是什麼？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：40 篇
+broad_query：OpenAI 最新新聞
+Token：12,882  耗時：42s
+
+【抓到的文章 40 篇】
+  [01] 0.519  [Nikkei Asia]    OpenAI weighs letting Japan access new Mythos-class cybersecurity AI
+  [02] 0.464  [CNBC Finance]  2026-05-21 03:05  OpenAI takes the lead in AI IPO horse race: 'Getting to public markets first is very important'
+  [03] 0.425  [中央社 科技]  2026-05-20 01:53  Google開發者大會發表Gemini 3.5模型　為AI代理量身強化[影]
+  [04] 0.421  [Yahoo Finance]  2026-05-21 08:04  Anthropic nears first quarterly profit, agrees to pay SpaceX $1.25 billion monthly for computing power
+  [05] 0.417  [CNBC Finance]  2026-05-22 04:28  SpaceX, OpenAI valuations could mean they leapfrog Berkshire Hathaway on first day of trading
+  [06] 0.406  [中央社 科技]  2026-05-20 13:12  美國會議員將推法案　削弱中國AI工具海外銷售
+  [07] 0.404  [聯合早報]  2026-05-22 09:00  【特稿】从马斯克对决奥尔特曼：看万亿估值下的AI治理之争
+  [08] 0.399  [中央社 科技]  2026-05-21 12:39  Google重金布局AI基建　皮查伊：看見實際市場需求
+  [09] 0.378  [SCMP Business]  2026-05-22 03:47  Trump scraps signing AI executive order to keep ‘lead’ over China in industry
+  [10] 0.373  [中央社 科技]  2026-05-19 21:59  蘋果輔助使用新功能結合AI　支援自然語言操作
+  [11] 0.369  [Yahoo Finance]  2026-05-21 05:47  Instant View: SpaceX files long awaited IPO, creating a fresh AI play
+  [12] 0.360  [SCMP Business]  2026-05-22 04:08  Pair charged in US under new law for creating AI celebrity porn
+  [13] 0.359  [中央社 科技]  2026-05-22 12:05  柯林研發擬強化AI導入  擴大亞利桑那與加州投資
+  [14] 0.353  [中央社 國際]  2026-05-22 13:40  紐時：伊朗阿曼密商荷莫茲海峽新制　通行擬收費
+  [15] 0.348  [CNBC Finance]  2026-05-20 15:00  Alibaba reveals more powerful Zhenwu AI chip, new LLM
+  [16] 0.347  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+  [17] 0.346  [中央社 產經證券]  2026-05-22 14:19  緯穎：代理式AI交貨來不及　關注議題變成產能和電力
+  [18] 0.345  [CNA Singapore Business]  2026-05-22 07:14  Waymo suspends freeway rides, pauses Atlanta operations amid safety fixes
+  [19] 0.341  [CNA Singapore Business]  2026-05-22 04:33  Cox Media fined for claiming it used AI to track consumer conversations
+  [20] 0.338  [SCMP Business]  2026-05-22 17:00  China’s AI start-up funding triples to US$16b in first quarter amid bets on LLMs, robotics
+  [21] 0.337  [Nikkei Asia]    Nvidia reports 85% revenue jump but still excludes China in outlook
+  [22] 0.334  [CNA Singapore Business]  2026-05-22 03:43  Spotify cranks up AI push with Universal Music deal, lays out bold growth targets
+  [23] 0.334  [SCMP Business]  2026-05-22 10:41  Chinese gang caught using AI in Malaysia bungalow for Spanish job scam
+  [24] 0.331  [SCMP Business]  2026-05-22 09:00  China is losing the LLM race but it can still win in AI, ex-Tencent AI lead says
+  [25] 0.330  [Yahoo Finance]  2026-05-21 08:06  'Financials look reckless': Lifting the xAI hood in the SpaceX IPO
+  [26] 0.325  [中央社 國際]  2026-05-22 14:05  川普支持深海採礦遭批非法　國際組織警告恐掀訴訟
+  [27] 0.321  [Nikkei Asia]    Kawasaki Heavy to partner with Nvidia on physical AI, open US robot center
+  [28] 0.318  [中央社 國際]  2026-05-22 13:52  川普力推華府大凱旋門計畫　美術委員會通過惹議
+  [29] 0.318  [Nikkei Asia]    Elon Musk's SpaceX IPO omits China as a market but warns it is a threat
+  [30] 0.314  [Euronews Business]  2026-05-20 17:20  Goldman Sachs reportedly selected to lead SpaceX IPO in landmark Wall Street deal
+  [31] 0.313  [CNA Singapore Business]  2026-05-22 07:04  Apple asks US Supreme Court to review contempt order in Epic Games lawsuit
+  [32] 0.311  [Euronews Business]  2026-05-21 19:45  Million-dollar salaries, billion-dollar stakes: Top AI talent every tech giant is fighting over
+  [33] 0.311  [CNA Singapore Business]  2026-05-22 01:10  Analysis:SpaceX IPO bets $2 trillion on Musk's ambitious rockets-to-AI vision
+  [34] 0.311  [中央社 產經證券]  2026-05-22 14:31  美國政府將投資20億美元入股9量子運算公司　IBM、格羅方德受益
+  [35] 0.310  [PR Newswire Finance]  2026-05-22 17:07  AppliedAI and McKinsey &amp; Company collaborate to rapidly rewire regulated enterprise processes with AI
+  [36] 0.308  [Financial Post Canada]  2026-05-22 16:03  EU-Anthropic Talks Over Mythos Concerns Are Stalled, Spain Says
+  [37] 0.306  [Yahoo Finance]  2026-05-21 05:56  SpaceX files for its historic IPO
+  [38] 0.306  [Yahoo Finance]  2026-05-21 06:28  SpaceX Takes Cover Off Its Financials In First Public Document Ahead Of IPO
+  [39] 0.305  [CNBC Finance]  2026-05-20 01:53  JPMorgan's summer reading list for the wealthy includes books on AI, leadership and lemons
+  [40] 0.303  [CNBC Finance]  2026-05-16 01:02  'Biggest bottleneck in the AI buildup' fuels DRAM ETF to record
+
+【最終回覆】
+📌 初步結論  
+OpenAI 最近的主要新聞包括其考慮將新型 GPT-5.5-Cyber 人工智慧模型提供給日本，以及其即將進行的首次公開募股（IPO）計劃。
+
+📰 目前新聞支持什麼  
+1. OpenAI 正在考慮將其新開發的 GPT-5.5-Cyber 模型提供給日本，該模型具備先進的網絡安全能力，旨在應對中國的網絡威脅。
+2. 有報導指出，OpenAI 預計會在近期內進行保密的 IPO 申請，這使其成為市場上最有可能率先上市的人工智慧公司。
+
+⚠️ 尚未確認/資料不足處  
+目前尚無具體的 IPO 時間表或詳細計劃，並且對於 GPT-5.5-Cyber 模型的具體推出時間和市場反應也尚無明確資訊。
+
+👀 後續觀察  
+投資者應關注 OpenAI 的 IPO 進展及其新模型的市場接受度，這將對其未來的發展及整個人工智慧行業產生重要影響。
+─────────────────
+📰 消息來源
+・Nikkei Asia
+・CNBC Finance
+・中央社 科技
+・Yahoo Finance
+・聯合早報
+・SCMP Business
+・中央社 國際
+・Euronews Business
+・中央社 產經證券
+・CNA Singapore Business
+
+======================================================================
+
+[19] Google 最近 AI 有什麼動作？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：13 篇
+broad_query：Google AI 人工智慧 最新動態
+Token：7,566  耗時：24s
+
+【抓到的文章 13 篇】
+  [01] 0.502  [中央社 科技]  2026-05-21 12:39  Google重金布局AI基建　皮查伊：看見實際市場需求
+  [02] 0.492  [中央社 科技]  2026-05-20 01:53  Google開發者大會發表Gemini 3.5模型　為AI代理量身強化[影]
+  [03] 0.459  [中央社 科技]  2026-05-20 01:48  Google個人AI代理Spark  能分析帳單、寫工作日誌
+  [04] 0.448  [中央社 科技]  2026-05-20 13:58  Google智慧眼鏡挑戰Meta  Gemini加持市場矚目
+  [05] 0.426  [Korea Herald Business]  2026-05-20 14:03  Samsung Electronics unveils new AI smart glasses with Google
+  [06] 0.409  [中央社 科技]  2026-05-19 21:59  蘋果輔助使用新功能結合AI　支援自然語言操作
+  [07] 0.348  [中央社 產經證券]  2026-05-22 14:19  緯穎：代理式AI交貨來不及　關注議題變成產能和電力
+  [08] 0.347  [CNBC Finance]  2026-05-20 15:00  Alibaba reveals more powerful Zhenwu AI chip, new LLM
+  [09] 0.308  [SCMP Business]  2026-05-22 05:30  Not even a quick end to Iran war can save AI stock bubble now
+  [10] 0.307  [SCMP Business]  2026-05-22 10:41  Chinese gang caught using AI in Malaysia bungalow for Spanish job scam
+  [11] 0.304  [聯合早報]  2026-05-22 09:00  【特稿】从马斯克对决奥尔特曼：看万亿估值下的AI治理之争
+  [12] 0.303  [Nikkei Asia]    OpenAI weighs letting Japan access new Mythos-class cybersecurity AI
+  [13] 0.301  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+
+【最終回覆】
+📌 重點摘要  
+Google近期在AI領域進行了多項重大布局，包括推出新一代AI模型和個人AI代理工具，以強化其市場競爭力。
+
+📰 最新消息  
+1. **Gemini 3.5模型**：在Google I/O年度開發者大會上，Google發表了Gemini 3.5系列，專為執行「代理任務」優化，並於會議當天開放3.5 Flash版本供全球用戶使用。預計6月推出的3.5 Pro版本已在內部使用中。
+   
+2. **Gemini Spark**：全新推出的Gemini Spark是一款全天候個人AI代理，能夠根據使用者指示自動追蹤資訊和處理任務，並可在使用者關閉設備後持續運行。
+
+3. **AI基礎設施投資**：Google執行長皮查伊表示，過去兩年內公司在AI基礎設施上的投資已達到成立後前20年的總和，顯示出對市場需求的信心。
+
+📊 市場反應  
+Google的這些新產品和投資計劃被視為對抗OpenAI及其他競爭對手的重要策略，並可能進一步推動其在AI市場的佔有率。
+
+👀 投資人可留意  
+隨著Google加速AI技術的發展，投資人應關注其新產品的市場反響及未來的技術創新，特別是在AI代理和基礎設施方面的進一步發展。
+─────────────────
+📰 消息來源
+・中央社 科技
+・Korea Herald Business
+・中央社 產經證券
+・CNBC Finance
+・SCMP Business
+・聯合早報
+・Nikkei Asia
+・Euronews Business
+
+======================================================================
+
+[20] Meta 最近為什麼被討論？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：10 篇
+broad_query：Meta Facebook 最新消息 討論
+Token：6,410  耗時：19s
+
+【抓到的文章 10 篇】
+  [01] 0.509  [中央社 科技]  2026-05-20 12:15  Meta在台推Instants App　主打無修圖社交分享
+  [02] 0.505  [中央社 科技]  2026-05-21 13:18  Meta全球裁員8千　新加坡辦公室最早接到通知
+  [03] 0.456  [CNA Singapore Business]  2026-05-22 04:31  Meta settles first US case over school costs tied to youth mental health, court filing shows
+  [04] 0.437  [中央社 國際]  2026-05-22 15:46  歐盟消費者團體控　Google與Meta等平台打詐不力
+  [05] 0.402  [中央社 科技]  2026-05-20 13:58  Google智慧眼鏡挑戰Meta  Gemini加持市場矚目
+  [06] 0.381  [CNA Singapore Business]  2026-05-22 07:58  Texas sues Meta, WhatsApp over encryption privacy claims
+  [07] 0.368  [CNA Singapore Business]  2026-05-22 02:36  Google, Meta, TikTok hit by EU consumer complaints about handling of financial scams
+  [08] 0.317  [Euronews Business]  2026-05-08 21:33  ‘EU legislation cannot be dictated by social media threats,’ says MEP trade chief
+  [09] 0.312  [中央社 科技]  2026-05-20 01:53  Google開發者大會發表Gemini 3.5模型　為AI代理量身強化[影]
+  [10] 0.307  [中央社 科技]  2026-05-21 13:34  Threads在台測試全新音樂功能　串文可加入30秒愛歌
+
+【最終回覆】
+📌 重點摘要  
+Meta近期因為多項重要動作而受到廣泛討論，包括推出新應用程式、進行大規模裁員及面對法律訴訟。
+
+📰 最新消息  
+1. **Instants App推出**：Meta在台灣推出全新社交應用程式Instants，主打無修圖的社交分享，鼓勵用戶快速捕捉生活瞬間，並強調隱私性和真實性。  
+2. **全球裁員計畫**：Meta宣布將裁減約8000名員工，約占總人力的10%，並計劃將資源轉向人工智慧相關項目。  
+3. **法律訴訟**：Meta及其子公司WhatsApp因涉嫌在隱私保護方面誤導消費者而遭到德克薩斯州的起訴。
+
+📊 市場反應  
+Meta的股價在近期市場中表現穩定，但面對裁員及法律訴訟的消息，投資人情緒可能受到影響，需持續觀察市場反應。
+
+👀 投資人可留意  
+未來Meta在人工智慧領域的發展及裁員後的組織重整，將是影響其長期表現的重要因素。同時，法律訴訟的進展也可能對公司形象及市場信心造成影響。
+─────────────────
+📰 消息來源
+・中央社 科技
+・CNA Singapore Business
+・中央社 國際
+・Euronews Business
+
+======================================================================
+
+[21] SpaceX 已經上市了嗎？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：16 篇  [查證型]
+broad_query：SpaceX IPO 上市 股票發行
+Token：6,371  耗時：21s
+
+【抓到的文章 16 篇】
+  [01] 0.582  [Yahoo Finance]  2026-05-21 04:54  SpaceX files IPO prospectus, offering a peek into its finances
+  [02] 0.572  [Yahoo Finance]  2026-05-21 05:56  SpaceX files for its historic IPO
+  [03] 0.563  [Yahoo Finance]  2026-05-21 05:39  SpaceX IPO filing brings Musk's interplanetary ambitions to Wall Street
+  [04] 0.550  [Yahoo Finance]  2026-05-21 05:48  SpaceX Files for Long-Awaited IPO
+  [05] 0.533  [Nikkei Asia]    Elon Musk's SpaceX IPO omits China as a market but warns it is a threat
+  [06] 0.521  [Yahoo Finance]  2026-05-21 06:28  SpaceX Takes Cover Off Its Financials In First Public Document Ahead Of IPO
+  [07] 0.510  [Euronews Business]  2026-05-20 17:20  Goldman Sachs reportedly selected to lead SpaceX IPO in landmark Wall Street deal
+  [08] 0.509  [CNBC Finance]  2026-05-22 03:40  Retail investors get direct access to SpaceX IPO through major brokerage platforms
+  [09] 0.496  [Korea Herald Business]  2026-05-22 15:21  Korea&apos;s SpaceX-linked shares surge ahead of blockbuster IPO
+  [10] 0.490  [Euronews Business]  2026-05-21 22:10  Ahead of the SpaceX IPO, a look at the biggest stock market debuts ever
+  [11] 0.461  [CNA Singapore Business]  2026-05-22 01:10  Analysis:SpaceX IPO bets $2 trillion on Musk's ambitious rockets-to-AI vision
+  [12] 0.461  [Nikkei Asia]    SpaceX's China-less IPO and other astronomical figures
+  [13] 0.444  [中央社 科技]  2026-05-21 11:45  SpaceX拚5年內每年發射1萬次　FAA促提升可靠性
+  [14] 0.430  [CNBC Finance]  2026-05-22 04:28  SpaceX, OpenAI valuations could mean they leapfrog Berkshire Hathaway on first day of trading
+  [15] 0.419  [中央社 科技]  2026-05-22 09:05  SpaceX星艦V3首航發射前喊卡　最快22日再試
+  [16] 0.301  [中央社 產經證券]  2026-05-22 16:26  股東質疑能源事業黑洞　張安平：非今日投資明日獲利
+
+【最終回覆】
+⚠️ 目前資料不足以直接確認此事件是否發生。
+
+📌 初步結論：目前尚未確認，SpaceX 尚未正式上市。
+
+📰 目前新聞支持什麼：SpaceX 已於 2026 年 5 月 21 日提交了 IPO 申請，計劃在納斯達克上市，股票代碼為 SPCX。根據報導，該公司預計將進行歷史上最大的首次公開募股，目標籌集高達 80 億美元，並估計公司市值可達 2 兆美元。
+
+⚠️ 尚未確認/資料不足處：目前尚無確切的上市日期，雖然有報導提到可能在 6 月 12 日進行上市，但這仍需官方確認。所有相關的計劃和數據目前仍處於準備階段，尚未實際發生。
+
+👀 後續觀察：投資者應密切關注 SpaceX 的後續公告，特別是有關 IPO 的具體時間表及其對市場的影響。
+─────────────────
+📰 消息來源
+・Yahoo Finance
+・Nikkei Asia
+・Euronews Business
+・CNBC Finance
+・Korea Herald Business
+・CNA Singapore Business
+・中央社 科技
+・中央社 產經證券
+
+======================================================================
+
+[22] 聯準會確認今年會降息了嗎？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：4 篇  [查證型]
+broad_query：聯準會 Fed 降息 利率決策 2025
+Token：3,061  耗時：16s
+
+【抓到的文章 4 篇】
+  [01] 0.352  [CNBC Finance]  2026-05-16 21:41  Kevin Warsh comes into the Fed facing a big 'family fight' over cutting interest rates
+  [02] 0.345  [CNBC Finance]  2026-05-21 03:04  Fed officials see rate hike ahead if inflation stays elevated, minutes show
+  [03] 0.325  [中央社 兩岸]  2026-05-22 16:52  2025年中國大陸人口抽樣調查  5年人口減少632萬
+  [04] 0.310  [CNBC Finance]  2026-05-20 05:51  Fed to hike? When traders see a rate increase coming
+
+【最終回覆】
+⚠️ 目前資料不足以直接確認此事件是否發生。
+
+📌 初步結論：目前尚未確認聯準會是否會在今年降息。
+
+📰 目前新聞支持什麼：近期的報導指出，聯準會官員在最近的會議中對於未來的利率政策存在分歧，並未達成一致意見。部分官員認為若通脹持續高企，可能需要進一步加息，而不是降息。
+
+⚠️ 尚未確認/資料不足處：目前並無具體新聞或官方聲明確認聯準會將於今年降息。市場對於降息的預期仍不明確，且有報導指出，交易者認為今年降息的機率僅為43%。
+
+👀 後續觀察：投資人應持續關注聯準會的會議紀要及經濟數據發布，特別是通脹及就業市場的變化，這將影響未來的利率決策。
+─────────────────
+📰 消息來源
+・CNBC Finance
+・中央社 兩岸
+
+======================================================================
+
+[23] NVIDIA 已經停止中國業務了嗎？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：15 篇  [查證型]
+broad_query：NVIDIA 停止 中國業務
+Token：5,910  耗時：20s
+
+【抓到的文章 15 篇】
+  [01] 0.496  [Nikkei Asia]    Nvidia reports 85% revenue jump but still excludes China in outlook
+  [02] 0.400  [中央社 兩岸]  2026-05-21 18:03  中國電影由殺人犯親自演出惹議  官方通報停止上映
+  [03] 0.390  [CNBC Finance]  2026-05-21 02:26  Nvidia earnings call drama: Will Jensen Huang talk 'Trump' and China chips after Xi summit?
+  [04] 0.370  [Yahoo Finance]  2026-05-21 06:07  Nvidia Beats Q1 Estimates. Stock Slips.
+  [05] 0.366  [Yahoo Finance]  2026-05-21 05:46  Nvidia Q1 FY2027 earnings: record revenue, dividend hike
+  [06] 0.363  [Euronews Business]  2026-05-21 14:50  Nvidia beats expectations again as AI boom drives revenue surge, but shares slip
+  [07] 0.363  [Yahoo Finance]  2026-05-21 05:54  4 important takeaways from Nvidia's earnings
+  [08] 0.360  [Euronews Business]  2026-05-13 15:49  Trump's China visit: US CEOs Musk, Cook and Nvidia’s Huang join trade talks
+  [09] 0.355  [Yahoo Finance]  2026-05-21 06:11  Nvidia says it will see $20 billion in CPU sales this year
+  [10] 0.320  [中央社 科技]  2026-05-20 13:12  美國會議員將推法案　削弱中國AI工具海外銷售
+  [11] 0.311  [SCMP Business]  2026-05-22 09:30  Boeing went to China to sell planes. Beijing is buying something else
+  [12] 0.311  [Nikkei Asia]    US arms sales to Taiwan on 'pause' due to Iran war, acting Navy chief says
+  [13] 0.309  [SCMP Business]  2026-05-22 03:47  Trump scraps signing AI executive order to keep ‘lead’ over China in industry
+  [14] 0.302  [Euronews Business]  2026-05-16 13:00  Nvidia surpasses Germany: How the market caps of tech giants compare to top economies
+  [15] 0.301  [Nikkei Asia]    Editor's Choice: Nvidia and Asia's three chip giants cash in on AI gold rush
+
+【最終回覆】
+⚠️ 目前資料不足以直接確認此事件是否發生。
+
+📌 初步結論：目前尚未確認，NVIDIA 是否已經停止中國業務的具體情況尚不明朗。
+
+📰 目前新聞支持什麼：最近的報導指出，NVIDIA 在其最新的財報中並未包含來自中國的數據中心收入預測，顯示出對中國市場的謹慎態度。然而，並沒有明確的消息指出該公司已經完全停止在中國的業務。
+
+⚠️ 尚未確認/資料不足處：目前資料不足以確認 NVIDIA 是否已經停止中國業務。所有相關報導主要集中在其財務表現及對中國市場的展望，並未提供具體的業務停止或變更的資訊。
+
+👀 後續觀察：建議持續關注 NVIDIA 的後續公告及市場動態，特別是在中美貿易關係及科技政策的變化下，該公司的業務策略可能會受到影響。
+─────────────────
+📰 消息來源
+・Nikkei Asia
+・中央社 兩岸
+・CNBC Finance
+・Yahoo Finance
+・Euronews Business
+・中央社 科技
+・SCMP Business
+
+======================================================================
+
+[24] 台積電要去美國設總部是真的嗎？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：0 篇  [Perplexity fallback]  [查證型]
+broad_query：台積電 TSMC 美國 總部 設立
+Token：Perplexity（不計 token）  耗時：12s
+
+【抓到的文章：0 篇】
+
+【最終回覆】
+⚠️ 近期相關報導不足（RSS 僅找到 0 篇），以下結果來自即時網路搜尋：
+
+目前尚未確認。
+
+就目前可見資料來看，**沒有明確證據顯示台積電「要把總部搬去美國」**。你提供的搜尋結果主要指出的是：
+
+- 台積電在**美國亞利桑那州擴大投資**，包含新增晶圓廠、先進封裝與**研發中心**。
+- 這些資料提到的是**美國廠區／研發中心**，不是公司**總部遷移**。
+- 目前沒有可靠來源可直接支持「台積電要去美國設總部」這個說法。
+
+最保守的結論是：**目前資料不足以判斷台積電是否要設美國總部；已確認的是其美國擴產與研發布局，不等於總部搬遷。**
+
+若你要查證這類消息，建議以：
+- 台積電官方新聞稿
+- 台積電法說會／年報
+- 主要國際財經媒體的直接報導
+
+為準。
+─────────────────
+📰 消息來源（即時搜尋）
+・Technowvoice
+・Wikipedia
+・Org
+・Youtube
+・Voachinese
+
+======================================================================
+
+[25] Apple 放棄 AI 計畫了嗎？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：12 篇  [查證型]
+broad_query：Apple AI 計畫 放棄 最新消息
+Token：8,815  耗時：18s
+
+【抓到的文章 12 篇】
+  [01] 0.460  [中央社 科技]  2026-05-19 21:59  蘋果輔助使用新功能結合AI　支援自然語言操作
+  [02] 0.425  [SCMP Business]  2026-05-22 03:47  Trump scraps signing AI executive order to keep ‘lead’ over China in industry
+  [03] 0.396  [中央社 科技]  2026-05-20 13:12  美國會議員將推法案　削弱中國AI工具海外銷售
+  [04] 0.395  [中央社 產經證券]  2026-05-22 14:19  緯穎：代理式AI交貨來不及　關注議題變成產能和電力
+  [05] 0.375  [中央社 科技]  2026-05-22 12:05  柯林研發擬強化AI導入  擴大亞利桑那與加州投資
+  [06] 0.371  [中央社 科技]  2026-05-20 21:46  蘋果App Store防堵詐欺　去年攔阻逾695億潛在交易
+  [07] 0.344  [中央社 科技]  2026-05-20 01:53  Google開發者大會發表Gemini 3.5模型　為AI代理量身強化[影]
+  [08] 0.339  [CNA Singapore Business]  2026-05-22 07:04  Apple asks US Supreme Court to review contempt order in Epic Games lawsuit
+  [09] 0.336  [中央社 國際]  2026-05-22 13:52  川普力推華府大凱旋門計畫　美術委員會通過惹議
+  [10] 0.322  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [11] 0.311  [中央社 產經證券]  2026-05-22 15:56  閎康3度加碼投資台灣　擬投7億打造AI智慧檢測實驗室
+  [12] 0.305  [SCMP Business]  2026-05-22 05:30  Not even a quick end to Iran war can save AI stock bubble now
+
+【最終回覆】
+⚠️ 目前資料不足以直接確認此事件是否發生。
+
+📌 初步結論：目前尚未確認，因為目前沒有新聞直接支持Apple放棄AI計畫的說法。
+
+📰 目前新聞支持什麼：最近的報導顯示，Apple仍在積極推進與AI相關的計畫，包括推出結合AI的輔助功能，並強調其在隱私保護下的應用。
+
+⚠️ 尚未確認/資料不足處：目前資料不足以確認Apple是否放棄任何AI計畫。所有相關的報導均指出Apple正在進行AI技術的整合與應用，而非停止或放棄。
+
+👀 後續觀察：建議持續關注Apple的官方公告及相關技術更新，以獲取最新的發展資訊。
+─────────────────
+📰 消息來源
+・中央社 科技
+・SCMP Business
+・中央社 產經證券
+・CNA Singapore Business
+・中央社 國際
+・中央社 兩岸
+
+======================================================================
+
+[26] 中國昨天股市真的蒸發兩兆嗎？
+----------------------------------------------------------------------
+意圖：broad | 標的：— | Ticker：—| 文章：5 篇  [查證型]
+broad_query：中國股市 市場蒸發 兩兆
+Token：4,692  耗時：16s
+
+【抓到的文章 5 篇】
+  [01] 0.344  [中央社 兩岸]  2026-05-22 13:31  中國出現融資結構轉型  信貸收縮債券融資增加
+  [02] 0.324  [中央社 產經證券]  2026-05-22 14:49  中東戰爭可望結束與美科技股漲勢帶動　日股收盤勁揚
+  [03] 0.318  [Yahoo Finance]  2026-05-21 05:30  Bond yields, oil fall amid hopes for Iran deal; stocks end up with chip shares
+  [04] 0.317  [中央社 兩岸]  2026-05-22 17:21  陸股劇烈震盪後反彈  分析：AI半導體獲利了結陷整理
+  [05] 0.310  [中央社 產經證券]  2026-05-22 14:40  台股強漲899點創收盤新高　週線勁揚1095點
+
+【最終回覆】
+⚠️ 目前資料不足以直接確認此事件是否發生。
+
+📌 初步結論：目前尚未確認，目前資料不足以確認中國股市是否蒸發兩兆。
+
+📰 目前新聞支持什麼：根據報導，中國股市在21日經歷了劇烈震盪，三大指數集體大跌逾2%，上證指數失守4100點，創下近兩個月來最大單日跌幅，但並未具體提及蒸發兩兆的數字。
+
+⚠️ 尚未確認/資料不足處：目前無新聞支持「中國股市蒸發兩兆」的具體數字，且報導中提到的股市波動主要與監管消息及獲利了結有關。
+
+👀 後續觀察：建議持續關注中國股市的後續走勢及相關新聞，以獲取更準確的市場資訊。
+─────────────────
+📰 消息來源
+・中央社 兩岸
+・中央社 產經證券
+・Yahoo Finance
+
+======================================================================
+
+總結
+======================================================================
+成功：26/26
+總 Token：191,831
+總費用：$0.031957 USD
+總耗時：13m20s

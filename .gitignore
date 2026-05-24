@@ -152,6 +152,9 @@ logs/.claude/
 .claude/
 CLAUDE.md
 
+# ---- Codex ----
+AGENTS.md
+
 
 # ---- allow selected model outputs ----
 
