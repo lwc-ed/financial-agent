@@ -1,50 +1,158 @@
+import json
 import os
-from datetime import datetime
-import pytz
-from backend.models.daily_news import DailyNews
-from backend.routes.daily_news.perplexity_news import fetch_perplexity_news
-from backend.routes.daily_news.openai_news import summarize_news_with_openai
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
 
-taipei = pytz.timezone("Asia/Taipei")
+import pytz
+
+from backend.models.daily_news import DailyNews
+from backend.routes.daily_news.intent_recognizer import recognize_intent
+from backend.routes.daily_news.rss_fetcher import fetch_articles
+from backend.routes.daily_news.market_data import fetch_market_data, fetch_historical_data
+from backend.routes.daily_news.openai_news import summarize_news_with_openai
+from backend.routes.daily_news.perplexity_search import (
+    search_with_perplexity, FALLBACK_ARTICLE_THRESHOLD
+)
+
+taipei    = pytz.timezone("Asia/Taipei")
+RAW_DATA_DIR = Path(__file__).parent / "raw_data"
+RAW_DATA_DIR.mkdir(exist_ok=True)
 
 
 def get_taiwan_now():
-    # DB 欄位是 DateTime（無 timezone），這裡寫入台灣當地時間的 naive datetime
     return datetime.now(taipei).replace(tzinfo=None)
+
+
+def _save_raw_data(raw_data: dict, topic: str) -> Path:
+    """把抓到的原始資料存成 JSON 檔，供事後人工檢查或 debug。"""
+    ts       = datetime.now(tz=timezone(timedelta(hours=8))).strftime("%Y%m%d_%H%M")
+    safe_topic = topic.replace("/", "_") if topic else "general"
+    filename = RAW_DATA_DIR / f"{ts}_{safe_topic}.json"
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(raw_data, f, ensure_ascii=False, indent=2)
+    print(f"[daily_news] raw data saved → {filename}")
+    return filename
 
 
 def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
     """
-    流程：Perplexity -> 存 DB -> OpenAI -> 更新 DB -> 回傳摘要
+    Pipeline：
+      1. 意圖識別（recognize_intent）
+      2. RSS 抓文章（broad_query 向量搜尋，限 24h）
+      3. 抓今日市場數據
+      4. 具體標的 → 歷史走勢（yfinance）
+      5. 組合 raw_data，存 JSON
+      6. 文章不足（< FALLBACK_ARTICLE_THRESHOLD）→ Perplexity fallback，直接回傳
+      7. 存 DB（原始資料）
+      8. OpenAI 產生摘要
+      9. 更新 DB（摘要結果），回傳
     """
-    if not os.getenv("PERPLEXITY_API_KEY", "").strip():
-        return "目前尚未設定 Perplexity API Key，暫時無法提供每日產業新聞。"
+    normalized_topic = (topic or "").strip()
 
     try:
-        perplexity_raw = fetch_perplexity_news(topic)
-        print("[daily_news] perplexity fetched, len =", len(perplexity_raw))
+        # ── Step 1：意圖識別 ──────────────────────────────────────
+        print(f"[daily_news] recognizing intent for: {normalized_topic!r}")
+        intent = recognize_intent(normalized_topic)
 
+        # ── Step 2：抓新聞文章（用 broad_query 做向量搜尋）────────
+        search_query = intent.get("broad_query") or normalized_topic
+        print(f"[daily_news] fetching articles, query={search_query!r}")
+        articles = fetch_articles(query=search_query, hours_back=24)  # LINE 正式流程限 24h
+
+        # ── Step 3：抓今日市場數據 ────────────────────────────────
+        print("[daily_news] fetching market data")
+        market_data = fetch_market_data()
+
+        # ── Step 4：具體標的 → 抓歷史走勢 ────────────────────────
+        historical_data = None
+        if intent.get("type") == "specific" and intent.get("ticker"):
+            ticker      = intent["ticker"]
+            period_days = intent.get("period_days", 30)
+            label       = intent.get("label", ticker)
+            print(f"[daily_news] fetching historical data: {ticker} ({period_days}d)")
+            historical_data = fetch_historical_data(ticker, period_days, label)
+
+        # ── Step 5：組合 raw_data 並存 JSON ──────────────────────
+        raw_data = {
+            "topic":           normalized_topic or "綜合",
+            "intent":          intent,
+            "fetched_at":      market_data.get("fetched_at", ""),
+            "market_data":     market_data,
+            "historical_data": historical_data,
+            "articles":        articles,
+        }
+        _save_raw_data(raw_data, normalized_topic or "general")
+
+        # ── Step 6：文章不足 → Perplexity fallback ────────────────
+        is_verification = intent.get("is_verification", False)
+        # 查證型：文章 < 2 就觸發（即使有歷史數據也不例外）
+        # 一般型：文章 < 3 且無歷史數據才觸發
+        need_fallback = (
+            (is_verification and len(articles) < 2)
+            or (not is_verification and len(articles) < FALLBACK_ARTICLE_THRESHOLD and not historical_data)
+        )
+        if need_fallback:
+            print(f"[daily_news] articles={len(articles)} < {FALLBACK_ARTICLE_THRESHOLD}, "
+                  f"triggering Perplexity fallback (query={normalized_topic!r})")
+            try:
+                perplexity_response, perplexity_evidence = search_with_perplexity(
+                    query=normalized_topic,           # 使用原始使用者輸入
+                    article_count=len(articles),
+                )
+                # 存 DB（保留完整 evidence，citation chain 不斷）
+                row = DailyNews(
+                    user_id=user_id,
+                    perplexity_scraper={
+                        "articles":           articles,
+                        "market_data":        market_data,
+                        "fallback":           "perplexity",
+                        "perplexity_evidence": perplexity_evidence,  # 完整 citation chain
+                    },
+                    gpt_response={"content": perplexity_response},
+                    created_at=get_taiwan_now(),
+                )
+                db.add(row)
+                db.commit()
+                print(f"[daily_news] perplexity fallback saved, no={row.no}")
+                return perplexity_response
+            except Exception as pe:
+                print(f"[daily_news] perplexity fallback error: {repr(pe)}")
+                # fallback 失敗 → 如果完全沒有文章，回傳提示
+                if not articles and not historical_data:
+                    return "今日暫無符合主題的最新財經新聞，請稍後再試或換個主題。"
+                # 否則繼續走 OpenAI 路線（用現有少量文章）
+
+        if not articles and not historical_data:
+            return "今日暫無符合主題的最新財經新聞，請稍後再試或換個主題。"
+
+        # ── Step 7：存 DB（原始資料） ─────────────────────────────
         row = DailyNews(
             user_id=user_id,
-            perplexity_scraper={"content": perplexity_raw},
+            perplexity_scraper={"articles": articles, "market_data": market_data},
             gpt_response={"content": ""},
             created_at=get_taiwan_now(),
         )
         db.add(row)
         db.commit()
         db.refresh(row)
-        print("[daily_news] raw saved, no =", row.no)
+        print(f"[daily_news] raw saved, no={row.no}")
 
-        gpt_response = summarize_news_with_openai(perplexity_raw, topic)
-        print("[daily_news] openai summarized, len =", len(gpt_response))
+        # ── Step 8：送 GPT 產生報告 ───────────────────────────────
+        print("[daily_news] summarizing with openai")
+        gpt_response, token_info = summarize_news_with_openai(raw_data, normalized_topic)
+        total_k = round(token_info["total_tokens"] / 1000, 1)
+        print(f"[daily_news] openai done, len={len(gpt_response)}")
+        print(f"[daily_news] 本次token使用量：{total_k} k")
+
+        # ── Step 9：更新 DB（摘要結果） ───────────────────────────
         row.gpt_response = {"content": gpt_response}
-        row.created_at = get_taiwan_now()
+        row.created_at   = get_taiwan_now()
         db.commit()
-        print("[daily_news] summary saved, no =", row.no)
+        print(f"[daily_news] summary saved, no={row.no}")
 
         return gpt_response
 
     except Exception as e:
         db.rollback()
-        print("[daily_news] pipeline error:", repr(e))
+        print(f"[daily_news] pipeline error: {repr(e)}")
         return "每日產業新聞處理失敗，請稍後再試一次。"
