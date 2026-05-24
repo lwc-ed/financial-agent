@@ -259,7 +259,7 @@ def build_user_scale_map(raw_val_pred: np.ndarray, val_input_df: pd.DataFrame, s
         )
     return scales
 
-def apply_user_scales(raw_pred: np.ndarray, user_ids: pd.Series | np.ndarray, user_scales: dict) -> np.ndarray:
+def apply_user_scales(raw_pred: np.ndarray, user_ids, user_scales: dict) -> np.ndarray:
     raw_pred = np.asarray(raw_pred, dtype=float).ravel()
     users = pd.Series(user_ids, dtype=str).to_numpy()
     calibrated = raw_pred.copy()
@@ -267,7 +267,7 @@ def apply_user_scales(raw_pred: np.ndarray, user_ids: pd.Series | np.ndarray, us
         calibrated[idx] = raw_pred[idx] * user_scales.get(str(user_id), 1.0)
     return np.maximum(calibrated, 0.0)
 
-def apply_user_scales_to_scaled_preds(seed_preds_dict: dict, user_scales_by_seed: dict, user_ids: pd.Series | np.ndarray) -> dict:
+def apply_user_scales_to_scaled_preds(seed_preds_dict: dict, user_scales_by_seed: dict, user_ids) -> dict:
     calibrated = {}
     for seed, scaled_pred in seed_preds_dict.items():
         raw_pred = target_scaler.inverse_transform(scaled_pred).ravel()
