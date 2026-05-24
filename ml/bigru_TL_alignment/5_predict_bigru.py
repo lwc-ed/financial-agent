@@ -46,6 +46,7 @@ HIDDEN_SIZE = 48
 NUM_LAYERS = 2
 DROPOUT = 0.4
 OUTPUT_SIZE = 1
+SENSITIVITY_EXCLUDE_USER_IDS = ["user14"]
 
 print("📂 載入資料...")
 X_val = np.load(ARTIFACTS_DIR / "personal_X_val.npy")
@@ -147,5 +148,31 @@ compute_per_seed_metrics(
     split_metadata_df=split_metadata_df,
     output_dir=ML_ROOT / "model_outputs" / "bigru_TL_alignment",
 )
+
+if SENSITIVITY_EXCLUDE_USER_IDS:
+    suffix = "exclude_" + "_".join(SENSITIVITY_EXCLUDE_USER_IDS)
+    sensitivity_model_name = f"bigru_TL_alignment_{suffix}"
+    keep_mask = ~prediction_input_df["user_id"].astype(str).isin(SENSITIVITY_EXCLUDE_USER_IDS)
+    keep_mask_np = keep_mask.to_numpy()
+    sensitivity_prediction_input_df = prediction_input_df.loc[keep_mask].reset_index(drop=True)
+    sensitivity_seed_preds_all = {
+        seed: preds[keep_mask_np]
+        for seed, preds in test_preds_all.items()
+    }
+
+    print(f"\n📊 [Sensitivity] 排除 {SENSITIVITY_EXCLUDE_USER_IDS} 後重新輸出指標...")
+    run_output_evaluation(
+        model_name=sensitivity_model_name,
+        prediction_input_df=sensitivity_prediction_input_df,
+        split_metadata_df=split_metadata_df
+    )
+    compute_per_seed_metrics(
+        seed_preds_dict=sensitivity_seed_preds_all,
+        target_scaler=target_scaler,
+        prediction_input_df=sensitivity_prediction_input_df,
+        split_metadata_df=split_metadata_df,
+        output_dir=ML_ROOT / "model_outputs" / sensitivity_model_name,
+    )
+
 print(f"\n✅ 所有正式評估檔案已儲存至: {ML_ROOT}/model_outputs/bigru_TL_alignment/")
 print("🎉 bigru_TL_alignment 期末考完成！")
