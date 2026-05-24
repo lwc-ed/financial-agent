@@ -52,6 +52,7 @@ SEEDS = [
     11, 22, 33, 44, 55, 66, 77, 88, 99,
     111, 222, 333, 444, 555, 666,
 ]
+SENSITIVITY_EXCLUDE_USER_IDS = ["user14"]
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -148,6 +149,31 @@ def main():
         split_metadata_df=split_metadata_df,
         output_dir=Path(__file__).resolve().parents[1] / "model_outputs" / "bigru",
     )
+
+    if SENSITIVITY_EXCLUDE_USER_IDS:
+        suffix = "exclude_" + "_".join(SENSITIVITY_EXCLUDE_USER_IDS)
+        sensitivity_model_name = f"bigru_{suffix}"
+        keep_mask = ~prediction_input_df["user_id"].astype(str).isin(SENSITIVITY_EXCLUDE_USER_IDS)
+        keep_mask_np = keep_mask.to_numpy()
+        sensitivity_prediction_input_df = prediction_input_df.loc[keep_mask].reset_index(drop=True)
+        sensitivity_seed_preds_all = {
+            seed: preds[keep_mask_np]
+            for seed, preds in test_preds_all.items()
+        }
+
+        print(f"\n📊 [Sensitivity] 排除 {SENSITIVITY_EXCLUDE_USER_IDS} 後重新輸出指標...")
+        run_output_evaluation(
+            model_name=sensitivity_model_name,
+            prediction_input_df=sensitivity_prediction_input_df,
+            split_metadata_df=split_metadata_df,
+        )
+        compute_per_seed_metrics(
+            seed_preds_dict=sensitivity_seed_preds_all,
+            target_scaler=target_scaler,
+            prediction_input_df=sensitivity_prediction_input_df,
+            split_metadata_df=split_metadata_df,
+            output_dir=Path(__file__).resolve().parents[1] / "model_outputs" / sensitivity_model_name,
+        )
 
     print("🎉 標準版 Bi-GRU baseline 評估完成。")
 

@@ -40,6 +40,7 @@ DIRECTION = {
 
 PAIRS = [
     ("bigru",  "bigru_TL_alignment"),
+    ("bigru_exclude_user14", "bigru_TL_alignment_exclude_user14"),
     ("bilstm", "bilstm_TL_alignment"),
     ("gru",    "gru_TL_alignment"),
 ]

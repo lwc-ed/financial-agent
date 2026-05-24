@@ -18,6 +18,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader, TensorDataset
 from collections import Counter
 import os, sys
+
 sys.path.insert(0, os.path.dirname(__file__))
 from alignment_utils import ALIGNED_FEATURE_COLS
 
@@ -48,11 +49,14 @@ SEEDS = [
 
 # ── 設備 ──────────────────────────────────────────────────────────────────────
 if torch.cuda.is_available():
-    device = torch.device("cuda"); print("✅ CUDA")
+    device = torch.device("cuda")
+    print("✅ CUDA")
 elif torch.backends.mps.is_available():
-    device = torch.device("mps");  print("✅ Apple M1 MPS")
+    device = torch.device("mps")
+    print("✅ Apple M1 MPS")
 else:
-    device = torch.device("cpu");  print("⚠️  CPU")
+    device = torch.device("cpu")
+    print("⚠️  CPU")
 
 # ── 載入資料 ──────────────────────────────────────────────────────────────────
 print("📂 載入個人資料...")
@@ -62,16 +66,22 @@ X_val        = np.load(f"{ARTIFACTS_DIR}/personal_X_val.npy")
 y_val        = np.load(f"{ARTIFACTS_DIR}/personal_y_val.npy")
 train_labels = np.load(f"{ARTIFACTS_DIR}/personal_y_train_risk_labels.npy")
 val_labels   = np.load(f"{ARTIFACTS_DIR}/personal_y_val_risk_labels.npy")
+
 print(f"  X_train: {X_train.shape}  X_val: {X_val.shape}")
 print(f"  Train risk 分佈: {dict(sorted(Counter(train_labels.tolist()).items()))}")
 
 # ── Class weights（處理樣本不平衡）───────────────────────────────────────────
 label_counts  = Counter(train_labels.tolist())
 total_samples = len(train_labels)
+
 class_weights = torch.tensor(
-    [total_samples / (NUM_CLASSES * label_counts.get(i, 1)) for i in range(NUM_CLASSES)],
+    [
+        total_samples / (NUM_CLASSES * label_counts.get(i, 1))
+        for i in range(NUM_CLASSES)
+    ],
     dtype=torch.float32
 )
+
 print(f"  Focal class weights: {class_weights.numpy().round(2)}")
 
 
@@ -82,8 +92,13 @@ class FocalLoss(nn.Module):
         self.weight = weight
 
     def forward(self, logits, targets):
-        ce   = F.cross_entropy(logits, targets, weight=self.weight, reduction="none")
-        pt   = torch.exp(-ce)
+        ce = F.cross_entropy(
+            logits,
+            targets,
+            weight=self.weight,
+            reduction="none"
+        )
+        pt = torch.exp(-ce)
         return (((1 - pt) ** self.gamma) * ce).mean()
 
 
@@ -91,11 +106,16 @@ class FocalLoss(nn.Module):
 class BiLSTMWithAttentionMT(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, output_size, dropout, num_classes=4):
         super().__init__()
+
         self.lstm = nn.LSTM(
-            input_size, hidden_size, num_layers,
-            batch_first=True, bidirectional=True,
+            input_size,
+            hidden_size,
+            num_layers,
+            batch_first=True,
+            bidirectional=True,
             dropout=dropout if num_layers > 1 else 0
         )
+
         bi_hidden       = hidden_size * 2
         self.attention  = nn.Linear(bi_hidden, 1)
         self.layer_norm = nn.LayerNorm(bi_hidden)
@@ -121,12 +141,22 @@ class BiLSTMWithAttentionMT(nn.Module):
 def load_pretrained_mt():
     """載入 pretrain 權重，新增分類頭（隨機初始化）"""
     ckpt  = torch.load(f"{ARTIFACTS_DIR}/pretrain_bilstm.pth", map_location=device)
-    model = BiLSTMWithAttentionMT(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT, NUM_CLASSES)
+    model = BiLSTMWithAttentionMT(
+        INPUT_SIZE,
+        HIDDEN_SIZE,
+        NUM_LAYERS,
+        OUTPUT_SIZE,
+        DROPOUT,
+        NUM_CLASSES
+    )
+
     pretrained = ckpt["model_state"]
     current    = model.state_dict()
+
     for k, v in pretrained.items():
         if k in current:
             current[k] = v
+
     model.load_state_dict(current)
     return model
 
@@ -149,27 +179,44 @@ for seed in SEEDS:
     torch.manual_seed(seed)
     np.random.seed(seed)
 
-    model          = load_pretrained_mt().to(device)
-    huber_crit     = nn.HuberLoss(delta=HUBER_DELTA)
-    ce_crit        = FocalLoss(gamma=FOCAL_GAMMA, weight=class_weights.to(device))
-    optimizer      = torch.optim.AdamW(model.parameters(), lr=LEARNING_RATE, weight_decay=WEIGHT_DECAY)
-    scheduler      = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=7)
+    model      = load_pretrained_mt().to(device)
+    huber_crit = nn.HuberLoss(delta=HUBER_DELTA)
+    ce_crit    = FocalLoss(
+        gamma=FOCAL_GAMMA,
+        weight=class_weights.to(device)
+    )
+
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=LEARNING_RATE,
+        weight_decay=WEIGHT_DECAY
+    )
+
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer,
+        mode="min",
+        factor=0.5,
+        patience=7
+    )
 
     train_loader = DataLoader(
         TensorDataset(
-            torch.tensor(X_train),
-            torch.tensor(y_train),
+            torch.tensor(X_train, dtype=torch.float32),
+            torch.tensor(y_train, dtype=torch.float32),
             torch.tensor(train_labels, dtype=torch.long),
         ),
-        batch_size=BATCH_SIZE, shuffle=True
+        batch_size=BATCH_SIZE,
+        shuffle=True
     )
+
     val_loader = DataLoader(
         TensorDataset(
-            torch.tensor(X_val),
-            torch.tensor(y_val),
+            torch.tensor(X_val, dtype=torch.float32),
+            torch.tensor(y_val, dtype=torch.float32),
             torch.tensor(val_labels, dtype=torch.long),
         ),
-        batch_size=BATCH_SIZE, shuffle=False
+        batch_size=BATCH_SIZE,
+        shuffle=False
     )
 
     best_val_loss    = float("inf")
@@ -177,49 +224,76 @@ for seed in SEEDS:
 
     for epoch in range(1, EPOCHS + 1):
         model.train()
-        epoch_huber = epoch_cls = 0.0
+        epoch_huber = 0.0
+        epoch_cls   = 0.0
 
         for X_b, y_b, lbl_b in train_loader:
-            X_b, y_b, lbl_b = X_b.to(device), y_b.to(device), lbl_b.to(device)
+            X_b   = X_b.to(device)
+            y_b   = y_b.to(device)
+            lbl_b = lbl_b.to(device)
+
             optimizer.zero_grad()
+
             reg_out, cls_out = model(X_b)
+
             h_loss = huber_crit(reg_out, y_b)
             c_loss = ce_crit(cls_out, lbl_b)
-            loss   = h_loss + MT_ALPHA * c_loss
+
+            loss = h_loss + MT_ALPHA * c_loss
+
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
             optimizer.step()
+
             epoch_huber += h_loss.item()
             epoch_cls   += c_loss.item()
 
         epoch_huber /= len(train_loader)
         epoch_cls   /= len(train_loader)
 
+        # ── Validation：原本版本，只看 regression HuberLoss ────────────────
         model.eval()
         val_loss = 0.0
+
         with torch.no_grad():
             for X_b, y_b, lbl_b in val_loader:
-                reg_out, _ = model(X_b.to(device))
-                val_loss  += huber_crit(reg_out, y_b.to(device)).item()
+                X_b = X_b.to(device)
+                y_b = y_b.to(device)
+
+                reg_out, _ = model(X_b)
+                val_loss += huber_crit(reg_out, y_b).item()
+
         val_loss /= len(val_loader)
 
         scheduler.step(val_loss)
+
         if epoch % 10 == 0:
             lr = optimizer.param_groups[0]["lr"]
-            print(f"  Epoch {epoch:3d}  Huber: {epoch_huber:.4f}  CE: {epoch_cls:.4f}  Val: {val_loss:.6f}  LR: {lr:.2e}")
+            print(
+                f"  Epoch {epoch:3d}  "
+                f"Huber: {epoch_huber:.4f}  "
+                f"CE: {epoch_cls:.4f}  "
+                f"Val: {val_loss:.6f}  "
+                f"LR: {lr:.2e}"
+            )
 
         if val_loss < best_val_loss:
             best_val_loss    = val_loss
             patience_counter = 0
-            torch.save({
-                "epoch"      : epoch,
-                "model_state": model.state_dict(),
-                "val_loss"   : best_val_loss,
-                "seed"       : seed,
-                "version"    : "ibm_finetune_mt",
-            }, save_path)
+
+            torch.save(
+                {
+                    "epoch"      : epoch,
+                    "model_state": model.state_dict(),
+                    "val_loss"   : best_val_loss,
+                    "seed"       : seed,
+                    "version"    : "ibm_finetune_mt",
+                },
+                save_path
+            )
         else:
             patience_counter += 1
+
             if patience_counter >= PATIENCE:
                 print(f"\n  ⏹️  Early stopping")
                 break
