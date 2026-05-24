@@ -9,7 +9,9 @@ Step 4：BiGRU Aligned Finetune (方案 2：兩階段訓練終極版)
 
 import os
 import sys
+import pickle
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
@@ -19,10 +21,27 @@ from pathlib import Path
 MY_DIR = Path(__file__).resolve().parent
 ARTIFACTS_DIR = MY_DIR / "artifacts_bigru_tl"
 ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
+ML_UTILS_DIR = MY_DIR.parents[1] / "ml"
 
 sys.path.insert(0, str(MY_DIR))
+sys.path.insert(0, str(ML_UTILS_DIR))
 from alignment_utils import ALIGNED_FEATURE_COLS
 from model_bigru import BiGRUWithAttention
+from output_eval_utils import (
+    _prepare_prediction_input,
+    _prepare_split_metadata,
+    _prepare_transactions,
+    build_spent_mtd_lookup,
+    compute_4class_risk_metrics,
+    compute_binary_alarm_metrics,
+    compute_future_available_7d,
+    compute_monthly_available_cash,
+    compute_regression_metrics,
+    compute_risk_ratio,
+    lookup_spent_mtd,
+    risk_ratio_to_alarm,
+    risk_ratio_to_level,
+)
 
 # ── 2. 超參數設定 ────────────────────────────────────────────────────────
 INPUT_SIZE = len(ALIGNED_FEATURE_COLS)
@@ -41,6 +60,7 @@ PHASE2_LR = 1e-5          # 極小學習率，保護 Pretrain 知識
 PATIENCE = 8
 WEIGHT_DECAY = 1e-5
 MSE_WEIGHT = 0.1          # 調低 MSE 權重，確保 MAE 不會被反噬
+SENSITIVITY_EXCLUDE_USER_IDS = ["user14"]
 
 # 保持 30 個 Seed 確保檢定公平
 SEEDS = [
@@ -62,6 +82,23 @@ X_train = np.load(ARTIFACTS_DIR / "personal_X_train.npy")
 y_train = np.load(ARTIFACTS_DIR / "personal_y_train.npy")
 X_val   = np.load(ARTIFACTS_DIR / "personal_X_val.npy")
 y_val   = np.load(ARTIFACTS_DIR / "personal_y_val.npy")
+val_user_ids = np.load(ARTIFACTS_DIR / "personal_val_user_ids.npy")
+
+with open(ARTIFACTS_DIR / "personal_target_scaler.pkl", "rb") as f:
+    target_scaler = pickle.load(f)
+y_val_raw = target_scaler.inverse_transform(y_val)
+metadata_df = pd.read_csv(ARTIFACTS_DIR / "metadata.csv")
+split_metadata_df = metadata_df[["user_id", "date", "split"]]
+val_meta = metadata_df[metadata_df["split"] == "val"].reset_index(drop=True)
+val_prediction_input_df = pd.DataFrame({
+    "user_id": val_meta["user_id"],
+    "date": val_meta["date"],
+    "y_true": y_val_raw.ravel(),
+    "y_pred": y_val_raw.ravel(),
+})
+val_keep_mask = ~val_prediction_input_df["user_id"].astype(str).isin(SENSITIVITY_EXCLUDE_USER_IDS)
+val_keep_mask_np = val_keep_mask.to_numpy()
+selection_val_input_df = val_prediction_input_df.loc[val_keep_mask].reset_index(drop=True)
 
 PRETRAIN_WEIGHT_PATH = ARTIFACTS_DIR / "pretrain_bigru.pth"
 
@@ -73,6 +110,70 @@ def load_pretrained():
     model = BiGRUWithAttention(INPUT_SIZE, HIDDEN_SIZE, NUM_LAYERS, OUTPUT_SIZE, DROPOUT)
     model.load_state_dict(ckpt["model_state"])
     return model
+
+def build_metric_context(prediction_input_df: pd.DataFrame, split_metadata_df: pd.DataFrame) -> dict:
+    pred_df = _prepare_prediction_input(prediction_input_df)
+    split_df = _prepare_split_metadata(split_metadata_df)
+    raw_txn_df = _prepare_transactions(None)
+    monthly_cash_df = compute_monthly_available_cash(raw_txn_df, split_df)
+    spent_lookup = build_spent_mtd_lookup(raw_txn_df)
+
+    base_df = pred_df.merge(monthly_cash_df, on="user_id", how="left", validate="many_to_one")
+    base_df["spent_mtd"] = base_df.apply(
+        lambda row: lookup_spent_mtd(spent_lookup, row["user_id"], row["date"]), axis=1
+    )
+    base_df["future_available_7d"] = base_df.apply(
+        lambda row: compute_future_available_7d(
+            row["date"], float(row["monthly_available_cash"]), float(row["spent_mtd"])
+        ),
+        axis=1,
+    )
+    base_df["true_risk_ratio"] = base_df.apply(
+        lambda row: compute_risk_ratio(float(row["y_true"]), float(row["future_available_7d"])),
+        axis=1,
+    )
+    return {
+        "y_true": base_df["y_true"].to_numpy(dtype=float),
+        "future_available_7d": base_df["future_available_7d"].to_numpy(dtype=float),
+        "true_alarm": base_df["true_risk_ratio"].apply(risk_ratio_to_alarm).to_numpy(dtype=int),
+        "true_level": base_df["true_risk_ratio"].apply(risk_ratio_to_level).tolist(),
+        "mae_norm": max(float(np.mean(np.abs(base_df["y_true"].to_numpy(dtype=float)))), 1.0),
+        "rmse_norm": max(float(np.sqrt(np.mean(base_df["y_true"].to_numpy(dtype=float) ** 2))), 1.0),
+    }
+
+selection_val_context = build_metric_context(selection_val_input_df, split_metadata_df)
+
+def evaluate_raw_predictions(y_pred: np.ndarray, metric_context: dict) -> dict:
+    y_pred = np.asarray(y_pred, dtype=float).ravel()
+    fav_7d = metric_context["future_available_7d"]
+    pred_ratio = np.array([compute_risk_ratio(float(p), float(f)) for p, f in zip(y_pred, fav_7d)])
+    pred_alarm = np.array([risk_ratio_to_alarm(r) for r in pred_ratio], dtype=int)
+    pred_level = [risk_ratio_to_level(r) for r in pred_ratio]
+
+    reg = compute_regression_metrics(metric_context["y_true"], y_pred)
+    bin_m = compute_binary_alarm_metrics(metric_context["true_alarm"], pred_alarm)
+    cls_m = compute_4class_risk_metrics(metric_context["true_level"], pred_level)
+    return {
+        "MAE": reg["MAE"],
+        "RMSE": reg["RMSE"],
+        "Binary_F1": bin_m["F1-score"],
+        "Weighted_F1": cls_m["Weighted F1"],
+    }
+
+def validation_selection_score(metrics: dict, metric_context: dict) -> float:
+    return (
+        0.72 * metrics["Binary_F1"]
+        + 0.18 * metrics["Weighted_F1"]
+        - 0.06 * (metrics["RMSE"] / metric_context["rmse_norm"])
+        - 0.04 * (metrics["MAE"] / metric_context["mae_norm"])
+    )
+
+def compute_validation_metrics(model: nn.Module) -> dict:
+    model.eval()
+    with torch.no_grad():
+        preds = model(torch.tensor(X_val, dtype=torch.float32).to(device)).cpu().numpy()
+    raw_pred = target_scaler.inverse_transform(preds[val_keep_mask_np]).ravel()
+    return evaluate_raw_predictions(np.maximum(raw_pred, 0.0), selection_val_context)
 
 # ── 5. 訓練迴圈 ──────────────────────────────────────────────────────────
 print(f"\n🚀 開始微調 (方案 2：兩階段解凍 + Blended Loss)...")
@@ -95,6 +196,8 @@ for seed in SEEDS:
     val_loader = DataLoader(TensorDataset(torch.tensor(X_val), torch.tensor(y_val)), batch_size=BATCH_SIZE)
 
     best_val_loss = float("inf")
+    best_val_score = -float("inf")
+    best_val_metrics = None
 
     # ==========================================
     # 🛑 Phase 1: 凍結 Encoder，只訓練 Head
@@ -125,8 +228,14 @@ for seed in SEEDS:
                 v_loss += (criterion_l1(preds_v, y_v) + MSE_WEIGHT * criterion_mse(preds_v, y_v)).item()
         v_loss /= len(val_loader)
 
-        if v_loss < best_val_loss:
+        val_metrics = compute_validation_metrics(model)
+        val_score = validation_selection_score(val_metrics, selection_val_context)
+        if (val_score > best_val_score + 1e-8) or (
+            abs(val_score - best_val_score) <= 1e-8 and v_loss < best_val_loss
+        ):
             best_val_loss = v_loss
+            best_val_score = val_score
+            best_val_metrics = val_metrics
             torch.save({"model_state": model.state_dict()}, save_path)
 
     # ==========================================
@@ -163,8 +272,15 @@ for seed in SEEDS:
         
         scheduler.step(v_loss)
 
-        if v_loss < best_val_loss:
+        val_metrics = compute_validation_metrics(model)
+        val_score = validation_selection_score(val_metrics, selection_val_context)
+
+        if (val_score > best_val_score + 1e-8) or (
+            abs(val_score - best_val_score) <= 1e-8 and v_loss < best_val_loss
+        ):
             best_val_loss = v_loss
+            best_val_score = val_score
+            best_val_metrics = val_metrics
             patience_counter = 0
             torch.save({"model_state": model.state_dict()}, save_path)
         else:
@@ -172,6 +288,15 @@ for seed in SEEDS:
             if patience_counter >= PATIENCE: 
                 break
     
-    print(f"完成！最佳 Val Loss: {best_val_loss:.6f}")
+    if best_val_metrics is None:
+        print(f"完成！最佳 Val Loss: {best_val_loss:.6f}")
+    else:
+        print(
+            f"完成！最佳 Val Score: {best_val_score:.6f} "
+            f"Val MAE: {best_val_metrics['MAE']:.2f} "
+            f"Val RMSE: {best_val_metrics['RMSE']:.2f} "
+            f"Val Binary_F1: {best_val_metrics['Binary_F1']:.4f} "
+            f"Val Weighted_F1: {best_val_metrics['Weighted_F1']:.4f}"
+        )
 
 print("\n🎉 兩階段微調結束！現在可以跑 python 5_predict_bigru.py 了！")
