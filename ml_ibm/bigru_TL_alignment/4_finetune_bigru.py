@@ -1,10 +1,10 @@
 """
-Step 4：BiGRU Aligned Finetune (方案 1 - 完全凍結 Encoder 版)
+Step 4：BiGRU Aligned Finetune (方案 2：兩階段訓練終極版)
 ==============================
 策略：
-1. 凍結 bigru、attention、layer_norm 等所有特徵萃取層 (Encoder)
-2. 只解凍並訓練 fc1, fc2 等全連接層 (Head)
-3. 使用 L1Loss 直球最佳化 MAE
+1. 兩階段訓練：Phase 1 凍結 Encoder (護腦) -> Phase 2 全局解凍微調 (適應極端值)
+2. Loss 調整：L1 + 0.1 * MSE，取得 MAE 與 RMSE 的最佳平衡
+3. 搭配 ReduceLROnPlateau 進行精細收斂
 """
 
 import os
@@ -32,17 +32,20 @@ DROPOUT = 0.4
 OUTPUT_SIZE = 1
 BATCH_SIZE = 32
 
-# 方案 1 訓練參數 (單階段，全凍結)
-EPOCHS = 50               # 讓 Head 有充足時間適應
-LEARNING_RATE = 1e-3      # 只有 FC 層要學，學習率可以給稍微大一點點
-PATIENCE = 15             # 容忍度給高一點，讓 L1 Loss 慢慢收斂
-WEIGHT_DECAY = 1e-5       # 調低正則化，避免壓抑預測數值
+# 【終極修改】兩階段訓練參數
+PHASE1_EPOCHS = 20        # Phase 1: 凍結特徵層，只練 Head
+PHASE2_EPOCHS = 25        # Phase 2: 全局解凍，微調特徵
+PHASE1_LR = 1e-3
+PHASE2_LR = 1e-5          # 極小學習率，保護 Pretrain 知識
 
+PATIENCE = 8
+WEIGHT_DECAY = 1e-5
+MSE_WEIGHT = 0.1          # 調低 MSE 權重，確保 MAE 不會被反噬
+
+# 保持 30 個 Seed 確保檢定公平
 SEEDS = [
-    42, 123, 777, 456, 789, 999, 2024,
-    0, 7, 13, 21, 100, 314, 1234, 9999,
-    11, 22, 33, 44, 55, 66, 77, 88, 99,
-    111, 222, 333, 444, 555, 666
+    42, 123, 777, 456, 789, 999, 2024, 0, 7, 13, 21, 100, 314, 1234, 9999,
+    11, 22, 33, 44, 55, 66, 77, 88, 99, 111, 222, 333, 444, 555, 666
 ]
 
 if torch.cuda.is_available():
@@ -72,7 +75,7 @@ def load_pretrained():
     return model
 
 # ── 5. 訓練迴圈 ──────────────────────────────────────────────────────────
-print(f"\n🚀 開始微調 (方案1：完全凍結 Encoder，只訓練 Head)...")
+print(f"\n🚀 開始微調 (方案 2：兩階段解凍 + Blended Loss)...")
 
 for seed in SEEDS:
     save_path = ARTIFACTS_DIR / f"finetune_bigru_seed{seed}.pth"
@@ -85,46 +88,80 @@ for seed in SEEDS:
 
     model = load_pretrained().to(device)
     
-    # 【直球對決】使用 L1 Loss 來最佳化 MAE
-    criterion = nn.L1Loss()
-    
-    # ==========================================
-    # 🛑 方案 1: 完全凍結 Encoder
-    # ==========================================
-    for name, param in model.named_parameters():
-        if "fc" not in name:  # 名稱裡沒有 fc 的一律凍結
-            param.requires_grad = False
-            
-    # Optimizer 裡面的過濾器：只給它 requires_grad=True 的參數 (即 fc1, fc2)
-    optimizer = torch.optim.AdamW(
-        filter(lambda p: p.requires_grad, model.parameters()), 
-        lr=LEARNING_RATE, 
-        weight_decay=WEIGHT_DECAY
-    )
+    criterion_l1 = nn.L1Loss()
+    criterion_mse = nn.MSELoss()
     
     train_loader = DataLoader(TensorDataset(torch.tensor(X_train), torch.tensor(y_train)), batch_size=BATCH_SIZE, shuffle=True)
     val_loader = DataLoader(TensorDataset(torch.tensor(X_val), torch.tensor(y_val)), batch_size=BATCH_SIZE)
 
     best_val_loss = float("inf")
-    patience_counter = 0
 
-    print(f"🔥 Seed {seed} 訓練中...", end=" ")
-    
-    for epoch in range(1, EPOCHS + 1):
+    # ==========================================
+    # 🛑 Phase 1: 凍結 Encoder，只訓練 Head
+    # ==========================================
+    for name, param in model.named_parameters():
+        if "fc" not in name:  
+            param.requires_grad = False
+            
+    optimizer_p1 = torch.optim.AdamW(filter(lambda p: p.requires_grad, model.parameters()), lr=PHASE1_LR, weight_decay=WEIGHT_DECAY)
+
+    print(f"🔥 Seed {seed} [Phase 1: 凍結]...", end=" ")
+    for epoch in range(1, PHASE1_EPOCHS + 1):
         model.train()
         for X_b, y_b in train_loader:
             X_b, y_b = X_b.to(device), y_b.to(device)
-            optimizer.zero_grad()
-            loss = criterion(model(X_b), y_b)
+            optimizer_p1.zero_grad()
+            preds = model(X_b)
+            loss = criterion_l1(preds, y_b) + MSE_WEIGHT * criterion_mse(preds, y_b)
             loss.backward()
-            optimizer.step()
+            optimizer_p1.step()
 
         model.eval()
         v_loss = 0.0
         with torch.no_grad():
             for X_v, y_v in val_loader:
-                v_loss += criterion(model(X_v.to(device)), y_v.to(device)).item()
+                X_v, y_v = X_v.to(device), y_v.to(device)
+                preds_v = model(X_v)
+                v_loss += (criterion_l1(preds_v, y_v) + MSE_WEIGHT * criterion_mse(preds_v, y_v)).item()
         v_loss /= len(val_loader)
+
+        if v_loss < best_val_loss:
+            best_val_loss = v_loss
+            torch.save({"model_state": model.state_dict()}, save_path)
+
+    # ==========================================
+    # 🟢 Phase 2: 全局解凍，極小學習率微調
+    # ==========================================
+    # 解凍所有層
+    for param in model.parameters():
+        param.requires_grad = True
+        
+    optimizer_p2 = torch.optim.AdamW(model.parameters(), lr=PHASE2_LR, weight_decay=WEIGHT_DECAY)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer_p2, mode='min', factor=0.5, patience=5)
+    
+    print(f"➡️ [Phase 2: 解凍]...", end=" ")
+    patience_counter = 0
+    
+    for epoch in range(1, PHASE2_EPOCHS + 1):
+        model.train()
+        for X_b, y_b in train_loader:
+            X_b, y_b = X_b.to(device), y_b.to(device)
+            optimizer_p2.zero_grad()
+            preds = model(X_b)
+            loss = criterion_l1(preds, y_b) + MSE_WEIGHT * criterion_mse(preds, y_b)
+            loss.backward()
+            optimizer_p2.step()
+
+        model.eval()
+        v_loss = 0.0
+        with torch.no_grad():
+            for X_v, y_v in val_loader:
+                X_v, y_v = X_v.to(device), y_v.to(device)
+                preds_v = model(X_v)
+                v_loss += (criterion_l1(preds_v, y_v) + MSE_WEIGHT * criterion_mse(preds_v, y_v)).item()
+        v_loss /= len(val_loader)
+        
+        scheduler.step(v_loss)
 
         if v_loss < best_val_loss:
             best_val_loss = v_loss
@@ -135,6 +172,6 @@ for seed in SEEDS:
             if patience_counter >= PATIENCE: 
                 break
     
-    print(f"完成！最佳 Val L1-Loss: {best_val_loss:.6f}")
+    print(f"完成！最佳 Val Loss: {best_val_loss:.6f}")
 
-print("\n🎉 微調流程結束！你現在可以跑 python 5_predict_bigru.py 了！")
+print("\n🎉 兩階段微調結束！現在可以跑 python 5_predict_bigru.py 了！")
