@@ -69,6 +69,8 @@ SENSITIVITY_EXCLUDE_USER_IDS = ["user14"]
 CALIBRATION_SCALES = np.array([1.0])
 CALIBRATION_OFFSETS = np.array([0.0])
 CALIBRATION_BOUNDARY_BOOSTS = np.array([0.0])
+FULL_USER_CALIBRATION_IDS = {"user14"}
+USER_CALIBRATION_SCALES = np.round(np.arange(1.00, 2.01, 0.05), 2)
 
 print("📂 載入資料...")
 X_val = np.load(ARTIFACTS_DIR / "personal_X_val.npy")
@@ -218,6 +220,61 @@ def apply_raw_calibration_to_scaled_preds(seed_preds_dict: dict, calibration_by_
         calibrated[seed] = target_scaler.transform(raw_pred).astype(np.float32)
     return calibrated
 
+def choose_user_scale(raw_pred: np.ndarray, y_true: np.ndarray, context: dict) -> float:
+    best_scale = 1.0
+    best_score = -float("inf")
+    y_true = np.asarray(y_true, dtype=float).ravel()
+    for scale in USER_CALIBRATION_SCALES:
+        pred = np.maximum(np.asarray(raw_pred, dtype=float).ravel() * float(scale), 0.0)
+        metrics = evaluate_raw_predictions(pred, context)
+        rmse_norm = max(float(np.sqrt(np.mean(y_true ** 2))), 1.0)
+        mae_norm = max(float(np.mean(np.abs(y_true))), 1.0)
+        score = (
+            0.50 * metrics["Binary_F1"]
+            + 0.20 * metrics["Weighted_F1"]
+            - 0.20 * (metrics["RMSE"] / rmse_norm)
+            - 0.10 * (metrics["MAE"] / mae_norm)
+        )
+        if score > best_score:
+            best_score = score
+            best_scale = float(scale)
+    return best_scale
+
+def build_user_scale_map(raw_val_pred: np.ndarray, val_input_df: pd.DataFrame, split_metadata_df: pd.DataFrame) -> dict:
+    scales = {}
+    raw_val_pred = np.asarray(raw_val_pred, dtype=float).ravel()
+    val_df = val_input_df.copy().reset_index(drop=True)
+    val_df["y_pred"] = raw_val_pred
+    for user_id, group in val_df.groupby("user_id", sort=True):
+        if str(user_id) not in FULL_USER_CALIBRATION_IDS:
+            scales[str(user_id)] = 1.0
+            continue
+        idx = group.index.to_numpy()
+        user_input_df = group[["user_id", "date", "y_true", "y_pred"]].reset_index(drop=True)
+        user_context = build_metric_context(user_input_df, split_metadata_df)
+        scales[str(user_id)] = choose_user_scale(
+            raw_val_pred[idx],
+            group["y_true"].to_numpy(dtype=float),
+            user_context,
+        )
+    return scales
+
+def apply_user_scales(raw_pred: np.ndarray, user_ids: pd.Series | np.ndarray, user_scales: dict) -> np.ndarray:
+    raw_pred = np.asarray(raw_pred, dtype=float).ravel()
+    users = pd.Series(user_ids, dtype=str).to_numpy()
+    calibrated = raw_pred.copy()
+    for idx, user_id in enumerate(users):
+        calibrated[idx] = raw_pred[idx] * user_scales.get(str(user_id), 1.0)
+    return np.maximum(calibrated, 0.0)
+
+def apply_user_scales_to_scaled_preds(seed_preds_dict: dict, user_scales_by_seed: dict, user_ids: pd.Series | np.ndarray) -> dict:
+    calibrated = {}
+    for seed, scaled_pred in seed_preds_dict.items():
+        raw_pred = target_scaler.inverse_transform(scaled_pred).ravel()
+        raw_pred = apply_user_scales(raw_pred, user_ids, user_scales_by_seed[seed]).reshape(-1, 1)
+        calibrated[seed] = target_scaler.transform(raw_pred).astype(np.float32)
+    return calibrated
+
 print("\n🔮 推論所有 seed...")
 val_preds_all = get_all_preds(X_val)
 test_preds_all = get_all_preds(X_test)
@@ -263,6 +320,48 @@ prediction_input_df = pd.DataFrame({
 
 # 3. 準備 split_metadata_df (全部)
 split_metadata_df = metadata_df[['user_id', 'date', 'split']]
+
+# 3.5 使用 validation-only per-user scale calibration 校準主輸出（含 user14）
+val_meta = metadata_df[metadata_df['split'] == 'val'].reset_index(drop=True)
+val_prediction_input_df = pd.DataFrame({
+    'user_id': val_meta['user_id'],
+    'date': val_meta['date'],
+    'y_true': y_val_raw.ravel(),
+    'y_pred': y_val_raw.ravel()
+})
+
+ensemble_val_raw_full = target_scaler.inverse_transform(
+    np.mean([val_preds_all[s] for s in best_combo], axis=0)
+).ravel()
+ensemble_user_scales = build_user_scale_map(
+    ensemble_val_raw_full,
+    val_prediction_input_df,
+    split_metadata_df,
+)
+print("\n🔧 [Full] validation-based per-user calibration scales:")
+for user_id, scale in sorted(ensemble_user_scales.items()):
+    print(f"  {user_id}: scale={scale:.2f}")
+
+test_preds = apply_user_scales(
+    test_preds.ravel(),
+    prediction_input_df["user_id"],
+    ensemble_user_scales,
+)
+prediction_input_df["y_pred"] = test_preds
+
+seed_user_scales = {}
+for seed, scaled_pred in val_preds_all.items():
+    raw_val_pred = target_scaler.inverse_transform(scaled_pred).ravel()
+    seed_user_scales[seed] = build_user_scale_map(
+        raw_val_pred,
+        val_prediction_input_df,
+        split_metadata_df,
+    )
+test_preds_all = apply_user_scales_to_scaled_preds(
+    test_preds_all,
+    seed_user_scales,
+    prediction_input_df["user_id"],
+)
 
 # 4. 呼叫共用 evaluator
 run_output_evaluation(

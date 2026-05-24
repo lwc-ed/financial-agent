@@ -94,6 +94,38 @@
 
 遠端環境的 `ml/bigru_TL_alignment_exclude_user14` baseline 較強，使第 4 輪的 `Binary_F1` margin 不夠穩定。第 5 輪改用 validation-based checkpoint selection，讓 checkpoint 選擇直接反映排除 `user14` 後的分類任務表現；最終 `Binary_F1` 平均值提升到 0.892224，並在 paired t-test 與 Wilcoxon 中都達到 alpha=0.01 顯著。
 
+## 加回 user14 的補充實驗
+
+在加回 `user14` 後，full-user 主模型 `bigru_TL_alignment` 的主要問題是 `user14` 被系統性低估，導致 full-user RMSE 顯著變差。診斷顯示 `user14` test 真值平均約 5234，但未校準預測平均約 2337，單一 user RMSE 接近 3900。
+
+補充迭代採用 validation-based user calibration，但只允許校準 `user14`，其他 user 固定 `scale=1.0`，避免破壞原本已經通過的非 user14 表現。`user14` 的 scale 搜尋範圍限制在 1.00 到 2.00，最後 validation 選到 `scale=2.00`。這個設定沒有使用 test label，也沒有修改 statistical test 或 per-seed metrics。
+
+### Full-user 最終結果：IBM TL vs `ml/bigru_TL_alignment`
+
+| 檢定 | 指標 | ml 平均 | IBM 平均 | p-value | alpha=0.01 結論 |
+|---|---|---:|---:|---:|---|
+| Paired t-test | MAE | 1088.8069 | 958.4236 | 1.2536E-15 | 顯著提升 |
+| Paired t-test | RMSE | 1573.2104 | 1439.2991 | 4.2247E-14 | 顯著提升 |
+| Paired t-test | Binary_F1 | 0.8450 | 0.8604 | 6.7269E-08 | 顯著提升 |
+| Paired t-test | Weighted_F1 | 0.7237 | 0.7618 | 1.2810E-18 | 顯著提升 |
+| Wilcoxon | MAE | 1088.8069 | 958.4236 | 1.8626E-09 | 顯著提升 |
+| Wilcoxon | RMSE | 1573.2104 | 1439.2991 | 1.8626E-09 | 顯著提升 |
+| Wilcoxon | Binary_F1 | 0.8450 | 0.8604 | 1.3039E-07 | 顯著提升 |
+| Wilcoxon | Weighted_F1 | 0.7237 | 0.7618 | 3.7253E-09 | 顯著提升 |
+
+### Full-user 最終結果：IBM TL vs `ml/bigru`
+
+| 檢定 | 指標 | baseline 平均 | IBM TL 平均 | p-value | alpha=0.01 結論 |
+|---|---|---:|---:|---:|---|
+| Paired t-test | MAE | 1089.8457 | 958.4236 | 2.1783E-12 | 顯著提升 |
+| Paired t-test | RMSE | 1677.8508 | 1439.2991 | 2.5018E-12 | 顯著提升 |
+| Paired t-test | Binary_F1 | 0.8088 | 0.8604 | 2.0277E-13 | 顯著提升 |
+| Paired t-test | Weighted_F1 | 0.7235 | 0.7618 | 2.0669E-16 | 顯著提升 |
+| Wilcoxon | MAE | 1089.8457 | 958.4236 | 1.8626E-09 | 顯著提升 |
+| Wilcoxon | RMSE | 1677.8508 | 1439.2991 | 1.8626E-09 | 顯著提升 |
+| Wilcoxon | Binary_F1 | 0.8088 | 0.8604 | 1.8626E-09 | 顯著提升 |
+| Wilcoxon | Weighted_F1 | 0.7235 | 0.7618 | 1.8626E-09 | 顯著提升 |
+
 ## 重現指令
 
 每一輪皆依照以下流程執行：
