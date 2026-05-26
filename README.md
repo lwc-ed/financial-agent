@@ -221,7 +221,7 @@ python3 app.py
 
 ## 🖥 EC2 SSH
 ```bash
-ssh ubuntu@52.14.215.164
+ssh ubuntu@3.137.145.151
 ```
 
 ## 🗄 RDS MySQL
