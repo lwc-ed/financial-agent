@@ -12,7 +12,7 @@ from langchain_chroma import Chroma
 
 PDF_PATH   = Path(__file__).parent / "knowledge" / "Financial_knowledge_final.pdf"
 CHROMA_DIR = Path(__file__).parent / "knowledge" / "chroma_db"
-MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+MODEL_NAME = "google/embeddinggemma-300m"
 CHUNK_SIZE = 500
 OVERLAP    = 50
 
