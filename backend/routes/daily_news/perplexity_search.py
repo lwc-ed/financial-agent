@@ -130,8 +130,12 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
 
     raw_content = (response.choices[0].message.content or "").strip()
 
-    # ── 印出 token 用量 ───────────────────────────────────────────
+    # ── 取 token 用量 ────────────────────────────────────────────
     usage = getattr(response, "usage", None)
+    perplexity_token_info = {
+        "prompt_tokens":     usage.prompt_tokens     if usage else 0,
+        "completion_tokens": usage.completion_tokens if usage else 0,
+    }
     if usage:
         print(f"[perplexity] tokens: prompt={usage.prompt_tokens}, "
               f"completion={usage.completion_tokens}, total={usage.total_tokens}")
@@ -163,4 +167,4 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
         "raw_response":      raw_content,            # Perplexity 原始回覆
     }
 
-    return raw_content, evidence
+    return raw_content, evidence, perplexity_token_info

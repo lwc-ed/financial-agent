@@ -12,6 +12,7 @@ from backend.models.wishlist import Wishlist
 from backend.models.record import Record
 from backend.routes.daily_news.daily_news_service import run_daily_news_pipeline
 from backend.tax.tax_calculator import calculate_taiwan_tax_2026
+from backend.utils.token_tracker import upsert_pipeline_tokens, is_over_daily_limit
 from sqlalchemy import desc
 from openai import OpenAI
 from datetime import datetime
@@ -263,7 +264,7 @@ TOOLS = [
 
 
 def orchestrate(user_msg: str) -> dict:
-    """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict}"""
+    """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict, "token_info": dict}"""
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -271,14 +272,19 @@ def orchestrate(user_msg: str) -> dict:
             tools=TOOLS,
             tool_choice="required",
         )
+        usage = response.usage
         tool_call = response.choices[0].message.tool_calls[0]
         return {
             "intent": tool_call.function.name,
             "params": json.loads(tool_call.function.arguments),
+            "token_info": {
+                "prompt_tokens":     usage.prompt_tokens     if usage else 0,
+                "completion_tokens": usage.completion_tokens if usage else 0,
+            },
         }
     except Exception as e:
         print("[orchestrate] error:", repr(e))
-        return {"intent": "unknown", "params": {}}
+        return {"intent": "unknown", "params": {}, "token_info": {"prompt_tokens": 0, "completion_tokens": 0}}
 
 
 def _reply(reply_token: str, text: str):
@@ -308,21 +314,32 @@ def _push(line_user_id: str, text: str):
         print("[linebot] push failed:", repr(e))
 
 
-def process_credit_card_query(user_msg: str) -> str:
-    """信用卡回饋查詢：GPT 解析品牌 → 查 DB → GPT 生成回覆"""
+def process_credit_card_query(user_msg: str, line_user_id: str | None = None) -> str:
+    """信用卡回饋查詢：GPT 解析品牌 → 查 DB → GPT 生成回覆，pipeline 結束後統一記錄 token。"""
     from backend.ai.ai_parser import normalize_input
     from backend.ai.benefit_query import query_benefits
     from backend.ai.format_benefit_summary import build_summary
     from backend.ai.ai_reply import generate_reply
 
-    parsed    = normalize_input(user_msg)
-    results   = query_benefits(
+    parsed, parser_tokens = normalize_input(user_msg)
+    results  = query_benefits(
         brand_name=parsed.get("brand_name"),
         category=parsed.get("category"),
         candidates=parsed.get("candidates", []),
     )
-    summary   = build_summary(parsed, results)
-    return generate_reply(user_msg, results, summary)
+    summary  = build_summary(parsed, results)
+    reply, reply_tokens = generate_reply(user_msg, results, summary)
+
+    if line_user_id:
+        upsert_pipeline_tokens(
+            line_user_id=line_user_id,
+            source="credit_card",
+            model_openai="gpt-4o-mini",
+            openai_prompt=parser_tokens["prompt_tokens"] + reply_tokens["prompt_tokens"],
+            openai_completion=parser_tokens["completion_tokens"] + reply_tokens["completion_tokens"],
+        )
+
+    return reply
 
 
 @linebot_bp.route("/callback", methods=["POST"])
@@ -343,6 +360,13 @@ def handle_message(event):
     user_msg     = event.message.text
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
+
+    # ---------- Daily token 用量限制 ----------
+    if is_over_daily_limit(line_user_id):
+        _reply(event.reply_token, "⚠️ 您今日的使用量已達上限，請明日再試。")
+        db.close()
+        return
+    # ---------- Daily token 用量限制結束 ----------
 
     # ---------- Google 綁定檢查 ----------
     user = db.query(User).filter_by(line_user_id=line_user_id).first()
@@ -414,13 +438,14 @@ def handle_message(event):
     result = orchestrate(user_msg)
     intent = result["intent"]
     params = result["params"]
+    orchestrate_tokens = result["token_info"]
     print(f"[orchestrate] intent={intent}, params={params}")
 
     if intent == "credit_card":
         _reply(event.reply_token, "🔍 正在為您查詢中，請稍候…")
         query = params.get("query", user_msg)
         threading.Thread(
-            target=lambda: _push(line_user_id, process_credit_card_query(query)),
+            target=lambda: _push(line_user_id, process_credit_card_query(query, line_user_id=line_user_id)),
             daemon=True,
         ).start()
 
@@ -489,7 +514,8 @@ def handle_message(event):
     elif intent == "news":
         _reply(event.reply_token, "📰 正在整理今日產業新聞，請稍候…")
         final_reply = run_daily_news_pipeline(
-            db=db, user_id=user.id, topic=params.get("topic", "綜合財經"), user_msg=user_msg
+            db=db, user_id=user.id, topic=params.get("topic", "綜合財經"),
+            user_msg=user_msg, line_user_id=line_user_id,
         )
         _push(line_user_id, final_reply)
 
@@ -527,6 +553,16 @@ def handle_message(event):
                "🧮 所得稅試算（例如：幫我算所得稅，年收入80萬）\n"
                "📊 投資風險屬性測驗（例如：幫我做投資風險評估）\n"
                "📚 金融知識問答（例如：什麼是ETF？複利怎麼算？）")
+
+    # ---------- Token 用量記錄（credit_card / news 各自已記，其他 intent 記 orchestrate） ----------
+    if intent not in ("credit_card", "news"):
+        upsert_pipeline_tokens(
+            line_user_id=line_user_id,
+            source=intent,
+            model_openai="gpt-4o-mini",
+            openai_prompt=orchestrate_tokens["prompt_tokens"],
+            openai_completion=orchestrate_tokens["completion_tokens"],
+        )
 
     user.last_activity_time = datetime.now(taipei)
     db.commit()

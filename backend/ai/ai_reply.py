@@ -88,8 +88,13 @@ def generate_reply(user_input: str, query_results: list, summary: str):
             ],
             temperature=0.4
         )
-        return response.choices[0].message.content.strip()
+        usage = response.usage
+        token_info = {
+            "prompt_tokens":     usage.prompt_tokens     if usage else 0,
+            "completion_tokens": usage.completion_tokens if usage else 0,
+        }
+        return response.choices[0].message.content.strip(), token_info
 
     except Exception as e:
         print("generate_reply error:", e)
-        return "伺服器忙碌中，請稍後再試 🌀"
+        return "伺服器忙碌中，請稍後再試 🌀", {"prompt_tokens": 0, "completion_tokens": 0}

@@ -13,6 +13,7 @@ from backend.routes.daily_news.openai_news import summarize_news_with_openai
 from backend.routes.daily_news.perplexity_search import (
     search_with_perplexity, FALLBACK_ARTICLE_THRESHOLD
 )
+from backend.utils.token_tracker import upsert_pipeline_tokens
 
 taipei    = pytz.timezone("Asia/Taipei")
 RAW_DATA_DIR = Path(__file__).parent / "raw_data"
@@ -34,7 +35,7 @@ def _save_raw_data(raw_data: dict, topic: str) -> Path:
     return filename
 
 
-def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") -> str:
+def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "", line_user_id: str | None = None) -> str:
     """
     Pipeline：
       1. 意圖識別（recognize_intent）
@@ -84,6 +85,7 @@ def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") ->
         _save_raw_data(raw_data, normalized_topic or "general")
 
         # ── Step 6：文章不足 → Perplexity fallback ────────────────
+        perplexity_tokens = {"prompt_tokens": 0, "completion_tokens": 0}
         is_verification = intent.get("is_verification", False)
         # 查證型：文章 < 2 就觸發（即使有歷史數據也不例外）
         # 一般型：文章 < 3 且無歷史數據才觸發
@@ -95,7 +97,7 @@ def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") ->
             print(f"[daily_news] articles={len(articles)} < {FALLBACK_ARTICLE_THRESHOLD}, "
                   f"triggering Perplexity fallback (query={normalized_topic!r})")
             try:
-                perplexity_content, perplexity_evidence = search_with_perplexity(
+                perplexity_content, perplexity_evidence, perplexity_tokens = search_with_perplexity(
                     query=user_msg or normalized_topic,
                     article_count=len(articles),
                 )
@@ -139,6 +141,19 @@ def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") ->
         row.created_at   = get_taiwan_now()
         db.commit()
         print(f"[daily_news] summary saved, no={row.no}")
+
+        # ── Step 10：記錄 token 用量 ─────────────────────────────
+        if line_user_id:
+            upsert_pipeline_tokens(
+                line_user_id=line_user_id,
+                source="daily_news",
+                model_openai="gpt-4o-mini",
+                openai_prompt=token_info["prompt_tokens"],
+                openai_completion=token_info["completion_tokens"],
+                model_perplexity="sonar" if perplexity_tokens["prompt_tokens"] > 0 else None,
+                perplexity_prompt=perplexity_tokens["prompt_tokens"],
+                perplexity_completion=perplexity_tokens["completion_tokens"],
+            )
 
         return gpt_response
 

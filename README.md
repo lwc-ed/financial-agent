@@ -202,7 +202,7 @@ npm start
 
 ## SSH 連線
 ```bash
-ssh ubuntu@18.224.213.100
+ssh ubuntu@3.133.58.32
 ```
 
 ## 安裝套件
@@ -308,6 +308,30 @@ pip install -r requirements.txt
 ```bash
 sudo timedatectl set-timezone Asia/Taipei
 ```
+
+---
+
+# 🔑 API Token 使用總覽
+
+各 pipeline 完成後會向 `user_token_logs` table 寫入一筆 token 用量紀錄（source = pipeline 名稱）。
+
+| Pipeline（source） | 觸發方式 | OpenAI 用量 | Perplexity 用量 |
+|---|---|---|---|
+| `credit_card` | 使用者詢問信用卡回饋 | orchestrate（意圖判斷）＋ ai_parser（品牌解析）＋ ai_reply（回覆生成） | 無 |
+| `daily_news` | 使用者要求每日新聞 | orchestrate ＋ openai_news（摘要生成） | 文章不足時觸發 Perplexity fallback（sonar） |
+| `expense` | 記帳（「午餐 150」） | orchestrate | 無 |
+| `query_expense` | 查消費紀錄 | orchestrate | 無 |
+| `wishlist` | 新增欲望清單 | orchestrate | 無 |
+| `tax` | 所得稅試算 | orchestrate | 無 |
+| `quiz` | 投資風險屬性測驗 | orchestrate | 無 |
+| `financial_qa` | 金融知識問答 | orchestrate | 無 |
+| `unknown` | 無法識別意圖 | orchestrate | 無 |
+
+**模型版本**
+- OpenAI：`gpt-4o-mini`
+- Perplexity：`sonar`
+
+**每日用量上限**：預設 50,000 OpenAI tokens／user／天，可透過 `.env` 的 `DAILY_TOKEN_LIMIT` 調整。超過上限後當天所有請求會被拒絕（Perplexity 不計入，因為 OpenAI 達上限時 pipeline 已被攔截，Perplexity 根本不會被觸發）。
 
 ---
 
