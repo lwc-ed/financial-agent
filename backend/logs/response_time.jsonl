@@ -17,3 +17,5 @@
 {"timestamp": "2026-05-27T19:28:02", "user_id": 30, "user_input": "美光現在股價", "pipeline": "news", "elapsed_seconds": 54.745}
 {"timestamp": "2026-05-27T19:29:49", "user_id": 30, "user_input": "稅務系統", "pipeline": "unknown", "elapsed_seconds": 1.592}
 {"timestamp": "2026-05-27T19:29:58", "user_id": 30, "user_input": "所得稅", "pipeline": "tax", "elapsed_seconds": 0.933}
+{"timestamp": "2026-05-27T19:42:44", "user_id": 30, "user_input": "我想算所得稅", "pipeline": "tax", "elapsed_seconds": 2.449}
+{"timestamp": "2026-05-27T19:47:19", "user_id": 30, "user_input": "主動型ETF跟被動型ETF差在哪啊", "pipeline": "financial_qa", "elapsed_seconds": 14.279}
