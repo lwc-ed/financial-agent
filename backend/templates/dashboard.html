@@ -528,7 +528,7 @@
   function render() {
     // Update Balance
     const income = state.records.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
-    const expense = state.records.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
+    const expense = state.records.filter(r => r.type === 'expense' && r.category !== 'saving_challenge').reduce((s, r) => s + r.amount, 0);
     const saved = state.challenges.reduce((s, c) => s + c.current, 0);
     state.balance = income - expense - saved;
     
