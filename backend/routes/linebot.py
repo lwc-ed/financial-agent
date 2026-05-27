@@ -4,6 +4,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent, PostbackEvent
 from linebot.v3.messaging import (
     MessagingApi, ReplyMessageRequest, PushMessageRequest,
     TextMessage, Configuration, ApiClient,
+    QuickReply, QuickReplyItem, URIAction,
 )
 from backend.routes.quiz_handler import FullInsuranceQuizHandler
 from backend.database import SessionLocal
@@ -288,10 +289,19 @@ def orchestrate(user_msg: str) -> dict:
         return {"intent": "unknown", "params": {}, "token_info": {"prompt_tokens": 0, "completion_tokens": 0}}
 
 
+LIFF_URL = "https://liff.line.me/2008065321-vlAGLNjW"
+
+_dashboard_qr = QuickReply(items=[
+    QuickReplyItem(action=URIAction(label="📊 儀表板", uri=LIFF_URL))
+])
+
 def _reply(reply_token: str, text: str):
     try:
         line_bot_api.reply_message(
-            ReplyMessageRequest(reply_token=reply_token, messages=[TextMessage(text=text)])
+            ReplyMessageRequest(
+                reply_token=reply_token,
+                messages=[TextMessage(text=text, quick_reply=_dashboard_qr)]
+            )
         )
     except Exception as e:
         print("[linebot] reply failed:", repr(e))
