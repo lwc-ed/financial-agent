@@ -27,6 +27,9 @@ def _init():
 def answer_financial_question(query: str) -> str:
     _init()
     docs = _vector_store.similarity_search(query, k=3)
+    print(f"[rag_service] query={query!r}, docs_found={len(docs)}")
+    for i, d in enumerate(docs):
+        print(f"[rag_service] doc[{i}]: {d.page_content[:80]!r}")
     context = "\n\n".join(d.page_content for d in docs)
     prompt = (
         f"請根據以下資訊回答問題：\n{context}\n\n"
