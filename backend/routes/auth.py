@@ -1,4 +1,7 @@
-from flask import Blueprint
+from flask import Blueprint, render_template
 
 auth_bp = Blueprint("auth", __name__)
-# Google OAuth 已移除，帳號改由 LINE 自動建立
+
+@auth_bp.route("/login_page")
+def login_page():
+    return render_template("login.html")
