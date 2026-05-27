@@ -1,4 +1,5 @@
 import os
+import re
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
@@ -34,10 +35,14 @@ def answer_financial_question(query: str) -> str:
     prompt = (
         f"請根據以下資訊回答問題：\n{context}\n\n"
         "注意：若資訊不足以回答，請直接回答「抱歉，文件中未提及此資訊」，請勿編造答案。"
-        f"請使用繁體中文回答。\n\n問題：{query}"
+        "請使用繁體中文回答，回覆為純文字，不可使用 ** 或 * 等 markdown 格式。"
+        f"\n\n問題：{query}"
     )
     response = _openai_client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.choices[0].message.content
+    content = (response.choices[0].message.content or "").strip()
+    content = re.sub(r'\*\*(.+?)\*\*', r'\1', content)
+    content = re.sub(r'\*(.+?)\*', r'\1', content)
+    return content

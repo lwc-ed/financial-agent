@@ -1,2 +1,39 @@
+{"timestamp": "2026-05-27T17:09:46", "user_id": 30, "user_input": "早安", "pipeline": "unknown", "elapsed_seconds": 2.209}
+{"timestamp": "2026-05-27T17:12:06", "user_id": 30, "user_input": "今日台股走勢如何", "pipeline": "news", "elapsed_seconds": 58.686}
+{"timestamp": "2026-05-27T17:12:06", "user_id": 30, "user_input": "今日台股走勢如何", "pipeline": "news", "elapsed_seconds": 58.688}
+{"timestamp": "2026-05-27T17:17:49", "user_id": 30, "user_input": "早安", "pipeline": "unknown", "elapsed_seconds": 1.771}
+{"timestamp": "2026-05-27T17:17:50", "user_id": 30, "user_input": "早安", "pipeline": "unknown", "elapsed_seconds": 0.895}
+{"timestamp": "2026-05-27T17:17:59", "user_id": 30, "user_input": "晚餐1000", "pipeline": "expense", "elapsed_seconds": 1.212}
+{"timestamp": "2026-05-27T17:23:01", "user_id": 30, "user_input": "你可以為我做什麼", "pipeline": "unknown", "elapsed_seconds": 1.93}
+{"timestamp": "2026-05-27T17:28:07", "user_id": 30, "user_input": "薪水10000", "pipeline": "tax", "elapsed_seconds": 1.539}
+{"timestamp": "2026-05-27T18:51:42", "user_id": 30, "user_input": "薪水 一萬元\n", "pipeline": "tax", "elapsed_seconds": 5.642}
+{"timestamp": "2026-05-27T18:52:48", "user_id": 30, "user_input": "否", "pipeline": "unknown", "elapsed_seconds": 1.854}
+{"timestamp": "2026-05-27T18:52:56", "user_id": 30, "user_input": "晚餐100", "pipeline": "expense", "elapsed_seconds": 1.805}
+{"timestamp": "2026-05-27T18:53:09", "user_id": 30, "user_input": "薪水 10000", "pipeline": "tax", "elapsed_seconds": 1.066}
+{"timestamp": "2026-05-27T18:58:41", "user_id": 30, "user_input": "測驗", "pipeline": "unknown", "elapsed_seconds": 2.369}
+{"timestamp": "2026-05-27T18:59:41", "user_id": 30, "user_input": "薪水1000", "pipeline": "tax", "elapsed_seconds": 2.285}
+{"timestamp": "2026-05-27T19:25:44", "user_id": 30, "user_input": "早安", "pipeline": "unknown", "elapsed_seconds": 2.628}
+{"timestamp": "2026-05-27T19:28:02", "user_id": 30, "user_input": "美光現在股價", "pipeline": "news", "elapsed_seconds": 54.737}
+{"timestamp": "2026-05-27T19:28:02", "user_id": 30, "user_input": "美光現在股價", "pipeline": "news", "elapsed_seconds": 54.745}
+{"timestamp": "2026-05-27T19:29:49", "user_id": 30, "user_input": "稅務系統", "pipeline": "unknown", "elapsed_seconds": 1.592}
+{"timestamp": "2026-05-27T19:29:58", "user_id": 30, "user_input": "所得稅", "pipeline": "tax", "elapsed_seconds": 0.933}
+{"timestamp": "2026-05-27T19:42:44", "user_id": 30, "user_input": "我想算所得稅", "pipeline": "tax", "elapsed_seconds": 2.449}
+{"timestamp": "2026-05-27T19:47:19", "user_id": 30, "user_input": "主動型ETF跟被動型ETF差在哪啊", "pipeline": "financial_qa", "elapsed_seconds": 14.279}
+{"timestamp": "2026-05-28T00:39:55", "user_id": 30, "user_input": "早安", "pipeline": "unknown", "elapsed_seconds": 3.801}
+{"timestamp": "2026-05-28T00:45:06", "user_id": 30, "user_input": "我想喝星巴克", "pipeline": "credit_card", "elapsed_seconds": 19.181}
+{"timestamp": "2026-05-28T02:06:34", "user_id": 30, "user_input": "我想買一個ps5", "pipeline": "wishlist", "elapsed_seconds": 2.666}
+{"timestamp": "2026-05-28T02:07:25", "user_id": 30, "user_input": "宵夜150", "pipeline": "expense", "elapsed_seconds": 1.935}
+{"timestamp": "2026-05-28T02:15:30", "user_id": 30, "user_input": "早安", "pipeline": "unknown", "elapsed_seconds": 2.753}
+{"timestamp": "2026-05-28T02:16:01", "user_id": 30, "user_input": "單利複利有什麼差", "pipeline": "financial_qa", "elapsed_seconds": 13.469}
+{"timestamp": "2026-05-28T02:16:15", "user_id": 30, "user_input": "複利是什麼", "pipeline": "financial_qa", "elapsed_seconds": 4.643}
+{"timestamp": "2026-05-28T02:16:28", "user_id": 30, "user_input": "ETF是什麼", "pipeline": "financial_qa", "elapsed_seconds": 3.188}
+{"timestamp": "2026-05-28T02:17:55", "user_id": 30, "user_input": "宵夜500", "pipeline": "expense", "elapsed_seconds": 1.015}
+{"timestamp": "2026-05-28T02:19:49", "user_id": 30, "user_input": "ETF是什麼", "pipeline": "financial_qa", "elapsed_seconds": 4.293}
+{"timestamp": "2026-05-28T02:24:22", "user_id": 30, "user_input": "ETF是什麼", "pipeline": "financial_qa", "elapsed_seconds": 11.814}
+{"timestamp": "2026-05-28T02:27:55", "user_id": 30, "user_input": "ETF是什麼", "pipeline": "financial_qa", "elapsed_seconds": 17.166}
+{"timestamp": "2026-05-28T02:28:06", "user_id": 30, "user_input": "單利複利差在哪啊", "pipeline": "financial_qa", "elapsed_seconds": 7.027}
+{"timestamp": "2026-05-28T02:33:00", "user_id": 30, "user_input": "我拿到家教薪水1200", "pipeline": "income", "elapsed_seconds": 1.462}
+{"timestamp": "2026-05-28T02:37:33", "user_id": 30, "user_input": "ETF是啥", "pipeline": "financial_qa", "elapsed_seconds": 17.763}
 {"timestamp": "2026-05-27T21:04:45", "user_id": 27, "user_input": "我想買Air pods 價格6000", "pipeline": "wishlist", "elapsed_seconds": 2.902}
 {"timestamp": "2026-05-27T21:07:04", "user_id": 27, "user_input": "我想買麥當勞 價格120\n幫我加入願望清單", "pipeline": "wishlist", "elapsed_seconds": 4.408}
+

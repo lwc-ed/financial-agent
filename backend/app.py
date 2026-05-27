@@ -11,6 +11,7 @@ from backend.routes.saving_challenge import saving_challenge_bp
 from backend.routes.profile import profile_bp
 from backend.routes.liff_test import liff_test_bp
 from backend.routes.dashboard import dashboard_bp
+from backend.routes.ml_risk import ml_risk_bp
 from dotenv import load_dotenv
 import subprocess
 import os
@@ -28,6 +29,8 @@ except Exception:
 
 # 確保所有 model 被 import，才能被 create_all 建到
 import backend.models.token_log  # noqa: F401
+import backend.models.risk_prediction  # noqa: F401
+import backend.models.risk_notification  # noqa: F401
 
 # 建立資料表
 Base.metadata.create_all(bind=engine)
@@ -52,6 +55,19 @@ app.register_blueprint(profile_bp, url_prefix="/api/profile")
 app.register_blueprint(liff_test_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(saving_challenge_bp)
+app.register_blueprint(ml_risk_bp, url_prefix="/api/ml")
+
+
+import threading
+
+def _warmup_ml():
+    try:
+        from backend.ml_inference.bigru_service import _load_assets
+        _load_assets()
+    except Exception as e:
+        print(f"[app] ML 預熱失敗（不影響主服務）：{repr(e)}")
+
+threading.Thread(target=_warmup_ml, daemon=True).start()
 
 
 if __name__ == "__main__":
