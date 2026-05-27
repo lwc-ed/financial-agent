@@ -26,6 +26,9 @@ try:
 except Exception:
     print("🚀 Financial Agent starting... (git commit unknown)")
 
+# 確保所有 model 被 import，才能被 create_all 建到
+import backend.models.token_log  # noqa: F401
+
 # 建立資料表
 Base.metadata.create_all(bind=engine)
 

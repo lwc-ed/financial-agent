@@ -82,13 +82,10 @@
       <!-- 錯誤提示區 (預設隱藏) -->
       <div id="error-message" class="hidden mb-4 p-3 bg-red-50 text-red-500 text-xs rounded-xl border border-red-100"></div>
 
-      <!-- 登入按鈕 -->
-      <button id="google-login-btn" type="button"
-              class="w-full flex items-center justify-center gap-3 bg-white border border-slate-200 text-slate-700 font-medium py-3.5 px-6 rounded-2xl hover:bg-slate-50 hover:shadow-md hover:border-emerald-200 transition-all duration-300 active:scale-[0.98]">
-        <img id="google-icon" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-             alt="Google" class="w-5 h-5">
-        <span id="btn-text">使用 Google 帳號登入</span>
-      </button>
+      <!-- 載入狀態 -->
+      <div id="loading-area" class="w-full flex items-center justify-center py-3.5 px-6">
+        <div class="spinner"></div>
+      </div>
 
       <!-- 裝飾頁腳 -->
       <div class="mt-8">
@@ -99,41 +96,18 @@
   </div>
 
   <script>
-    // ✅ 改成與 Rich Menu / Dashboard 一致的 LIFF ID
-    //（避免用錯 LIFF App，導致 OAuth 參數/redirectUri 不匹配而 400）
     const LIFF_ID = "2008065321-vlAGLNjW";
-
-    // Google 綁定入口（後端 route）
-    const LOGIN_URL = "https://financial-agent.it.com/login_google";
-
-    // 本地測試開關：localhost / 127.0.0.1 不跑 LIFF
     const IS_LOCAL = ["localhost", "127.0.0.1"].includes(location.hostname);
 
-    const loginBtn = document.getElementById('google-login-btn');
-    const btnText = document.getElementById('btn-text');
-    const googleIcon = document.getElementById('google-icon');
+    const statusText = document.getElementById('status-text');
     const errorMsg = document.getElementById('error-message');
 
     function showError(msg) {
       errorMsg.textContent = msg;
       errorMsg.classList.remove('hidden');
+      document.getElementById('loading-area').classList.add('hidden');
     }
 
-    function setLoading(isLoading) {
-      if (isLoading) {
-        loginBtn.disabled = true;
-        loginBtn.classList.add('opacity-70', 'cursor-not-allowed');
-        googleIcon.classList.add('hidden');
-        btnText.innerHTML = '<div class="flex items-center gap-2"><div class="spinner"></div> 正在連線...</div>';
-      } else {
-        loginBtn.disabled = false;
-        loginBtn.classList.remove('opacity-70', 'cursor-not-allowed');
-        googleIcon.classList.remove('hidden');
-        btnText.textContent = '使用 Google 帳號登入';
-      }
-    }
-
-    // 1) 初始化 LIFF：如果已綁定就直接進 /dashboard
     async function initLiff() {
       try {
         if (IS_LOCAL) {
@@ -149,66 +123,32 @@
         }
 
         if (!liff.isLoggedIn()) {
-          // ✅ 指定 redirectUri，避免 redirectUri 不在 LIFF 後台允許清單導致 400
           liff.login({ redirectUri: window.location.href });
           return;
         }
 
         const profile = await liff.getProfile();
-        // 直接用 session 檢查登入狀態，不再傳 line_user_id
-        console.log('LINE userid:', profile.userId);  // ✅ 先印出來看
+        console.log('LINE userid:', profile.userId);
 
         const res = await fetch('/api/check_user', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lineuserid: profile.userId }),  // ✅ 關鍵：傳 lineuserid！
-            credentials: 'include'
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ lineuserid: profile.userId, displayName: profile.displayName }),
+          credentials: 'include'
         });
 
-        
-
         if (!res.ok) {
-          showError('後端檢查使用者失敗，請稍後再試。');
+          showError('後端建立帳號失敗，請稍後再試。');
           return;
         }
 
-        const data = await res.json();
-
-        if (data.exists) {
-          // ✅ 已完成 LINE + Google 綁定並建立 session
-          window.location.replace('/dashboard');
-          return;
-        }
-        // 已登入 LINE，但是否綁定交給後端流程
-        // 留在登入頁，讓使用者按 Google 登入
-        return;
-        // 未綁定：留在登入頁
+        window.location.replace('/dashboard');
 
       } catch (err) {
         console.error('LIFF 初始化失敗', err);
         showError('LIFF 初始化失敗：請確認 LIFF ID 與 Redirect URI 設定是否正確。');
       }
     }
-
-    // 2) 按鈕：開啟 Google 綁定（外部瀏覽器）
-    loginBtn.addEventListener('click', () => {
-      setLoading(true);
-
-      try {
-        if (IS_LOCAL) {
-          window.location.href = '/login_google';
-          return;
-        }
-
-        liff.openWindow({ url: LOGIN_URL, external: true });
-      } catch (err) {
-        console.error('跳轉失敗', err);
-        showError('跳轉失敗，請稍後再試。');
-        setLoading(false);
-      }
-
-      setTimeout(() => setLoading(false), 3000);
-    });
 
     initLiff();
   </script>

@@ -109,7 +109,8 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
 
     system_prompt = (
         "你是 LINE Bot 財經資訊查詢助理，專門根據最新網路資訊回答使用者問題。"
-        "請使用繁體中文回答，語氣精確、冷靜。"
+        "【語言規定】無論任何情況，你的回覆必須全程使用繁體中文，嚴禁使用日文、簡體中文或其他語言。"
+        "語氣精確、冷靜。"
         "若問題是查證型（是否發生某事），請在第一句直接回答：是/否/目前尚未確認。"
         "只陳述有明確來源支持的事實，不推論、不捏造。"
         "準備中、計劃中、傳言、可能 ≠ 已發生，請明確區分。"
@@ -128,6 +129,22 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
     )
 
     raw_content = (response.choices[0].message.content or "").strip()
+
+    # ── 取 token 用量 ────────────────────────────────────────────
+    usage = getattr(response, "usage", None)
+    perplexity_token_info = {
+        "prompt_tokens":     usage.prompt_tokens     if usage else 0,
+        "completion_tokens": usage.completion_tokens if usage else 0,
+    }
+    if usage:
+        print(f"[perplexity] tokens: prompt={usage.prompt_tokens}, "
+              f"completion={usage.completion_tokens}, total={usage.total_tokens}")
+
+    # ── 清理 LINE 不支援的格式 ────────────────────────────────────
+    import re as _re
+    raw_content = _re.sub(r'\[\d+\]', '', raw_content)
+    raw_content = _re.sub(r'\*\*(.+?)\*\*', r'\1', raw_content)
+    raw_content = raw_content.strip()
 
     # ── 取 citations（Perplexity 特有欄位），建立結構化 evidence ──
     citation_urls: list[str] = getattr(response, "citations", []) or []
@@ -150,19 +167,4 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
         "raw_response":      raw_content,            # Perplexity 原始回覆
     }
 
-    # ── 組合透明度聲明 + 內容 + 來源區塊 ─────────────────────
-    notice = (
-        f"⚠️ 近期相關報導不足（RSS 僅找到 {article_count} 篇），"
-        f"以下結果來自即時網路搜尋：\n\n"
-    )
-
-    sources_block = ""
-    if source_names:
-        sources_block = (
-            "\n─────────────────\n"
-            "📰 消息來源（即時搜尋）\n"
-            + "\n".join(f"・{s}" for s in source_names)
-        )
-
-    full_response = notice + raw_content + sources_block
-    return full_response, evidence
+    return raw_content, evidence, perplexity_token_info

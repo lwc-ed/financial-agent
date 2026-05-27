@@ -7,7 +7,7 @@ from openai import OpenAI
 load_dotenv()
 
 _CHROMA_DIR = os.path.join(os.path.dirname(__file__), "knowledge", "chroma_db")
-_EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+_EMBEDDING_MODEL = "google/embeddinggemma-300m"
 
 _vector_store = None
 _openai_client = None

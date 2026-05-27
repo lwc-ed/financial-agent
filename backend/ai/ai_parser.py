@@ -37,7 +37,7 @@ def normalize_input(user_input: str):
         fallback = {"brand_name": "國內外一般消費", "score": 0.5}
         result["candidates"].append(fallback)
 
-        return result
+        return result, {"prompt_tokens": 0, "completion_tokens": 0}
 
     # ===========================================================
     # 🔥 GPT 多候選解析 Prompt（強化版）
@@ -88,6 +88,11 @@ def normalize_input(user_input: str):
             messages=[{"role": "user", "content": prompt}],
             temperature=0.25,
         )
+        usage = response.usage
+        token_info = {
+            "prompt_tokens":     usage.prompt_tokens if usage else 0,
+            "completion_tokens": usage.completion_tokens if usage else 0,
+        }
         raw = response.choices[0].message.content.strip()
 
         # 取 JSON
@@ -113,11 +118,8 @@ def normalize_input(user_input: str):
             result["candidates"].append(fallback2)
             
         print("✅ Parser 結果：", result)
-        return result
+        return result, token_info
 
     except Exception as e:
         print("normalize_input error:", e)
-        return {
-            "brand_name": None,
-            "candidates": []
-        }
+        return {"brand_name": None, "candidates": []}, {"prompt_tokens": 0, "completion_tokens": 0}

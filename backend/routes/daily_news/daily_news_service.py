@@ -13,6 +13,7 @@ from backend.routes.daily_news.openai_news import summarize_news_with_openai
 from backend.routes.daily_news.perplexity_search import (
     search_with_perplexity, FALLBACK_ARTICLE_THRESHOLD
 )
+from backend.utils.token_tracker import upsert_pipeline_tokens
 
 taipei    = pytz.timezone("Asia/Taipei")
 RAW_DATA_DIR = Path(__file__).parent / "raw_data"
@@ -34,7 +35,7 @@ def _save_raw_data(raw_data: dict, topic: str) -> Path:
     return filename
 
 
-def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
+def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") -> str:
     """
     Pipeline：
       1. 意圖識別（recognize_intent）
@@ -84,6 +85,7 @@ def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
         _save_raw_data(raw_data, normalized_topic or "general")
 
         # ── Step 6：文章不足 → Perplexity fallback ────────────────
+        perplexity_tokens = {"prompt_tokens": 0, "completion_tokens": 0}
         is_verification = intent.get("is_verification", False)
         # 查證型：文章 < 2 就觸發（即使有歷史數據也不例外）
         # 一般型：文章 < 3 且無歷史數據才觸發
@@ -95,40 +97,30 @@ def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
             print(f"[daily_news] articles={len(articles)} < {FALLBACK_ARTICLE_THRESHOLD}, "
                   f"triggering Perplexity fallback (query={normalized_topic!r})")
             try:
-                perplexity_response, perplexity_evidence = search_with_perplexity(
-                    query=normalized_topic,           # 使用原始使用者輸入
+                perplexity_content, perplexity_evidence, perplexity_tokens = search_with_perplexity(
+                    query=user_msg or normalized_topic,
                     article_count=len(articles),
                 )
-                # 存 DB（保留完整 evidence，citation chain 不斷）
-                row = DailyNews(
-                    user_id=user_id,
-                    perplexity_scraper={
-                        "articles":           articles,
-                        "market_data":        market_data,
-                        "fallback":           "perplexity",
-                        "perplexity_evidence": perplexity_evidence,  # 完整 citation chain
-                    },
-                    gpt_response={"content": perplexity_response},
-                    created_at=get_taiwan_now(),
-                )
-                db.add(row)
-                db.commit()
-                print(f"[daily_news] perplexity fallback saved, no={row.no}")
-                return perplexity_response
+                raw_data["perplexity_content"] = perplexity_content
+                raw_data["perplexity_evidence"] = perplexity_evidence
+                raw_data["perplexity_article_count"] = len(articles)
+                print(f"[daily_news] perplexity content fetched, continuing to OpenAI")
             except Exception as pe:
                 print(f"[daily_news] perplexity fallback error: {repr(pe)}")
-                # fallback 失敗 → 如果完全沒有文章，回傳提示
                 if not articles and not historical_data:
                     return "今日暫無符合主題的最新財經新聞，請稍後再試或換個主題。"
-                # 否則繼續走 OpenAI 路線（用現有少量文章）
 
         if not articles and not historical_data:
             return "今日暫無符合主題的最新財經新聞，請稍後再試或換個主題。"
 
         # ── Step 7：存 DB（原始資料） ─────────────────────────────
+        db_scraper = {"articles": articles, "market_data": market_data}
+        if raw_data.get("perplexity_evidence"):
+            db_scraper["perplexity_evidence"] = raw_data["perplexity_evidence"]
         row = DailyNews(
             user_id=user_id,
-            perplexity_scraper={"articles": articles, "market_data": market_data},
+            user_input=user_msg or normalized_topic,
+            perplexity_scraper=db_scraper,
             gpt_response={"content": ""},
             created_at=get_taiwan_now(),
         )
@@ -149,6 +141,19 @@ def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
         row.created_at   = get_taiwan_now()
         db.commit()
         print(f"[daily_news] summary saved, no={row.no}")
+
+        # ── Step 10：記錄 token 用量 ─────────────────────────────
+        if user_id:
+            upsert_pipeline_tokens(
+                user_id=user_id,
+                source="daily_news",
+                model_openai="gpt-4o-mini",
+                openai_prompt=token_info["prompt_tokens"],
+                openai_completion=token_info["completion_tokens"],
+                model_perplexity="sonar" if perplexity_tokens["prompt_tokens"] > 0 else None,
+                perplexity_prompt=perplexity_tokens["prompt_tokens"],
+                perplexity_completion=perplexity_tokens["completion_tokens"],
+            )
 
         return gpt_response
 

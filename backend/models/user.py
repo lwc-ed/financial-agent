@@ -9,9 +9,13 @@ class User(Base):
     provider = Column(String(50), nullable=False)
     provider_id = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
-    email = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True)
     line_user_id = Column(String(64), unique=True, nullable=True)  # LINE 對應 ID
 
     # 新增的欄位
-    current_function = Column(String, nullable=True)  
+    current_function = Column(String, nullable=True)
     last_activity_time = Column(DateTime, default=datetime.utcnow)
+
+    # 風險測驗結果
+    risk_score = Column(Integer, nullable=True)
+    risk_type = Column(String(10), nullable=True)

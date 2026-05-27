@@ -4,6 +4,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent, PostbackEvent
 from linebot.v3.messaging import (
     MessagingApi, ReplyMessageRequest, PushMessageRequest,
     TextMessage, Configuration, ApiClient,
+    QuickReply, QuickReplyItem, URIAction,
 )
 from backend.routes.quiz_handler import FullInsuranceQuizHandler
 from backend.database import SessionLocal
@@ -12,6 +13,8 @@ from backend.models.wishlist import Wishlist
 from backend.models.record import Record
 from backend.routes.daily_news.daily_news_service import run_daily_news_pipeline
 from backend.tax.tax_calculator import calculate_taiwan_tax_2026
+from backend.utils.token_tracker import upsert_pipeline_tokens, is_over_daily_limit
+from backend.utils.response_logger import log_response
 from sqlalchemy import desc
 from openai import OpenAI
 from datetime import datetime
@@ -189,7 +192,11 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "tax",
-            "description": "台灣綜合所得稅試算（114年度，2026年申報），使用者詢問要繳多少稅、所得稅怎麼算、幫我試算所得稅",
+            "description": (
+                "台灣綜合所得稅試算（114年度，2026年申報）。"
+                "【只有】使用者明確提到「所得稅」、「報稅」、「繳稅」、「退稅」、「稅額試算」等稅務相關字眼才觸發。"
+                "使用者只是提到薪水、收入、薪資金額，但沒有明確詢問稅務時，【不】觸發此工具。"
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -218,18 +225,10 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "topic": {"type": "string", "description": "產業主題，若無特定主題填「一般」"},
+                    "topic": {"type": "string", "description": "使用者想查詢的財經主題，直接取用使用者的原始說法（例如「台股」「科技股」「美股」「比特幣」），若無特定主題填「綜合財經」"},
                 },
                 "required": ["topic"],
             },
-        },
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "quiz",
-            "description": "投資風險屬性評估測驗，使用者想了解自己的投資風險偏好、做風險評估、投資屬性測驗、理財風險測驗",
-            "parameters": {"type": "object", "properties": {}, "required": []},
         },
     },
     {
@@ -263,7 +262,7 @@ TOOLS = [
 
 
 def orchestrate(user_msg: str) -> dict:
-    """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict}"""
+    """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict, "token_info": dict}"""
     try:
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
@@ -271,20 +270,38 @@ def orchestrate(user_msg: str) -> dict:
             tools=TOOLS,
             tool_choice="required",
         )
+        usage = response.usage
         tool_call = response.choices[0].message.tool_calls[0]
         return {
             "intent": tool_call.function.name,
             "params": json.loads(tool_call.function.arguments),
+            "token_info": {
+                "prompt_tokens":     usage.prompt_tokens     if usage else 0,
+                "completion_tokens": usage.completion_tokens if usage else 0,
+            },
         }
     except Exception as e:
         print("[orchestrate] error:", repr(e))
-        return {"intent": "unknown", "params": {}}
+        return {"intent": "unknown", "params": {}, "token_info": {"prompt_tokens": 0, "completion_tokens": 0}}
 
 
-def _reply(reply_token: str, text: str):
+LIFF_URL = "https://liff.line.me/2008065321-vlAGLNjW"
+
+_dashboard_qr = QuickReply(items=[
+    QuickReplyItem(action=URIAction(label="📊 儀表板", uri=LIFF_URL))
+])
+
+def _reply(reply_token: str, text: str, line_user_id: str | None = None):
+    in_quiz = line_user_id and line_user_id in quiz_engine.user_sessions
     try:
         line_bot_api.reply_message(
-            ReplyMessageRequest(reply_token=reply_token, messages=[TextMessage(text=text)])
+            ReplyMessageRequest(
+                reply_token=reply_token,
+                messages=[TextMessage(
+                    text=text,
+                    quick_reply=None if in_quiz else _dashboard_qr
+                )]
+            )
         )
     except Exception as e:
         print("[linebot] reply failed:", repr(e))
@@ -302,27 +319,41 @@ def _reply_messages(reply_token: str, messages: list):
 def _push(line_user_id: str, text: str):
     try:
         line_bot_api.push_message(
-            PushMessageRequest(to=line_user_id, messages=[TextMessage(text=text)])
+            PushMessageRequest(
+                to=line_user_id,
+                messages=[TextMessage(text=text, quick_reply=_dashboard_qr)]
+            )
         )
     except Exception as e:
         print("[linebot] push failed:", repr(e))
 
 
-def process_credit_card_query(user_msg: str) -> str:
-    """信用卡回饋查詢：GPT 解析品牌 → 查 DB → GPT 生成回覆"""
+def process_credit_card_query(user_msg: str, user_id: int | None = None) -> str:
+    """信用卡回饋查詢：GPT 解析品牌 → 查 DB → GPT 生成回覆，pipeline 結束後統一記錄 token。"""
     from backend.ai.ai_parser import normalize_input
     from backend.ai.benefit_query import query_benefits
     from backend.ai.format_benefit_summary import build_summary
     from backend.ai.ai_reply import generate_reply
 
-    parsed    = normalize_input(user_msg)
-    results   = query_benefits(
+    parsed, parser_tokens = normalize_input(user_msg)
+    results  = query_benefits(
         brand_name=parsed.get("brand_name"),
         category=parsed.get("category"),
         candidates=parsed.get("candidates", []),
     )
-    summary   = build_summary(parsed, results)
-    return generate_reply(user_msg, results, summary)
+    summary  = build_summary(parsed, results)
+    reply, reply_tokens = generate_reply(user_msg, results, summary)
+
+    if user_id:
+        upsert_pipeline_tokens(
+            user_id=user_id,
+            source="credit_card",
+            model_openai="gpt-4o-mini",
+            openai_prompt=parser_tokens["prompt_tokens"] + reply_tokens["prompt_tokens"],
+            openai_completion=parser_tokens["completion_tokens"] + reply_tokens["completion_tokens"],
+        )
+
+    return reply
 
 
 @linebot_bp.route("/callback", methods=["POST"])
@@ -341,25 +372,38 @@ def callback():
 def handle_message(event):
     line_user_id = event.source.user_id
     user_msg     = event.message.text
+    t_start      = datetime.now()
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
 
-    # ---------- Google 綁定檢查 ----------
     user = db.query(User).filter_by(line_user_id=line_user_id).first()
     if not user:
-        user = db.query(User).filter(
-            User.provider == "google",
-            User.line_user_id == line_user_id,
-        ).first()
-        if not user:
-            _reply(event.reply_token,
-                   "⚠️ 您尚未綁定帳號，請先點擊下方連接進行 Google 登入並綁定 LINE\n"
-                   "https://financial-agent.it.com/login_google\n"
-                   "若綁定失敗可以參照以下步驟⭣\n"
-                   "IPhone使用者：\n主頁\n  ⭣\n設定(右上角)\n  ⭣\nLINE Labs\n  ⭣\n關閉「使用預設瀏覽器開啟連結」")
-            db.close()
-            return
-    # ---------- 綁定檢查完成 ----------
+        try:
+            profile = line_bot_api.get_profile(line_user_id)
+            display_name = profile.display_name
+        except Exception:
+            display_name = "LINE User"
+        user = User(
+            provider="line",
+            provider_id=line_user_id,
+            name=display_name,
+            email=None,
+            line_user_id=line_user_id,
+        )
+        db.add(user)
+        try:
+            db.commit()
+            db.refresh(user)
+        except Exception:
+            db.rollback()
+            user = db.query(User).filter_by(line_user_id=line_user_id).first()
+
+    # ---------- Daily token 用量限制 ----------
+    if is_over_daily_limit(user.id):
+        _reply(event.reply_token, "⚠️ 您今日的使用量已達上限，請明日再試。")
+        db.close()
+        return
+    # ---------- Daily token 用量限制結束 ----------
 
     # ---------- 所得稅多輪補問 ----------
     if line_user_id in _tax_sessions:
@@ -410,19 +454,45 @@ def handle_message(event):
         return
     # ---------- RR 等級查詢結束 ----------
 
+    # ---------- 風險測驗關鍵字觸發（不走 GPT，避免誤判）----------
+    _QUIZ_KEYWORDS = ["風險測驗", "風險評估", "投資屬性", "風險屬性", "風險偏好測驗", "做測驗", "開始測驗"]
+    if any(kw in user_msg for kw in _QUIZ_KEYWORDS):
+        messages = quiz_engine.handle_start_quiz(line_user_id)
+        _reply_messages(event.reply_token, messages)
+        user.last_activity_time = datetime.now(taipei)
+        db.commit()
+        db.close()
+        return
+    # ---------- 風險測驗關鍵字觸發結束 ----------
+
     # ---------- Orchestrator ----------
+    _UNKNOWN_REPLY = (
+        "你好！我可以幫你：\n"
+        "💳 查信用卡回饋（例如：星巴克刷哪張卡）\n"
+        "🧾 記帳（例如：午餐 150）\n"
+        "📋 查消費紀錄（例如：查紀錄）\n"
+        "🛍 欲望清單（例如：幫我加 AirPods 35000）\n"
+        "📰 每日金融新聞（例如：我想看科技產業新聞）\n"
+        "🧮 所得稅試算（例如：幫我算所得稅，年收入80萬）\n"
+        "📊 投資風險屬性測驗（例如：幫我做風險測驗）\n"
+        "📚 金融知識問答（例如：什麼是ETF？複利怎麼算？）"
+    )
+
     result = orchestrate(user_msg)
     intent = result["intent"]
     params = result["params"]
+    orchestrate_tokens = result["token_info"]
     print(f"[orchestrate] intent={intent}, params={params}")
 
     if intent == "credit_card":
         _reply(event.reply_token, "🔍 正在為您查詢中，請稍候…")
         query = params.get("query", user_msg)
-        threading.Thread(
-            target=lambda: _push(line_user_id, process_credit_card_query(query)),
-            daemon=True,
-        ).start()
+        _uid, _input, _ts = user.id, user_msg, t_start
+        def _run_credit_card():
+            result = process_credit_card_query(query, user_id=_uid)
+            _push(line_user_id, result)
+            log_response(_uid, _input, "credit_card", (datetime.now() - _ts).total_seconds())
+        threading.Thread(target=_run_credit_card, daemon=True).start()
 
     elif intent == "expense":
         try:
@@ -482,51 +552,60 @@ def handle_message(event):
             reply_text = f"新增失敗：{str(e)}"
         _reply(event.reply_token, reply_text)
 
-    elif intent == "quiz":
-        messages = quiz_engine.handle_start_quiz(line_user_id)
-        _reply_messages(event.reply_token, messages)
-
     elif intent == "news":
         _reply(event.reply_token, "📰 正在整理今日產業新聞，請稍候…")
         final_reply = run_daily_news_pipeline(
-            db=db, user_id=user.id, topic=params.get("topic", "一般")
+            db=db, user_id=user.id, topic=params.get("topic", "綜合財經"),
+            user_msg=user_msg,
         )
         _push(line_user_id, final_reply)
+        log_response(user.id, user_msg, "news", (datetime.now() - t_start).total_seconds())
 
     elif intent == "tax":
-        # 過濾 GPT 回傳的 None 值，只保留有實際內容的欄位
-        collected = {k: v for k, v in params.items() if v is not None}
-        missing = [q for q in _TAX_QUESTIONS if q["field"] not in collected]
-        if not missing:
-            try:
-                _reply(event.reply_token, calculate_taiwan_tax_2026(collected))
-            except Exception as e:
-                print("[tax] calc error:", repr(e))
-                _reply(event.reply_token, "試算失敗，請稍後再試。")
+        # 關鍵字守衛：訊息裡沒有稅務字眼就視為 GPT 誤判，降為 unknown
+        _TAX_KEYWORDS = ["所得稅", "報稅", "繳稅", "退稅", "稅額", "稅務", "節稅", "稅率", "綜所稅"]
+        if not any(kw in user_msg for kw in _TAX_KEYWORDS):
+            _reply(event.reply_token, _UNKNOWN_REPLY)
         else:
-            _tax_sessions[line_user_id] = {"params": collected}
-            _reply(event.reply_token, missing[0]["question"])
+            # 過濾 GPT 回傳的 None 值，只保留有實際內容的欄位
+            collected = {k: v for k, v in params.items() if v is not None}
+            missing = [q for q in _TAX_QUESTIONS if q["field"] not in collected]
+            if not missing:
+                try:
+                    _reply(event.reply_token, calculate_taiwan_tax_2026(collected))
+                except Exception as e:
+                    print("[tax] calc error:", repr(e))
+                    _reply(event.reply_token, "試算失敗，請稍後再試。")
+            else:
+                _tax_sessions[line_user_id] = {"params": collected}
+                _reply(event.reply_token, missing[0]["question"])
 
     elif intent == "financial_qa":
         from backend.ai.rag_service import answer_financial_question
         _reply(event.reply_token, "📚 正在查詢金融知識庫，請稍候…")
         query = params.get("query", user_msg)
-        threading.Thread(
-            target=lambda: _push(line_user_id, answer_financial_question(query)),
-            daemon=True,
-        ).start()
+        _uid, _input, _ts = user.id, user_msg, t_start
+        def _run_financial_qa():
+            result = answer_financial_question(query)
+            _push(line_user_id, result)
+            log_response(_uid, _input, "financial_qa", (datetime.now() - _ts).total_seconds())
+        threading.Thread(target=_run_financial_qa, daemon=True).start()
 
     else:  # unknown
-        _reply(event.reply_token,
-               "你好！我可以幫你：\n"
-               "💳 查信用卡回饋（例如：星巴克刷哪張卡）\n"
-               "🧾 記帳（例如：午餐 150）\n"
-               "📋 查消費紀錄（例如：查紀錄）\n"
-               "🛍 欲望清單（例如：幫我加 AirPods 35000）\n"
-               "📰 每日金融新聞（例如：我想看科技產業新聞）\n"
-               "🧮 所得稅試算（例如：幫我算所得稅，年收入80萬）\n"
-               "📊 投資風險屬性測驗（例如：幫我做投資風險評估）\n"
-               "📚 金融知識問答（例如：什麼是ETF？複利怎麼算？）")
+        _reply(event.reply_token, _UNKNOWN_REPLY)
+
+    # ---------- Token 用量記錄 + 回應時間 ----------
+    elapsed = (datetime.now() - t_start).total_seconds()
+    if intent not in ("credit_card", "financial_qa"):
+        log_response(user.id, user_msg, intent, elapsed)
+    if intent not in ("credit_card", "news"):
+        upsert_pipeline_tokens(
+            user_id=user.id,
+            source=intent,
+            model_openai="gpt-4o-mini",
+            openai_prompt=orchestrate_tokens["prompt_tokens"],
+            openai_completion=orchestrate_tokens["completion_tokens"],
+        )
 
     user.last_activity_time = datetime.now(taipei)
     db.commit()

@@ -132,12 +132,6 @@ def get_wishlist():
         print(f"🔍 找到 {len(wishlists)} 筆願望")
 
 
-        # 🔥 用已建立但未完成的挑戰當願望清單
-        challenges = db.query(SavingChallenge)\
-            .filter_by(user_id=user.id)\
-            .filter(SavingChallenge.current_amount < SavingChallenge.target_amount)\
-            .all()
-        
         wishlist_data = [
             {
                 "itemname": c.item_name,

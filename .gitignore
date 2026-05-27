@@ -108,6 +108,8 @@ Desktop.ini
 # ---- Logs ----
 *.log
 logs/
+!backend/logs/
+!backend/logs/*.jsonl
 
 
 # ---- ML Project ----
