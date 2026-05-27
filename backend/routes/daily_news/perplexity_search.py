@@ -130,6 +130,12 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
 
     raw_content = (response.choices[0].message.content or "").strip()
 
+    # ── 清理 LINE 不支援的格式 ────────────────────────────────────
+    import re as _re
+    raw_content = _re.sub(r'\[\d+\]', '', raw_content)   # 移除 [1][2] 引用數字
+    raw_content = _re.sub(r'\*\*(.+?)\*\*', r'\1', raw_content)  # 移除 **粗體**
+    raw_content = raw_content.strip()
+
     # ── 取 citations（Perplexity 特有欄位），建立結構化 evidence ──
     citation_urls: list[str] = getattr(response, "citations", []) or []
     structured_citations: list[dict] = []
