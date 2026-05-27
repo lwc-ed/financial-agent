@@ -17,9 +17,13 @@ def save_expense():
 # 紀錄消費 API（SQLAlchemy 版）
 from flask import Blueprint, request, jsonify
 import re
+from datetime import datetime
+import pytz
 
 from backend.database import SessionLocal
 from backend.models.record import Record
+
+taipei = pytz.timezone("Asia/Taipei")
 
 expense_record_bp = Blueprint("expense_record", __name__)
 
@@ -69,7 +73,8 @@ def save_expense():
             type=tx_type,
             category=category,
             amount=amount,
-            note=note
+            note=note,
+            timestamp=datetime.now(taipei).replace(tzinfo=None),
         )
         db.add(rec)
         db.commit()
@@ -79,7 +84,7 @@ def save_expense():
             "status": "ok",
             "message": "已新增消費",
             "data": {
-                "id": rec.id,
+                "id": rec.no,
                 "line_user_id": rec.line_user_id,
                 "type": rec.type,
                 "category": rec.category,

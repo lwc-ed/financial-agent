@@ -8,6 +8,8 @@ from linebot.v3.messaging import (
 )
 from backend.routes.quiz_handler import FullInsuranceQuizHandler
 from backend.database import SessionLocal
+from backend.ml_inference.bigru_service import predict_risk_for_user
+from backend.models.risk_prediction import RiskPrediction
 from backend.models.user import User
 from backend.models.wishlist import Wishlist
 from backend.models.record import Record
@@ -162,8 +164,13 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "category": {"type": "string", "description": "消費類別，例如：午餐、交通、飲料"},
+                    "category": {
+                        "type": "string",
+                        "description": "消費類別",
+                        "enum": ["早餐", "午餐", "晚餐", "宵夜", "飲料", "交通", "購物", "娛樂", "醫療", "房租", "水電", "通訊", "學習", "社交", "日常用品", "投資支出", "其他"]
+                    },
                     "amount":   {"type": "integer", "description": "消費金額（純數字）"},
+                    "note":     {"type": "string",  "description": "細節備註，例如品名、地點、對象（可留空）"},
                 },
                 "required": ["category", "amount"],
             },
@@ -267,8 +274,13 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "category": {"type": "string", "description": "收入類別，例如：薪資、獎金、兼職、投資"},
+                    "category": {
+                        "type": "string",
+                        "description": "收入類別",
+                        "enum": ["薪資", "獎金", "投資收入", "兼職", "租金", "其他"]
+                    },
                     "amount":   {"type": "integer", "description": "收入金額（純數字）"},
+                    "note":     {"type": "string",  "description": "細節備註，例如來源、公司、項目（可留空）"},
                 },
                 "required": ["category", "amount"],
             },
@@ -355,6 +367,45 @@ def _push(line_user_id: str, text: str):
         )
     except Exception as e:
         print("[linebot] push failed:", repr(e))
+
+
+_RISK_LEVEL_LABELS = {
+    1: ("✅ 安全", "您的下週消費預算充裕，財務狀況良好。"),
+    2: ("⚠️ 注意", "下週消費接近預算上限，建議適當節制。"),
+    3: ("🔶 警戒", "下週消費預測超出月收入比例，請注意控制支出。"),
+    4: ("🔴 危險", "下週消費預測嚴重超支，強烈建議減少非必要消費。"),
+}
+
+
+def _run_ml_risk_push(line_user_id: str) -> None:
+    """在背景 thread 執行 ML 風險預測並 push 結果給使用者。"""
+    try:
+        with SessionLocal() as _db:
+            result = predict_risk_for_user(line_user_id, _db)
+            if result is None:
+                return
+
+            _db.add(RiskPrediction(
+                line_user_id=line_user_id,
+                predicted_expense_7d=result["predicted_expense_7d"],
+                monthly_income_avg=result["monthly_income_avg"],
+                risk_ratio=result["risk_ratio"],
+                risk_level=result["risk_level"],
+                alarm=result["alarm"],
+                data_days=result["data_days"],
+            ))
+            _db.commit()
+
+            level_label, advice = _RISK_LEVEL_LABELS[result["risk_level"]]
+            msg = (
+                f"📊 財務風險預測\n"
+                f"預計下週花費：${result['predicted_expense_7d']:,.0f}\n"
+                f"風險等級：{level_label}\n"
+                f"{advice}"
+            )
+            _push(line_user_id, msg)
+    except Exception as e:
+        print(f"[bigru_service] ML 風險預測失敗：{repr(e)}")
 
 
 def process_credit_card_query(user_msg: str, user_id: int | None = None) -> str:
@@ -457,7 +508,7 @@ def handle_message(event):
                         except Exception as e:
                             print("[tax] calc error:", repr(e))
                             _reply(event.reply_token, "試算失敗，請稍後再試。")
-        user.last_activity_time = datetime.now(taipei)
+        user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
         return
@@ -471,7 +522,7 @@ def handle_message(event):
         else:
             current_q = quiz_engine.user_sessions[line_user_id]["current_q"]
             _reply_messages(event.reply_token, [quiz_engine.build_question_message(line_user_id, current_q)])
-        user.last_activity_time = datetime.now(taipei)
+        user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
         return
@@ -481,7 +532,7 @@ def handle_message(event):
     rr_match = re.match(r"^(RR[1-5])$", user_msg.strip().upper())
     if rr_match:
         _reply(event.reply_token, quiz_engine.get_rr_level_description(rr_match.group(1)))
-        user.last_activity_time = datetime.now(taipei)
+        user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
         return
@@ -492,7 +543,7 @@ def handle_message(event):
     if any(kw in user_msg for kw in _QUIZ_KEYWORDS):
         messages = quiz_engine.handle_start_quiz(line_user_id)
         _reply_messages(event.reply_token, messages)
-        user.last_activity_time = datetime.now(taipei)
+        user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
         return
@@ -528,38 +579,48 @@ def handle_message(event):
         threading.Thread(target=_run_credit_card, daemon=True).start()
 
     elif intent == "expense":
+        ml_ok = False
         try:
             db.add(Record(
                 line_user_id=line_user_id,
                 type="expense",
                 category=params["category"],
                 amount=params["amount"],
-                note="",
+                note=params.get("note", ""),
+                timestamp=datetime.now(taipei).replace(tzinfo=None),
             ))
             db.commit()
             reply_text = f"已幫你記錄：{params['category']} {params['amount']} 元 ✅"
+            ml_ok = True
         except Exception as e:
             db.rollback()
             print("[linebot] expense write error:", repr(e))
             reply_text = "記帳失敗 QQ，等等再試試看。"
         _reply(event.reply_token, reply_text)
+        if ml_ok:
+            threading.Thread(target=_run_ml_risk_push, args=(line_user_id,), daemon=True).start()
 
     elif intent == "income":
+        ml_ok = False
         try:
             db.add(Record(
                 line_user_id=line_user_id,
                 type="income",
                 category=params["category"],
                 amount=params["amount"],
-                note="",
+                note=params.get("note", ""),
+                timestamp=datetime.now(taipei).replace(tzinfo=None),
             ))
             db.commit()
             reply_text = f"已幫你記錄收入：{params['category']} {params['amount']} 元 💰"
+            ml_ok = True
         except Exception as e:
             db.rollback()
             print("[linebot] income write error:", repr(e))
             reply_text = "記錄收入失敗 QQ，等等再試試看。"
         _reply(event.reply_token, reply_text)
+        if ml_ok:
+            threading.Thread(target=_run_ml_risk_push, args=(line_user_id,), daemon=True).start()
 
     elif intent == "query_expense":
         try:
@@ -657,7 +718,7 @@ def handle_message(event):
             openai_completion=orchestrate_tokens["completion_tokens"],
         )
 
-    user.last_activity_time = datetime.now(taipei)
+    user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
     db.commit()
     db.close()
 
@@ -676,7 +737,7 @@ def handle_postback(event):
         messages = quiz_engine.handle_quiz_postback(line_user_id, params)
         _reply_messages(event.reply_token, messages)
         if user:
-            user.last_activity_time = datetime.now(taipei)
+            user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
             db.commit()
     except Exception as e:
         print("[linebot] handle_postback error:", repr(e))

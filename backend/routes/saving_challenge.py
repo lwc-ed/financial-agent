@@ -5,6 +5,9 @@ from backend.models.user import User
 from backend.models.wishlist import Wishlist  # 🔥 照 linebot.py 一樣
 from backend.models.record import Record
 from datetime import datetime
+import pytz
+
+taipei = pytz.timezone("Asia/Taipei")
 
 
 saving_challenge_bp = Blueprint(
@@ -189,7 +192,7 @@ def feed_challenge():
             category="saving_challenge",
             amount=amount,
             note=f"餵養存錢挑戰：{item_name}",
-            timestamp=datetime.now(),
+            timestamp=datetime.now(taipei).replace(tzinfo=None),
         )
         db.add(record)
 

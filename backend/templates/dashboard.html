@@ -112,7 +112,7 @@
 
       <div class="bg-emerald-600 rounded-3xl p-8 text-white shadow-lg shadow-emerald-200 relative overflow-hidden">
         <div class="relative z-10">
-          <p class="text-sm opacity-80 mb-1">總資產估值</p>
+          <p class="text-sm opacity-80 mb-1">總現金流</p>
           <p id="home-balance" class="text-4xl font-bold tracking-tight">$0</p>
         </div>
         <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
@@ -149,7 +149,6 @@
           <button onclick="setTab('overview')" id="tab-overview" class="pb-2 px-3 tab-active whitespace-nowrap">總覽</button>
           <button onclick="setTab('details')" id="tab-details" class="pb-2 px-3 tab-inactive whitespace-nowrap">明細</button>
           <button onclick="setTab('category')" id="tab-category" class="pb-2 px-3 tab-inactive whitespace-nowrap">類別</button>
-          <button onclick="setTab('ranking')" id="tab-ranking" class="pb-2 px-3 tab-inactive whitespace-nowrap">排行</button>
         </div>
       </div>
 
@@ -300,20 +299,40 @@
     }
   }
 
-  async function initDashboard() {
+  async function loadSummaryFromAPI() {
     try {
-      await liff.init({ liffId: LIFF_ID });
-      if (!liff.isLoggedIn()) { liff.login(); return; }
-      const profile = await liff.getProfile();
-      currentUserId = profile.userId;
-      document.getElementById('drawer-user-name').textContent = profile.displayName;
-      document.getElementById('drawer-user-id').textContent = profile.userId.substring(0, 20) + '...';
+      const res = await fetch(`/api/expense_history/summary?line_user_id=${currentUserId}`);
+      const json = await res.json();
+      if (json.status === 'ok') {
+        state.balance = json.balance;
+      }
     } catch (e) {
-      console.warn("LIFF init failed", e);
+      console.error("loadSummaryFromAPI failed", e);
+    }
+  }
+
+  async function initDashboard() {
+    // dev mode：網址帶 ?dev_user=Uxxxxx 可跳過 LIFF，方便本地測試
+    const devUser = new URLSearchParams(location.search).get('dev_user');
+    if (devUser) {
+      currentUserId = devUser;
+      document.getElementById('drawer-user-name').textContent = 'Dev mode';
+      document.getElementById('drawer-user-id').textContent = devUser.substring(0, 20) + '...';
+    } else {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) { liff.login(); return; }
+        const profile = await liff.getProfile();
+        currentUserId = profile.userId;
+        document.getElementById('drawer-user-name').textContent = profile.displayName;
+        document.getElementById('drawer-user-id').textContent = profile.userId.substring(0, 20) + '...';
+      } catch (e) {
+        console.warn("LIFF init failed", e);
+      }
     }
 
     if (currentUserId) {
-      await Promise.all([loadRecordsFromAPI(), loadChallengesFromAPI()]);
+      await Promise.all([loadRecordsFromAPI(), loadChallengesFromAPI(), loadSummaryFromAPI()]);
     }
 
     render();
@@ -335,8 +354,8 @@
   };
 
   const CATEGORIES = {
-    expense: ['午餐', '晚餐', '宵夜', '飲料', '交通', '購物', '娛樂', '醫療', '房租', '水電', '通訊', '學習', '社交', '其他'],
-    income: ['薪資', '獎金', '投資', '兼職', '租金', '其他']
+    expense: ['早餐', '午餐', '晚餐', '宵夜', '飲料', '交通', '購物', '娛樂', '醫療', '房租', '水電', '通訊', '學習', '社交', '日常用品', '投資支出', '其他'],
+    income: ['薪資', '獎金', '投資收入', '兼職', '租金', '其他']
   };
 
   const WISHLIST = [
@@ -445,6 +464,7 @@
   async function saveRecord() {
     const amount = Number(document.getElementById('record-amount').value);
     if(!amount) return;
+    if(!currentUserId) { alert('尚未取得使用者身份，請在 LINE 中開啟此頁面'); return; }
     const category = document.getElementById('record-category').value;
     const note = document.getElementById('record-note').value;
     try {
@@ -550,10 +570,6 @@
   // --- Main Rendering ---
   function render() {
     // Update Balance
-    const income = state.records.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
-    const expense = state.records.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
-    const saved = state.challenges.reduce((s, c) => s + c.current, 0);
-    state.balance = income - expense - saved;
     
     if(state.section === 'home') {
       document.getElementById('home-balance').innerText = '$' + state.balance.toLocaleString();
@@ -598,55 +614,61 @@
     const expenses = filtered.filter(r => r.type === 'expense');
     const totalExpense = expenses.reduce((s, r) => s + r.amount, 0);
 
+    const totalIncome = filtered.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
+    const netFlow = totalIncome - totalExpense;
+    const expenseRatio = totalIncome > 0 ? Math.min(totalExpense / totalIncome * 100, 100) : 100;
+
     if(state.tab === 'overview') {
       container.innerHTML = `
-        <div class="space-y-8">
-          <div class="space-y-4">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-slate-400">支出</span>
-                <span class="bg-red-50 text-red-500 text-[10px] px-2 py-0.5 rounded-full font-bold">${expenses.length}</span>
-              </div>
-              <span class="text-red-500 font-bold text-lg">-$${totalExpense.toLocaleString()}</span>
+        <div class="space-y-6">
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-emerald-50 rounded-2xl p-4 text-center">
+              <p class="text-[10px] text-emerald-600 font-bold mb-1">本月收入</p>
+              <p class="text-emerald-700 font-bold text-sm">$${totalIncome.toLocaleString()}</p>
             </div>
-            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-              <div class="bg-red-500 h-full" style="width: 100%"></div>
+            <div class="bg-red-50 rounded-2xl p-4 text-center">
+              <p class="text-[10px] text-red-500 font-bold mb-1">本月支出</p>
+              <p class="text-red-600 font-bold text-sm">$${totalExpense.toLocaleString()}</p>
             </div>
-          </div>
-
-          <div class="flex flex-col items-center py-6">
-            <h3 class="text-xl font-bold text-slate-800 mb-6">類別佔比</h3>
-            <div class="relative w-56 h-56">
-              <canvas id="report-doughnut"></canvas>
-              <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span class="text-slate-400 text-xs font-bold">總支出</span>
-                <span class="text-slate-800 font-bold text-xl">$${totalExpense.toLocaleString()}</span>
-              </div>
+            <div class="rounded-2xl p-4 text-center ${netFlow >= 0 ? 'bg-blue-50' : 'bg-orange-50'}">
+              <p class="text-[10px] font-bold mb-1 ${netFlow >= 0 ? 'text-blue-600' : 'text-orange-500'}">淨現金流</p>
+              <p class="font-bold text-sm ${netFlow >= 0 ? 'text-blue-700' : 'text-orange-600'}">${netFlow >= 0 ? '+' : ''}$${netFlow.toLocaleString()}</p>
             </div>
           </div>
 
-          <div class="space-y-4">
-            <h3 class="text-lg font-bold text-slate-800">TOP 3 支出</h3>
-            <div class="space-y-4">
-              ${expenses.sort((a,b) => b.amount - a.amount).slice(0, 3).map(r => `
+          <div class="card p-5 space-y-3">
+            <div class="flex justify-between text-xs font-bold text-slate-400">
+              <span>支出佔收入比</span>
+              <span>${totalIncome > 0 ? Math.round(expenseRatio) : '--'}%</span>
+            </div>
+            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+              <div class="h-full rounded-full transition-all ${expenseRatio >= 90 ? 'bg-red-500' : expenseRatio >= 70 ? 'bg-orange-400' : 'bg-emerald-500'}"
+                   style="width: ${expenseRatio}%"></div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-sm font-bold text-slate-600">TOP 3 支出</h3>
+            <div class="space-y-3">
+              ${[...expenses].sort((a,b) => b.amount - a.amount).slice(0, 3).map((r, i) => `
                 <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
-                  <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm">
+                  <div class="flex items-center gap-3">
+                    <span class="text-xs font-bold text-slate-300">#${i+1}</span>
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm">
                       ${getEmoji(r.category)}
                     </div>
-                    <span class="font-bold text-slate-700">${r.note || r.category}</span>
+                    <div>
+                      <p class="font-bold text-slate-700 text-sm">${r.note || r.category}</p>
+                      <p class="text-xs text-slate-400">${r.category}</p>
+                    </div>
                   </div>
-                  <div class="text-right">
-                    <p class="text-red-500 font-bold">$${r.amount.toLocaleString()}</p>
-                    <span class="text-[10px] bg-white text-slate-400 px-2 py-0.5 rounded-full border border-slate-100">錢包</span>
-                  </div>
+                  <p class="text-red-500 font-bold">$${r.amount.toLocaleString()}</p>
                 </div>
               `).join('')}
             </div>
           </div>
         </div>
       `;
-      renderDoughnut('report-doughnut', expenses);
     } else if(state.tab === 'details') {
       container.innerHTML = `
         <div class="space-y-6">
@@ -654,7 +676,7 @@
             <canvas id="report-trend"></canvas>
           </div>
           <div class="space-y-8">
-            ${groupRecordsByDate(expenses).map(group => `
+            ${groupRecordsByDate(filtered).map(group => `
               <div class="space-y-4">
                 <div class="flex justify-between items-center border-b border-slate-100 pb-2">
                   <span class="text-xs font-bold text-slate-400">${formatDateFull(group.date)}</span>
@@ -667,11 +689,14 @@
                         <div class="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-xl">
                           ${getEmoji(r.category)}
                         </div>
-                        <span class="font-bold text-slate-700">${r.note || r.category}</span>
+                        <div>
+                          <p class="font-bold text-slate-700 text-sm">${r.note || r.category}</p>
+                          ${r.note ? `<p class="text-xs text-slate-400">${r.category}</p>` : ''}
+                        </div>
                       </div>
                       <div class="text-right">
-                        <p class="text-red-500 font-bold">$${r.amount.toLocaleString()}</p>
-                        <span class="text-[10px] bg-slate-50 text-slate-400 px-2 py-0.5 rounded-full border border-slate-100">錢包</span>
+                        <p class="font-bold ${r.type === 'income' ? 'text-emerald-500' : r.type === 'save' ? 'text-blue-500' : 'text-red-500'}">${r.type === 'income' ? '+' : '-'}$${r.amount.toLocaleString()}</p>
+                        <span class="text-[10px] bg-slate-50 text-slate-400 px-2 py-0.5 rounded-full border border-slate-100">${r.type === 'income' ? '收入' : r.type === 'save' ? '儲蓄' : '支出'}</span>
                       </div>
                     </div>
                   `).join('')}
@@ -685,50 +710,46 @@
     } else if(state.tab === 'category') {
       const catTotals = getCategoryTotals(expenses);
       container.innerHTML = `
-        <div class="space-y-8">
-          <div class="flex flex-col items-center py-6">
-            <div class="relative w-64 h-64">
+        <div class="space-y-6">
+          <div class="flex flex-col items-center pt-4">
+            <div class="relative w-56 h-56">
               <canvas id="report-doughnut-large"></canvas>
               <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span class="text-slate-800 font-bold text-3xl">$${totalExpense.toLocaleString()}</span>
+                <span class="text-slate-400 text-xs font-bold">總支出</span>
+                <span class="text-slate-800 font-bold text-2xl">$${totalExpense.toLocaleString()}</span>
               </div>
             </div>
-          </div>
-          <div class="space-y-6">
-            ${catTotals.map(c => `
-              <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
-                <div class="flex items-center gap-4">
-                  <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-xl shadow-sm">
-                    ${getEmoji(c.name)}
-                  </div>
-                  <span class="font-bold text-slate-700">${c.name} (${c.count})</span>
+            <div class="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4">
+              ${catTotals.map((c, i) => `
+                <div class="flex items-center gap-1.5">
+                  <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${CHART_COLORS[i % CHART_COLORS.length]}"></span>
+                  <span class="text-xs text-slate-600">${c.name} ${totalExpense > 0 ? Math.round(c.value/totalExpense*100) : 0}%</span>
                 </div>
-                <span class="text-red-500 font-bold">$${c.value.toLocaleString()}</span>
+              `).join('')}
+            </div>
+          </div>
+          <div class="space-y-4">
+            ${catTotals.map((c, i) => `
+              <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 bg-slate-50 rounded-full flex items-center justify-center text-lg">
+                      ${getEmoji(c.name)}
+                    </div>
+                    <span class="font-bold text-slate-700 text-sm">${c.name}</span>
+                    <span class="text-xs text-slate-400">${c.count} 筆</span>
+                  </div>
+                  <span class="text-slate-700 font-bold text-sm">$${c.value.toLocaleString()}</span>
+                </div>
+                <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full" style="width:${totalExpense > 0 ? Math.round(c.value/totalExpense*100) : 0}%; background:${CHART_COLORS[i % CHART_COLORS.length]}"></div>
+                </div>
               </div>
             `).join('')}
           </div>
         </div>
       `;
       renderDoughnut('report-doughnut-large', expenses, true);
-    } else if(state.tab === 'ranking') {
-      container.innerHTML = `
-        <div class="space-y-6">
-          ${expenses.sort((a,b) => b.amount - a.amount).map(r => `
-            <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl">
-              <div class="flex items-center gap-4">
-                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm">
-                  ${getEmoji(r.category)}
-                </div>
-                <span class="font-bold text-slate-700">${r.note || r.category}</span>
-              </div>
-              <div class="text-right">
-                <p class="text-red-500 font-bold">$${r.amount.toLocaleString()}</p>
-                <span class="text-[10px] bg-white text-slate-400 px-2 py-0.5 rounded-full border border-slate-100">錢包</span>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
     }
   }
 

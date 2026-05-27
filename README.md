@@ -251,7 +251,7 @@ sudo systemctl stop financial-agent
 
 ## 🖥 EC2 SSH
 ```bash
-ssh ubuntu@3.137.145.151
+ssh ubuntu@3.133.58.32
 ```
 
 ## 🗄 RDS MySQL

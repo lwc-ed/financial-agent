@@ -1,6 +1,6 @@
 # backend/routes/expense_history.py
 from flask import Blueprint, request, jsonify
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from backend.database import SessionLocal
 from backend.models.record import Record
 
@@ -55,7 +55,7 @@ def get_recent_expenses():
 
         # 依時間新到舊排序
         rows = (
-            query.order_by(desc(Record.timestamp), desc(Record.id))
+            query.order_by(desc(Record.timestamp), desc(Record.no))
                  .offset(offset)
                  .limit(limit)
                  .all()
@@ -64,7 +64,7 @@ def get_recent_expenses():
         data = []
         for r in rows:
             data.append({
-                "id": r.id,
+                "id": r.no,
                 "line_user_id": r.line_user_id,
                 "type": r.type,
                 "category": r.category,
@@ -87,6 +87,41 @@ def get_recent_expenses():
 
     except Exception as e:
         # 開發中先把錯誤丟回去看，之後可以改成寫 log
+        return jsonify({"status": "error", "message": f"資料庫錯誤：{e}"}), 500
+    finally:
+        db.close()
+
+
+@expense_history_bp.get("/summary")
+def get_summary():
+    """
+    GET /api/expense_history/summary?line_user_id=Uxxxxx
+    回傳該用戶所有時間的 income / expense / save 加總，供資產總覽使用
+    """
+    line_user_id = (request.args.get("line_user_id") or "").strip()
+    if not line_user_id:
+        return jsonify({"status": "error", "message": "line_user_id 必填"}), 400
+
+    db = SessionLocal()
+    try:
+        rows = (
+            db.query(Record.type, func.sum(Record.amount).label("total"))
+            .filter(Record.line_user_id == line_user_id)
+            .group_by(Record.type)
+            .all()
+        )
+        totals = {row.type: int(row.total) for row in rows}
+        income  = totals.get("income", 0)
+        expense = totals.get("expense", 0)
+        save    = totals.get("save", 0)
+        return jsonify({
+            "status": "ok",
+            "income": income,
+            "expense": expense,
+            "save": save,
+            "balance": income - expense,   # 總資產 = 收入 - 支出（save 不扣）
+        }), 200
+    except Exception as e:
         return jsonify({"status": "error", "message": f"資料庫錯誤：{e}"}), 500
     finally:
         db.close()
