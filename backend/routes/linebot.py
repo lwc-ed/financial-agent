@@ -474,7 +474,8 @@ def handle_message(event):
         "🛍 欲望清單（例如：幫我加 AirPods 35000）\n"
         "📰 每日金融新聞（例如：我想看科技產業新聞）\n"
         "🧮 所得稅試算（例如：幫我算所得稅，年收入80萬）\n"
-        "📊 投資風險屬性測驗（例如：幫我做風險測驗）"
+        "📊 投資風險屬性測驗（例如：幫我做風險測驗）\n"
+        "📚 金融知識問答（例如：什麼是ETF？複利怎麼算？）"
     )
 
     result = orchestrate(user_msg)
@@ -591,16 +592,7 @@ def handle_message(event):
         threading.Thread(target=_run_financial_qa, daemon=True).start()
 
     else:  # unknown
-        _reply(event.reply_token,
-               "你好！我可以幫你：\n"
-               "💳 查信用卡回饋（例如：星巴克刷哪張卡）\n"
-               "🧾 記帳（例如：午餐 150）\n"
-               "📋 查消費紀錄（例如：查紀錄）\n"
-               "🛍 欲望清單（例如：幫我加 AirPods 35000）\n"
-               "📰 每日金融新聞（例如：我想看科技產業新聞）\n"
-               "🧮 所得稅試算（例如：幫我算所得稅，年收入80萬）\n"
-               "📊 投資風險屬性測驗（例如：幫我做投資風險評估）\n"
-               "📚 金融知識問答（例如：什麼是ETF？複利怎麼算？）")
+        _reply(event.reply_token, _UNKNOWN_REPLY)
 
     # ---------- Token 用量記錄 + 回應時間 ----------
     elapsed = (datetime.now() - t_start).total_seconds()
