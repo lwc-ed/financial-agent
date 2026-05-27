@@ -95,40 +95,29 @@ def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") ->
             print(f"[daily_news] articles={len(articles)} < {FALLBACK_ARTICLE_THRESHOLD}, "
                   f"triggering Perplexity fallback (query={normalized_topic!r})")
             try:
-                perplexity_response, perplexity_evidence = search_with_perplexity(
+                perplexity_content, perplexity_evidence = search_with_perplexity(
                     query=user_msg or normalized_topic,
                     article_count=len(articles),
                 )
-                # 存 DB（保留完整 evidence，citation chain 不斷）
-                row = DailyNews(
-                    user_id=user_id,
-                    perplexity_scraper={
-                        "articles":           articles,
-                        "market_data":        market_data,
-                        "fallback":           "perplexity",
-                        "perplexity_evidence": perplexity_evidence,  # 完整 citation chain
-                    },
-                    gpt_response={"content": perplexity_response},
-                    created_at=get_taiwan_now(),
-                )
-                db.add(row)
-                db.commit()
-                print(f"[daily_news] perplexity fallback saved, no={row.no}")
-                return perplexity_response
+                raw_data["perplexity_content"] = perplexity_content
+                raw_data["perplexity_evidence"] = perplexity_evidence
+                raw_data["perplexity_article_count"] = len(articles)
+                print(f"[daily_news] perplexity content fetched, continuing to OpenAI")
             except Exception as pe:
                 print(f"[daily_news] perplexity fallback error: {repr(pe)}")
-                # fallback 失敗 → 如果完全沒有文章，回傳提示
                 if not articles and not historical_data:
                     return "今日暫無符合主題的最新財經新聞，請稍後再試或換個主題。"
-                # 否則繼續走 OpenAI 路線（用現有少量文章）
 
         if not articles and not historical_data:
             return "今日暫無符合主題的最新財經新聞，請稍後再試或換個主題。"
 
         # ── Step 7：存 DB（原始資料） ─────────────────────────────
+        db_scraper = {"articles": articles, "market_data": market_data}
+        if raw_data.get("perplexity_evidence"):
+            db_scraper["perplexity_evidence"] = raw_data["perplexity_evidence"]
         row = DailyNews(
             user_id=user_id,
-            perplexity_scraper={"articles": articles, "market_data": market_data},
+            perplexity_scraper=db_scraper,
             gpt_response={"content": ""},
             created_at=get_taiwan_now(),
         )

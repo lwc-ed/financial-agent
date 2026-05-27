@@ -117,6 +117,8 @@ def summarize_news_with_openai(raw_data: dict, topic: str) -> tuple[str, dict]:
 
     market_text   = _format_market_data(market_data)
     articles_text = _format_articles(articles)
+    perplexity_content = raw_data.get("perplexity_content", "")
+    perplexity_article_count = raw_data.get("perplexity_article_count")
 
     system_prompt = (
 
@@ -283,6 +285,7 @@ E. 事件追蹤：適合「某事件後續如何、目前進展到哪」
 
 {articles_text}
 
+{"【即時網路搜尋補充】（RSS 文章不足，以下為 Perplexity 即時搜尋結果）" + chr(10) + perplexity_content if perplexity_content else ""}
 """
 
     total_chars = len(system_prompt) + len(user_prompt)
@@ -300,6 +303,10 @@ E. 事件追蹤：適合「某事件後續如何、目前進展到哪」
     content = (response.choices[0].message.content or "").strip()
     if not content:
         raise RuntimeError("OpenAI returned empty content")
+
+    if perplexity_article_count is not None:
+        notice = f"⚠️ 近期相關報導不足（RSS 僅找到 {perplexity_article_count} 篇），以下整合即時網路搜尋結果：\n\n"
+        content = notice + content
 
     # ── 查證型品質保護：第一段沒有明確 verdict → 補提示 ──────────
     if is_verification and not _has_clear_verdict(content):

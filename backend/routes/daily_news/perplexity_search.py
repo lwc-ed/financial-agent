@@ -136,32 +136,6 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
     raw_content = _re.sub(r'\*\*(.+?)\*\*', r'\1', raw_content)
     raw_content = raw_content.strip()
 
-    # ── 用 OpenAI 做排版，讓格式與 RSS 路線一致 ──────────────────
-    openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    if openai_api_key:
-        try:
-            fmt_client = OpenAI(api_key=openai_api_key)
-            fmt_response = fmt_client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": (
-                        "你是 LINE Bot 財經編輯。將以下搜尋結果重新整理成適合 LINE 閱讀的格式。"
-                        "【語言規定】全程繁體中文。"
-                        "【格式規定】"
-                        "使用以下結構（選擇最適合的 emoji 標題）：\n"
-                        "📌 重點摘要\n📰 最新消息 或 📊 市場影響\n⚠️ 尚未確認處（若有）\n👀 接下來看什麼\n"
-                        "總字數 200-400 字，短段落，不要出現引用數字如[1][2]，不要使用**粗體**符號。"
-                    )},
-                    {"role": "user", "content": f"使用者問題：{query}\n\n搜尋結果：\n{raw_content}"},
-                ],
-                temperature=0.3,
-            )
-            formatted = (fmt_response.choices[0].message.content or "").strip()
-            if formatted:
-                raw_content = formatted
-        except Exception as fmt_err:
-            print(f"[perplexity] openai formatting failed: {fmt_err}")
-
     # ── 取 citations（Perplexity 特有欄位），建立結構化 evidence ──
     citation_urls: list[str] = getattr(response, "citations", []) or []
     structured_citations: list[dict] = []
@@ -183,19 +157,4 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
         "raw_response":      raw_content,            # Perplexity 原始回覆
     }
 
-    # ── 組合透明度聲明 + 內容 + 來源區塊 ─────────────────────
-    notice = (
-        f"⚠️ 近期相關報導不足（RSS 僅找到 {article_count} 篇），"
-        f"以下結果來自即時網路搜尋：\n\n"
-    )
-
-    sources_block = ""
-    if source_names:
-        sources_block = (
-            "\n─────────────────\n"
-            "📰 消息來源（即時搜尋）\n"
-            + "\n".join(f"・{s}" for s in source_names)
-        )
-
-    full_response = notice + raw_content + sources_block
-    return full_response, evidence
+    return raw_content, evidence
