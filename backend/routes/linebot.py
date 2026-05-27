@@ -319,7 +319,10 @@ def _reply_messages(reply_token: str, messages: list):
 def _push(line_user_id: str, text: str):
     try:
         line_bot_api.push_message(
-            PushMessageRequest(to=line_user_id, messages=[TextMessage(text=text)])
+            PushMessageRequest(
+                to=line_user_id,
+                messages=[TextMessage(text=text, quick_reply=_dashboard_qr)]
+            )
         )
     except Exception as e:
         print("[linebot] push failed:", repr(e))
