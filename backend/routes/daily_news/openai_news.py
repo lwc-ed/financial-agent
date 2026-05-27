@@ -119,6 +119,7 @@ def summarize_news_with_openai(raw_data: dict, topic: str) -> tuple[str, dict]:
     articles_text = _format_articles(articles)
     perplexity_content = raw_data.get("perplexity_content", "")
     perplexity_article_count = raw_data.get("perplexity_article_count")
+    print(f"[openai_news] perplexity_article_count={perplexity_article_count!r}, has_content={bool(perplexity_content)}")
 
     system_prompt = (
 
