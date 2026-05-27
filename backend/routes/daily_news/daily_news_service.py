@@ -117,6 +117,7 @@ def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") ->
             db_scraper["perplexity_evidence"] = raw_data["perplexity_evidence"]
         row = DailyNews(
             user_id=user_id,
+            user_input=user_msg or normalized_topic,
             perplexity_scraper=db_scraper,
             gpt_response={"content": ""},
             created_at=get_taiwan_now(),
