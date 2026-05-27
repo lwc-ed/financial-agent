@@ -9,7 +9,7 @@ class User(Base):
     provider = Column(String(50), nullable=False)
     provider_id = Column(String(255), nullable=False)
     name = Column(String(255), nullable=False)
-    email = Column(String(255), nullable=False)
+    email = Column(String(255), nullable=True)
     line_user_id = Column(String(64), unique=True, nullable=True)  # LINE 對應 ID
 
     # 新增的欄位

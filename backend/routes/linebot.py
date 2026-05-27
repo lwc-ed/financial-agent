@@ -13,6 +13,7 @@ from backend.models.record import Record
 from backend.routes.daily_news.daily_news_service import run_daily_news_pipeline
 from backend.tax.tax_calculator import calculate_taiwan_tax_2026
 from backend.utils.token_tracker import upsert_pipeline_tokens, is_over_daily_limit
+from backend.utils.response_logger import log_response
 from sqlalchemy import desc
 from openai import OpenAI
 from datetime import datetime
@@ -358,25 +359,31 @@ def callback():
 def handle_message(event):
     line_user_id = event.source.user_id
     user_msg     = event.message.text
+    t_start      = datetime.now()
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
 
-    # ---------- Google 綁定檢查 ----------
     user = db.query(User).filter_by(line_user_id=line_user_id).first()
     if not user:
-        user = db.query(User).filter(
-            User.provider == "google",
-            User.line_user_id == line_user_id,
-        ).first()
-        if not user:
-            _reply(event.reply_token,
-                   "⚠️ 您尚未綁定帳號，請先點擊下方連接進行 Google 登入並綁定 LINE\n"
-                   "https://financial-agent.it.com/login_google\n"
-                   "若綁定失敗可以參照以下步驟⭣\n"
-                   "IPhone使用者：\n主頁\n  ⭣\n設定(右上角)\n  ⭣\nLINE Labs\n  ⭣\n關閉「使用預設瀏覽器開啟連結」")
-            db.close()
-            return
-    # ---------- 綁定檢查完成 ----------
+        try:
+            profile = line_bot_api.get_profile(line_user_id)
+            display_name = profile.display_name
+        except Exception:
+            display_name = "LINE User"
+        user = User(
+            provider="line",
+            provider_id=line_user_id,
+            name=display_name,
+            email=None,
+            line_user_id=line_user_id,
+        )
+        db.add(user)
+        try:
+            db.commit()
+            db.refresh(user)
+        except Exception:
+            db.rollback()
+            user = db.query(User).filter_by(line_user_id=line_user_id).first()
 
     # ---------- Daily token 用量限制 ----------
     if is_over_daily_limit(user.id):
@@ -444,10 +451,12 @@ def handle_message(event):
     if intent == "credit_card":
         _reply(event.reply_token, "🔍 正在為您查詢中，請稍候…")
         query = params.get("query", user_msg)
-        threading.Thread(
-            target=lambda: _push(line_user_id, process_credit_card_query(query, user_id=user.id)),
-            daemon=True,
-        ).start()
+        _uid, _input, _ts = user.id, user_msg, t_start
+        def _run_credit_card():
+            result = process_credit_card_query(query, user_id=_uid)
+            _push(line_user_id, result)
+            log_response(_uid, _input, "credit_card", (datetime.now() - _ts).total_seconds())
+        threading.Thread(target=_run_credit_card, daemon=True).start()
 
     elif intent == "expense":
         try:
@@ -518,6 +527,7 @@ def handle_message(event):
             user_msg=user_msg,
         )
         _push(line_user_id, final_reply)
+        log_response(user.id, user_msg, "news", (datetime.now() - t_start).total_seconds())
 
     elif intent == "tax":
         # 過濾 GPT 回傳的 None 值，只保留有實際內容的欄位
@@ -537,10 +547,12 @@ def handle_message(event):
         from backend.ai.rag_service import answer_financial_question
         _reply(event.reply_token, "📚 正在查詢金融知識庫，請稍候…")
         query = params.get("query", user_msg)
-        threading.Thread(
-            target=lambda: _push(line_user_id, answer_financial_question(query)),
-            daemon=True,
-        ).start()
+        _uid, _input, _ts = user.id, user_msg, t_start
+        def _run_financial_qa():
+            result = answer_financial_question(query)
+            _push(line_user_id, result)
+            log_response(_uid, _input, "financial_qa", (datetime.now() - _ts).total_seconds())
+        threading.Thread(target=_run_financial_qa, daemon=True).start()
 
     else:  # unknown
         _reply(event.reply_token,
@@ -554,7 +566,10 @@ def handle_message(event):
                "📊 投資風險屬性測驗（例如：幫我做投資風險評估）\n"
                "📚 金融知識問答（例如：什麼是ETF？複利怎麼算？）")
 
-    # ---------- Token 用量記錄（credit_card / news 各自已記，其他 intent 記 orchestrate） ----------
+    # ---------- Token 用量記錄 + 回應時間 ----------
+    elapsed = (datetime.now() - t_start).total_seconds()
+    if intent not in ("credit_card", "financial_qa"):
+        log_response(user.id, user_msg, intent, elapsed)
     if intent not in ("credit_card", "news"):
         upsert_pipeline_tokens(
             user_id=user.id,

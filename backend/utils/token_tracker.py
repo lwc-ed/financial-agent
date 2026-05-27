@@ -5,6 +5,16 @@ from backend.database import SessionLocal
 
 DAILY_TOKEN_LIMIT = int(os.getenv("DAILY_TOKEN_LIMIT", "50000"))
 
+# 開發人員白名單，不受每日 token 上限限制
+# 請填入開發人員的 users.id（整數），可至 DB 執行 SELECT id, name FROM users 查詢
+WHITELIST_USER_IDS = {
+    # 1,  # 開發者 A
+    # 2,  # 開發者 B
+    27, # 郭昱鋐
+    29, # 朱冠勳
+    30  # 李瑋晨 
+}
+
 
 def upsert_pipeline_tokens(
     user_id: int,
@@ -105,6 +115,8 @@ def get_daily_total(user_id: int) -> int:
 
 
 def is_over_daily_limit(user_id: int) -> bool:
+    if user_id in WHITELIST_USER_IDS:
+        return False
     used = get_daily_total(user_id)
     if used >= DAILY_TOKEN_LIMIT:
         print(f"[token_tracker] user_id={user_id} 已達日限 {used}/{DAILY_TOKEN_LIMIT}")

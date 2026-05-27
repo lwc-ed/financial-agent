@@ -333,6 +333,39 @@ sudo timedatectl set-timezone Asia/Taipei
 
 **每日用量上限**：預設 50,000 OpenAI tokens／user／天，可透過 `.env` 的 `DAILY_TOKEN_LIMIT` 調整。超過上限後當天所有請求會被拒絕（Perplexity 不計入，因為 OpenAI 達上限時 pipeline 已被攔截，Perplexity 根本不會被觸發）。
 
+**開發人員白名單**：`backend/utils/token_tracker.py` 的 `WHITELIST_USER_IDS` set，填入開發人員的 `users.id`，白名單內的 user 不受每日上限限制。可執行以下 SQL 查詢 id：
+```sql
+SELECT id, name FROM users;
+```
+
+---
+
+## 📊 Token 用量統計架構
+
+### 資料表
+| Table | 說明 |
+|---|---|
+| `user_token_logs` | 每筆 pipeline 執行的 token 用量，primary key 為 `(user_id, date, source)` |
+| `monthly_token_stats` | 系統整體月統計，primary key 為 `(year_month, source)` |
+
+### 月統計彙總（`backend/utils/monthly_stats.py`）
+
+從 `user_token_logs` 彙總出每個 pipeline 當月的總 token、請求次數、不同 user 數，寫入 `monthly_token_stats`。
+
+```bash
+# 彙總當月
+python3 -m backend.utils.monthly_stats
+
+# 彙總指定月份
+python3 -m backend.utils.monthly_stats 2026-04
+```
+
+**建議排程**：在 EC2 用 cron 設定每月 1 號自動跑上個月的彙總：
+```bash
+# crontab -e
+5 0 1 * * cd /home/ubuntu/financial-agent && source venv/bin/activate && python3 -m backend.utils.monthly_stats $(date -d "last month" +\%Y-\%m)
+```
+
 ---
 
 # 🎯 Notes

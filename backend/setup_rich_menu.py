@@ -9,7 +9,8 @@ from linebot.v3.messaging.models import (
     RichMenuArea,
     RichMenuBounds,
     MessageAction,
-    URIAction
+    URIAction,
+    PostbackAction
 )
 import os
 from mimetypes import guess_type
@@ -25,7 +26,7 @@ load_dotenv()
 channel_access_token = os.getenv("CHANNEL_ACCESS_TOKEN")
 
 # ✅ 圖片路徑
-image_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "picture", "menu1.jpg")
+image_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "picture", "dashboard_btn.jpg")
 
 
 # ✅ 正確初始化方式（包含 host）
@@ -75,33 +76,14 @@ with ApiClient(configuration) as api_client, ApiClient(blob_configuration) as bl
     # 🧩 建立 Rich Menu
     print("📦 Creating rich menu...")
     rich_menu = RichMenuRequest(
-        size=RichMenuSize(width=2500, height=1686),
+        size=RichMenuSize(width=2500, height=300),
         selected=True,
         name="FinanceHelperMenu",
-        chat_bar_text="Menu",
-        areas = [
-            # 上三個區域
+        chat_bar_text="進入儀表板",
+        areas=[
             RichMenuArea(
-                bounds=RichMenuBounds(x=0, y=0, width=833, height=843),
-                action=MessageAction(label="A", text="信用卡回饋查詢")
-            ),
-            RichMenuArea(
-                bounds=RichMenuBounds(x=833, y=0, width=833, height=843),
-                action=MessageAction(label="B", text="欲望清單")
-            ),
-            RichMenuArea(
-                bounds=RichMenuBounds(x=1666, y=0, width=834, height=1686),
-                action=MessageAction(label="C",text="紀錄消費")
-            ),
-            
-            # 下兩個區域
-            RichMenuArea(
-                bounds=RichMenuBounds(x=0, y=843, width=833, height=843),
-                action=URIAction(label="D", uri="line://app/2008065321-vlAGLNjW")
-            ),
-            RichMenuArea(
-                bounds=RichMenuBounds(x=833, y=843, width=833, height=843),
-                action=MessageAction(label="E", text="每日產業新聞")
+                bounds=RichMenuBounds(x=0, y=0, width=2500, height=300),
+                action=URIAction(label="進入儀表板", uri="https://liff.line.me/2008065321-vlAGLNjW")
             ),
         ]
     )
