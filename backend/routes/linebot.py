@@ -218,7 +218,7 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "topic": {"type": "string", "description": "產業主題，若無特定主題填「一般」"},
+                    "topic": {"type": "string", "description": "使用者想查詢的財經主題，直接取用使用者的原始說法（例如「台股」「科技股」「美股」「比特幣」），若無特定主題填「綜合財經」"},
                 },
                 "required": ["topic"],
             },
