@@ -11,7 +11,7 @@ import threading
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+_MODEL_NAME = "google/embeddinggemma-300m"
 _model: SentenceTransformer | None = None
 _load_lock = threading.Lock()
 
