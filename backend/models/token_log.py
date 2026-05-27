@@ -6,7 +6,7 @@ from datetime import datetime
 class UserTokenLog(Base):
     __tablename__ = "user_token_logs"
     __table_args__ = (
-        UniqueConstraint("line_user_id", "date", "source", name="uq_user_date_source"),
+        UniqueConstraint("user_id", "date", "source", name="uq_user_date_source"),
     )
 
     id                        = Column(Integer, primary_key=True, autoincrement=True)
