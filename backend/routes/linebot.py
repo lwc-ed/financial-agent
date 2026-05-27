@@ -579,7 +579,7 @@ def handle_message(event):
                 type="expense",
                 category=params["category"],
                 amount=params["amount"],
-                note=params.get("note") or user_msg,
+                note=params.get("note") or params["category"],
                 timestamp=datetime.now(taipei).replace(tzinfo=None),
             ))
             db.commit()
@@ -601,7 +601,7 @@ def handle_message(event):
                 type="income",
                 category=params["category"],
                 amount=params["amount"],
-                note=params.get("note") or user_msg,
+                note=params.get("note") or params["category"],
                 timestamp=datetime.now(taipei).replace(tzinfo=None),
             ))
             db.commit()

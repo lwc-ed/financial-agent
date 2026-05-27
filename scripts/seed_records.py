@@ -226,7 +226,7 @@ def main():
                     type=parsed["type"],
                     category=parsed["category"],
                     amount=parsed["amount"],
-                    note=parsed.get("note") or text,
+                    note=parsed.get("note") or parsed["category"],
                     timestamp=datetime.strptime(ts_str, "%Y-%m-%d %H:%M"),
                 ))
                 print(f"✅ {ts_str} | {parsed['type']:7} | {parsed['category']:6} | {parsed['amount']:>6} | {text}")
