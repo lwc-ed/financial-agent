@@ -9,6 +9,7 @@ from linebot.v3.messaging import (
 from backend.routes.quiz_handler import FullInsuranceQuizHandler
 from backend.database import SessionLocal
 from backend.ml_inference.bigru_service import predict_risk_for_user
+from backend.ml_inference.notification_service import check_and_notify
 from backend.models.risk_prediction import RiskPrediction
 from backend.models.user import User
 from backend.models.wishlist import Wishlist
@@ -369,41 +370,33 @@ def _push(line_user_id: str, text: str):
         print("[linebot] push failed:", repr(e))
 
 
-_RISK_LEVEL_LABELS = {
-    1: ("✅ 安全", "您的下週消費預算充裕，財務狀況良好。"),
-    2: ("⚠️ 注意", "下週消費接近預算上限，建議適當節制。"),
-    3: ("🔶 警戒", "下週消費預測超出月收入比例，請注意控制支出。"),
-    4: ("🔴 危險", "下週消費預測嚴重超支，強烈建議減少非必要消費。"),
-}
 
-
-def _run_ml_risk_push(line_user_id: str) -> None:
-    """在背景 thread 執行 ML 風險預測並 push 結果給使用者。"""
+def _run_ml_risk_push(user_id: int, line_user_id: str) -> None:
+    """在背景 thread 執行 ML 風險預測，依通知規則決定是否 push。"""
     try:
         with SessionLocal() as _db:
             result = predict_risk_for_user(line_user_id, _db)
             if result is None:
                 return
 
-            _db.add(RiskPrediction(
-                line_user_id=line_user_id,
-                predicted_expense_7d=result["predicted_expense_7d"],
-                monthly_income_avg=result["monthly_income_avg"],
-                risk_ratio=result["risk_ratio"],
-                risk_level=result["risk_level"],
-                alarm=result["alarm"],
-                data_days=result["data_days"],
-            ))
+            # upsert 預測結果
+            row = _db.get(RiskPrediction, user_id)
+            if row is None:
+                row = RiskPrediction(user_id=user_id)
+                _db.add(row)
+            row.predicted_expense_7d = result["predicted_expense_7d"]
+            row.monthly_income_avg = result["monthly_income_avg"]
+            row.risk_ratio = result["risk_ratio"]
+            row.risk_level = result["risk_level"]
+            row.alarm = result["alarm"]
+            row.data_days = result["data_days"]
+
+            # 判斷是否通知（會同步更新 row.last_notified_* 並寫入歷史）
+            msg = check_and_notify(user_id, result, row, _db)
             _db.commit()
 
-            level_label, advice = _RISK_LEVEL_LABELS[result["risk_level"]]
-            msg = (
-                f"📊 財務風險預測\n"
-                f"預計下週花費：${result['predicted_expense_7d']:,.0f}\n"
-                f"風險等級：{level_label}\n"
-                f"{advice}"
-            )
-            _push(line_user_id, msg)
+            if msg:
+                _push(line_user_id, msg)
     except Exception as e:
         print(f"[bigru_service] ML 風險預測失敗：{repr(e)}")
 
@@ -598,7 +591,7 @@ def handle_message(event):
             reply_text = "記帳失敗 QQ，等等再試試看。"
         _reply(event.reply_token, reply_text)
         if ml_ok:
-            threading.Thread(target=_run_ml_risk_push, args=(line_user_id,), daemon=True).start()
+            threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
 
     elif intent == "income":
         ml_ok = False
@@ -620,7 +613,7 @@ def handle_message(event):
             reply_text = "記錄收入失敗 QQ，等等再試試看。"
         _reply(event.reply_token, reply_text)
         if ml_ok:
-            threading.Thread(target=_run_ml_risk_push, args=(line_user_id,), daemon=True).start()
+            threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
 
     elif intent == "query_expense":
         try:

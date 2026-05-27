@@ -30,6 +30,7 @@ except Exception:
 # 確保所有 model 被 import，才能被 create_all 建到
 import backend.models.token_log  # noqa: F401
 import backend.models.risk_prediction  # noqa: F401
+import backend.models.risk_notification  # noqa: F401
 
 # 建立資料表
 Base.metadata.create_all(bind=engine)

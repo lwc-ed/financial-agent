@@ -12,9 +12,12 @@ def get_risk_history():
     GET /api/ml/history?line_user_id=Uxxxx&limit=10
     回傳使用者最近幾筆風險預測紀錄。
     """
-    line_user_id = (request.args.get("line_user_id") or "").strip()
-    if not line_user_id:
-        return jsonify({"status": "error", "message": "line_user_id 必填"}), 400
+    try:
+        user_id = int(request.args.get("user_id", 0))
+    except ValueError:
+        user_id = 0
+    if not user_id:
+        return jsonify({"status": "error", "message": "user_id 必填"}), 400
 
     try:
         limit = min(int(request.args.get("limit", 10)), 50)
@@ -24,7 +27,7 @@ def get_risk_history():
     with SessionLocal() as db:
         rows = (
             db.query(RiskPrediction)
-            .filter(RiskPrediction.line_user_id == line_user_id)
+            .filter(RiskPrediction.user_id == user_id)
             .order_by(desc(RiskPrediction.created_at))
             .limit(limit)
             .all()
@@ -32,6 +35,7 @@ def get_risk_history():
         data = [
             {
                 "id": r.id,
+                "user_id": r.user_id,
                 "predicted_expense_7d": r.predicted_expense_7d,
                 "monthly_income_avg": r.monthly_income_avg,
                 "risk_ratio": r.risk_ratio,
