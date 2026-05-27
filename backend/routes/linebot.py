@@ -489,7 +489,7 @@ def handle_message(event):
     elif intent == "news":
         _reply(event.reply_token, "📰 正在整理今日產業新聞，請稍候…")
         final_reply = run_daily_news_pipeline(
-            db=db, user_id=user.id, topic=params.get("topic", "一般")
+            db=db, user_id=user.id, topic=params.get("topic", "綜合財經"), user_msg=user_msg
         )
         _push(line_user_id, final_reply)
 

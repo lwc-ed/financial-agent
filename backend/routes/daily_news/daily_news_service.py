@@ -34,7 +34,7 @@ def _save_raw_data(raw_data: dict, topic: str) -> Path:
     return filename
 
 
-def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
+def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") -> str:
     """
     Pipeline：
       1. 意圖識別（recognize_intent）
@@ -96,7 +96,7 @@ def run_daily_news_pipeline(db, user_id: int, topic: str) -> str:
                   f"triggering Perplexity fallback (query={normalized_topic!r})")
             try:
                 perplexity_response, perplexity_evidence = search_with_perplexity(
-                    query=normalized_topic,           # 使用原始使用者輸入
+                    query=user_msg or normalized_topic,
                     article_count=len(articles),
                 )
                 # 存 DB（保留完整 evidence，citation chain 不斷）
