@@ -230,19 +230,6 @@ TOOLS = [
     {
         "type": "function",
         "function": {
-            "name": "quiz",
-            "description": (
-                "投資風險屬性評估測驗。"
-                "【只有】在使用者明確說出要「開始/進行/做」風險測驗、風險評估、投資屬性測驗時才觸發。"
-                "例如：「幫我做風險測驗」、「我要開始風險評估」、「進行投資屬性評估」。"
-                "以下情況【不】觸發：一般投資問題、詢問 RR 等級說明、閒聊、只提到『風險』或『投資』等詞彙。"
-            ),
-            "parameters": {"type": "object", "properties": {}, "required": []},
-        },
-    },
-    {
-        "type": "function",
-        "function": {
             "name": "financial_qa",
             "description": "金融知識問答，使用者詢問理財、投資、保險、股票、基金、ETF、複利、資產配置等金融知識相關問題",
             "parameters": {
@@ -459,6 +446,17 @@ def handle_message(event):
         return
     # ---------- RR 等級查詢結束 ----------
 
+    # ---------- 風險測驗關鍵字觸發（不走 GPT，避免誤判）----------
+    _QUIZ_KEYWORDS = ["風險測驗", "風險評估", "投資屬性", "風險屬性", "風險偏好測驗", "做測驗", "開始測驗"]
+    if any(kw in user_msg for kw in _QUIZ_KEYWORDS):
+        messages = quiz_engine.handle_start_quiz(line_user_id)
+        _reply_messages(event.reply_token, messages)
+        user.last_activity_time = datetime.now(taipei)
+        db.commit()
+        db.close()
+        return
+    # ---------- 風險測驗關鍵字觸發結束 ----------
+
     # ---------- Orchestrator ----------
     result = orchestrate(user_msg)
     intent = result["intent"]
@@ -533,10 +531,6 @@ def handle_message(event):
             print("[linebot] wishlist error:", repr(e))
             reply_text = f"新增失敗：{str(e)}"
         _reply(event.reply_token, reply_text)
-
-    elif intent == "quiz":
-        messages = quiz_engine.handle_start_quiz(line_user_id)
-        _reply_messages(event.reply_token, messages)
 
     elif intent == "news":
         _reply(event.reply_token, "📰 正在整理今日產業新聞，請稍候…")
