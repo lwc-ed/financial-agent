@@ -200,12 +200,42 @@ npm start
 
 # ☁️ Deployment（部署）
 
+## SSH 連線
 ```bash
-ssh ubuntu@<EC2-IP>
+ssh ubuntu@18.224.213.100
+```
+
+## 安裝套件
+```bash
 cd financial-agent
+source venv/bin/activate
+# 先裝 CPU 版 torch（避免拉到 nvidia CUDA 套件）
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+# 再裝其他套件
+pip install -r requirements.txt
+```
+
+## 背景執行（systemd）
+```bash
+# 啟動
+sudo systemctl start financial-agent
+
+# 確認有跑起來
+sudo systemctl status financial-agent --no-pager
+
+# 看即時 log
+sudo journalctl -u financial-agent -f
+```
+
+## 更新程式碼
+```bash
 git pull
-cd backend
-python3 app.py
+sudo systemctl restart financial-agent
+```
+
+## 停止服務
+```bash
+sudo systemctl stop financial-agent
 ```
 
 ---
@@ -287,51 +317,6 @@ sudo timedatectl set-timezone Asia/Taipei
 
 ---
 
-
-# 先忽略以下
-## 開啟常駐
-```bash
-#直接啟動服務：
-sudo systemctl start financial-agent
-
-#確認有跑起來：
-sudo systemctl status financial-agent --no-pager
-ss -ltnp | grep :8000
-
-#看 log（含你 LINE 訊息與 SQL log）：
-sudo journalctl -u financial-agent -f
-```
-
-## 在EC2上更新程式碼方式(常駐時)
-```bash
-cd /home/ubuntu/financial-agent
-git pull
-source venv/bin/activate
-
-# 如果你有新增/更新套件（建議每次都跑一次也行）
-pip install -r requirements.txt
-
-# 重啟服務讓新程式碼生效
-sudo systemctl restart financial-agent
-
-# 檢查狀態
-sudo systemctl status financial-agent --no-pager
-```
-
-## 把常駐方案停掉
-```bash
-#停止
-sudo systemctl stop financial-agent
-
-#確認真的停了
-sudo systemctl status financial-agent --no-pager
-#應該要顯示 Active: inactive (dead)
-
-#再次確認
-ss -ltnp | grep :8000
-#如果沒有輸出，代表 gunicorn 已停止。
-
-```
 
 
 # ml資料夾是做ml 模型

@@ -39,6 +39,7 @@ ml/ml_alignment_kyh_v3/
 *.pkl
 *.csv
 *.json
+!backend/routes/daily_news/rss_config.json
 
 
 # ---- Conda 環境 ----
