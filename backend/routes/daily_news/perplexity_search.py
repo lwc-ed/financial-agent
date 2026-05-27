@@ -130,6 +130,12 @@ def search_with_perplexity(query: str, article_count: int) -> tuple[str, dict]:
 
     raw_content = (response.choices[0].message.content or "").strip()
 
+    # ── 印出 token 用量 ───────────────────────────────────────────
+    usage = getattr(response, "usage", None)
+    if usage:
+        print(f"[perplexity] tokens: prompt={usage.prompt_tokens}, "
+              f"completion={usage.completion_tokens}, total={usage.total_tokens}")
+
     # ── 清理 LINE 不支援的格式 ────────────────────────────────────
     import re as _re
     raw_content = _re.sub(r'\[\d+\]', '', raw_content)
