@@ -52,6 +52,20 @@ quiz_engine = FullInsuranceQuizHandler()
 # --------------------------------------------------
 _tax_sessions: dict[str, dict] = {}
 
+# 退出/取消關鍵字（稅務多輪 & 風險測驗共用）
+_EXIT_KEYWORDS = [
+    # 明確取消
+    "取消", "算了", "停", "結束", "停止", "cancel",
+    # 離開系列
+    "離開", "退出", "先離", "先退", "我走了", "先走",
+    # 再見系列
+    "掰掰", "拜拜", "bye", "掰", "byebye", "掰了",
+    # 不做了系列
+    "不要了", "不做了", "不算了", "先不了", "不玩了", "不想做",
+    # 常見錯字 / 注音混打
+    "算ㄌ", "取ㄒ", "拜拜了", "不做ㄌ",
+]
+
 _TAX_QUESTIONS = [
     {
         "field": "gross_income",
@@ -248,6 +262,21 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "income",
+            "description": "記錄收入，使用者說領薪水、收到錢、收入了多少、獎金入帳",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "category": {"type": "string", "description": "收入類別，例如：薪資、獎金、兼職、投資"},
+                    "amount":   {"type": "integer", "description": "收入金額（純數字）"},
+                },
+                "required": ["category", "amount"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "unknown",
             "description": "無法判斷意圖，使用者說的不屬於任何已知功能（例如打招呼、閒聊）",
             "parameters": {"type": "object", "properties": {}, "required": []},
@@ -407,7 +436,7 @@ def handle_message(event):
 
     # ---------- 所得稅多輪補問 ----------
     if line_user_id in _tax_sessions:
-        if any(kw in user_msg for kw in ["取消", "算了", "停", "cancel"]):
+        if any(kw in user_msg for kw in _EXIT_KEYWORDS):
             del _tax_sessions[line_user_id]
             _reply(event.reply_token, "已取消所得稅試算。")
         else:
@@ -434,10 +463,14 @@ def handle_message(event):
         return
     # ---------- 所得稅多輪補問結束 ----------
 
-    # ---------- 風險測驗進行中：文字訊息直接重送當前題目 ----------
+    # ---------- 風險測驗進行中：支援文字退出或重送當前題目 ----------
     if line_user_id in quiz_engine.user_sessions:
-        current_q = quiz_engine.user_sessions[line_user_id]["current_q"]
-        _reply_messages(event.reply_token, [quiz_engine.build_question_message(line_user_id, current_q)])
+        if any(kw in user_msg for kw in _EXIT_KEYWORDS):
+            quiz_engine.user_sessions.pop(line_user_id, None)
+            _reply(event.reply_token, "已退出測驗。如需重新開始，請說「幫我做風險測驗」。")
+        else:
+            current_q = quiz_engine.user_sessions[line_user_id]["current_q"]
+            _reply_messages(event.reply_token, [quiz_engine.build_question_message(line_user_id, current_q)])
         user.last_activity_time = datetime.now(taipei)
         db.commit()
         db.close()
@@ -498,7 +531,7 @@ def handle_message(event):
         try:
             db.add(Record(
                 line_user_id=line_user_id,
-                type="支出",
+                type="expense",
                 category=params["category"],
                 amount=params["amount"],
                 note="",
@@ -509,6 +542,23 @@ def handle_message(event):
             db.rollback()
             print("[linebot] expense write error:", repr(e))
             reply_text = "記帳失敗 QQ，等等再試試看。"
+        _reply(event.reply_token, reply_text)
+
+    elif intent == "income":
+        try:
+            db.add(Record(
+                line_user_id=line_user_id,
+                type="income",
+                category=params["category"],
+                amount=params["amount"],
+                note="",
+            ))
+            db.commit()
+            reply_text = f"已幫你記錄收入：{params['category']} {params['amount']} 元 💰"
+        except Exception as e:
+            db.rollback()
+            print("[linebot] income write error:", repr(e))
+            reply_text = "記錄收入失敗 QQ，等等再試試看。"
         _reply(event.reply_token, reply_text)
 
     elif intent == "query_expense":

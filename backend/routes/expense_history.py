@@ -43,7 +43,7 @@ def get_recent_expenses():
         query = db.query(Record).filter(Record.line_user_id == line_user_id)
 
         # 如果有指定 type，就再加條件
-        if tx_type in ("支出", "收入"):
+        if tx_type in ("expense", "income", "save"):
             query = query.filter(Record.type == tx_type)
 
         # 如果有指定 category，就再加條件

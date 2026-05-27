@@ -276,7 +276,7 @@
         date: (r.timestamp || "").substring(0, 10),
         category: r.category,
         amount: r.amount,
-        type: r.type === "支出" ? "expense" : "income",
+        type: r.type,
         note: r.note || "",
       }));
     } catch (e) {
@@ -442,19 +442,42 @@
     }
   }
 
-  function saveRecord() {
+  async function saveRecord() {
     const amount = Number(document.getElementById('record-amount').value);
     if(!amount) return;
-    const record = {
-      id: Date.now().toString(),
-      type: state.recordType,
-      category: document.getElementById('record-category').value,
-      amount: amount,
-      note: document.getElementById('record-note').value,
-      date: document.getElementById('record-date').value
-    };
-    state.records.unshift(record);
-    localStorage.setItem('records', JSON.stringify(state.records));
+    const category = document.getElementById('record-category').value;
+    const note = document.getElementById('record-note').value;
+    try {
+      const res = await fetch('/api/expense_record/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          line_user_id: currentUserId,
+          type: state.recordType,
+          category: category,
+          amount: amount,
+          note: note,
+        }),
+      });
+      const json = await res.json();
+      if (json.status !== 'ok') throw new Error(json.message);
+
+      // 將 API 回傳的記錄加到 state（格式與 loadRecordsFromAPI 一致）
+      const d = json.data;
+      state.records.unshift({
+        id: String(d.id),
+        date: (d.timestamp || '').substring(0, 10),
+        category: d.category,
+        amount: d.amount,
+        type: state.recordType,
+        note: d.note || '',
+      });
+    } catch(e) {
+      console.error('saveRecord failed', e);
+      alert('儲存失敗，請再試一次');
+      return;
+    }
+
     closeModals();
     render();
   }
@@ -528,7 +551,7 @@
   function render() {
     // Update Balance
     const income = state.records.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
-    const expense = state.records.filter(r => r.type === 'expense' && r.category !== 'saving_challenge').reduce((s, r) => s + r.amount, 0);
+    const expense = state.records.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
     const saved = state.challenges.reduce((s, c) => s + c.current, 0);
     state.balance = income - expense - saved;
     
