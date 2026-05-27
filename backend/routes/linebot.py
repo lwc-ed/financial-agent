@@ -287,12 +287,16 @@ _dashboard_qr = QuickReply(items=[
     QuickReplyItem(action=URIAction(label="📊 儀表板", uri=LIFF_URL))
 ])
 
-def _reply(reply_token: str, text: str):
+def _reply(reply_token: str, text: str, line_user_id: str | None = None):
+    in_quiz = line_user_id and line_user_id in quiz_engine.user_sessions
     try:
         line_bot_api.reply_message(
             ReplyMessageRequest(
                 reply_token=reply_token,
-                messages=[TextMessage(text=text, quick_reply=_dashboard_qr)]
+                messages=[TextMessage(
+                    text=text,
+                    quick_reply=None if in_quiz else _dashboard_qr
+                )]
             )
         )
     except Exception as e:
