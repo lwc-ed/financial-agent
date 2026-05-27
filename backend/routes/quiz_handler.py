@@ -173,7 +173,16 @@ class FullInsuranceQuizHandler:
                         display_text=label
                     )
                 ))
-                
+
+        # 每題都附上退出按鈕
+        items.append(QuickReplyItem(
+            action=PostbackAction(
+                label="❌ 退出測驗",
+                data=f"action=full_quiz&q={q_index}&type=exit",
+                display_text="退出測驗"
+            )
+        ))
+
         return TextMessage(text=question["text"], quick_reply=QuickReply(items=items))
     # 複選題（Q2）分數計算
     def calculate_q2_score(self, selected_codes):
@@ -270,11 +279,16 @@ class FullInsuranceQuizHandler:
             
         q_index = int(params.get("q"))
         click_type = params.get("type")
-        
+
+        # 處理退出測驗
+        if click_type == "exit":
+            self.user_sessions.pop(user_id, None)
+            return [TextMessage(text="已退出測驗。如需重新開始，請說「幫我做風險測驗」。")]
+
         # 防止重複點擊舊按鈕
         if q_index != self.user_sessions[user_id]["current_q"]:
             return [self.build_question_message(user_id, self.user_sessions[user_id]["current_q"])]
-            
+
         # 處理複選題點擊切換 (Q2)
         if click_type == "toggle":
             code = params.get("code")

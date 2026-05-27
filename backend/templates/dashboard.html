@@ -11,6 +11,8 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- LINE LIFF SDK -->
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 
   <script>
     tailwind.config = {
@@ -72,11 +74,7 @@
       <i data-lucide="wallet" class="w-6 h-6"></i>
       理財小幫手
     </h1>
-    <div class="flex items-center gap-2">
-      <button onclick="toggleDrawer(true)" class="p-2 hover:bg-slate-50 rounded-full transition-colors">
-        <i data-lucide="menu" class="w-6 h-6 text-slate-600"></i>
-      </button>
-    </div>
+    <div class="flex items-center gap-2"></div>
   </header>
 
   <!-- Side Drawer -->
@@ -86,8 +84,8 @@
       <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mb-4">
         <i data-lucide="user" class="w-8 h-8"></i>
       </div>
-      <p class="font-bold text-xl">測試用戶</p>
-      <p class="text-sm opacity-70">U_LOCAL_TEST</p>
+      <p id="drawer-user-name" class="font-bold text-xl">載入中...</p>
+      <p id="drawer-user-id" class="text-sm opacity-70"></p>
     </div>
     <div class="p-4 flex-1">
       <button onclick="showSection('home')" class="nav-btn w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-colors mb-2 text-emerald-700 bg-emerald-50" data-section="home">
@@ -152,7 +150,6 @@
           <button onclick="setTab('details')" id="tab-details" class="pb-2 px-3 tab-inactive whitespace-nowrap">明細</button>
           <button onclick="setTab('category')" id="tab-category" class="pb-2 px-3 tab-inactive whitespace-nowrap">類別</button>
           <button onclick="setTab('ranking')" id="tab-ranking" class="pb-2 px-3 tab-inactive whitespace-nowrap">排行</button>
-          <button class="pb-2 px-3 tab-inactive whitespace-nowrap">帳戶</button>
         </div>
       </div>
 
@@ -195,7 +192,7 @@
     <button onclick="showSection('report')" id="nav-report" class="text-slate-400 hover:text-emerald-600">
       <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
     </button>
-    <button class="text-slate-400 hover:text-emerald-600">
+    <button onclick="toggleDrawer(true)" class="text-slate-400 hover:text-emerald-600">
       <i data-lucide="settings-2" class="w-6 h-6"></i>
     </button>
   </nav>
@@ -266,22 +263,71 @@
 </div>
 
 <script>
+  // --- LIFF & API init ---
+  const LIFF_ID = "2008065321-vlAGLNjW";
+  let currentUserId = null;
+
+  async function loadRecordsFromAPI() {
+    try {
+      const res = await fetch(`/api/expense_history/recent?line_user_id=${currentUserId}&limit=100`);
+      const json = await res.json();
+      state.records = (json.data || []).map(r => ({
+        id: String(r.id),
+        date: (r.timestamp || "").substring(0, 10),
+        category: r.category,
+        amount: r.amount,
+        type: r.type === "支出" ? "expense" : "income",
+        note: r.note || "",
+      }));
+    } catch (e) {
+      console.error("loadRecordsFromAPI failed", e);
+    }
+  }
+
+  async function loadChallengesFromAPI() {
+    try {
+      const res = await fetch(`/api/saving-challenge/list?line_user_id=${currentUserId}`);
+      const json = await res.json();
+      state.challenges = (json.challenges || []).map((c, i) => ({
+        id: String(i),
+        name: c.item_name,
+        emoji: "🐾",
+        current: c.current_amount,
+        target: c.target_amount,
+      }));
+    } catch (e) {
+      console.error("loadChallengesFromAPI failed", e);
+    }
+  }
+
+  async function initDashboard() {
+    try {
+      await liff.init({ liffId: LIFF_ID });
+      if (!liff.isLoggedIn()) { liff.login(); return; }
+      const profile = await liff.getProfile();
+      currentUserId = profile.userId;
+      document.getElementById('drawer-user-name').textContent = profile.displayName;
+      document.getElementById('drawer-user-id').textContent = profile.userId.substring(0, 20) + '...';
+    } catch (e) {
+      console.warn("LIFF init failed", e);
+    }
+
+    if (currentUserId) {
+      await Promise.all([loadRecordsFromAPI(), loadChallengesFromAPI()]);
+    }
+
+    render();
+    lucide.createIcons();
+  }
+
   // --- State ---
   let state = {
     section: 'home',
     tab: 'overview',
     month: new Date(),
-    balance: 50000,
-    records: JSON.parse(localStorage.getItem('records')) || [
-      { id: '1', date: '2026-02-22', category: '晚餐', amount: 63, type: 'expense', note: '披薩' },
-      { id: '2', date: '2026-02-22', category: '宵夜', amount: 31, type: 'expense', note: '串燒' },
-      { id: '3', date: '2026-02-23', category: '午餐', amount: 110, type: 'expense', note: '漢堡' },
-      { id: '4', date: '2026-02-23', category: '晚餐', amount: 85, type: 'expense', note: '義大利麵' },
-      { id: '5', date: '2026-02-23', category: '飲料', amount: 26, type: 'expense', note: '綠茶' },
-      { id: '6', date: '2026-02-24', category: '午餐', amount: 110, type: 'expense', note: '便當' },
-      { id: '7', date: '2026-02-25', category: '薪資', amount: 50000, type: 'income', note: '月薪' }
-    ],
-    challenges: JSON.parse(localStorage.getItem('challenges')) || [],
+    balance: 0,
+    records: [],
+    challenges: [],
     recordType: 'expense',
     selectedWishlist: null,
     selectedPet: 'cat',
@@ -484,7 +530,7 @@
     const income = state.records.filter(r => r.type === 'income').reduce((s, r) => s + r.amount, 0);
     const expense = state.records.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
     const saved = state.challenges.reduce((s, c) => s + c.current, 0);
-    state.balance = 50000 + income - expense - saved;
+    state.balance = income - expense - saved;
     
     if(state.section === 'home') {
       document.getElementById('home-balance').innerText = '$' + state.balance.toLocaleString();
@@ -759,7 +805,7 @@
     });
   }
 
-  window.onload = () => { render(); lucide.createIcons(); };
+  window.onload = () => { initDashboard(); };
 </script>
 
 </body>
