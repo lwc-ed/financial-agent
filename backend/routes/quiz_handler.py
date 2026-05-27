@@ -5,6 +5,8 @@ from linebot.v3.messaging import (
     QuickReplyItem,
     PostbackAction
 )
+from backend.database import SessionLocal
+from backend.models.user import User
 
 class FullInsuranceQuizHandler:
     # 問卷題目
@@ -332,7 +334,21 @@ class FullInsuranceQuizHandler:
             # 12 題全部作答完畢
             final_score = self.user_sessions[user_id]["score"]
             label, advice = self.get_result_analysis(final_score)
-            
+
+            # 將測驗結果寫入 DB
+            risk_type_clean = label.strip("【】")
+            try:
+                db = SessionLocal()
+                user = db.query(User).filter(User.line_user_id == user_id).first()
+                if user:
+                    user.risk_score = final_score
+                    user.risk_type = risk_type_clean
+                    db.commit()
+            except Exception as e:
+                print(f"[quiz] 儲存風險測驗結果失敗: {e}")
+            finally:
+                db.close()
+
             result_text = (
                 f"您的風險偏好已評估完成！\n"
                 f"您的評估總分為：{final_score} 分\n"

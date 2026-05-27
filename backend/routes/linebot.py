@@ -192,7 +192,11 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "tax",
-            "description": "台灣綜合所得稅試算（114年度，2026年申報），使用者詢問要繳多少稅、所得稅怎麼算、幫我試算所得稅",
+            "description": (
+                "台灣綜合所得稅試算（114年度，2026年申報）。"
+                "【只有】使用者明確提到「所得稅」、「報稅」、「繳稅」、「退稅」、「稅額試算」等稅務相關字眼才觸發。"
+                "使用者只是提到薪水、收入、薪資金額，但沒有明確詢問稅務時，【不】觸發此工具。"
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -462,6 +466,17 @@ def handle_message(event):
     # ---------- 風險測驗關鍵字觸發結束 ----------
 
     # ---------- Orchestrator ----------
+    _UNKNOWN_REPLY = (
+        "你好！我可以幫你：\n"
+        "💳 查信用卡回饋（例如：星巴克刷哪張卡）\n"
+        "🧾 記帳（例如：午餐 150）\n"
+        "📋 查消費紀錄（例如：查紀錄）\n"
+        "🛍 欲望清單（例如：幫我加 AirPods 35000）\n"
+        "📰 每日金融新聞（例如：我想看科技產業新聞）\n"
+        "🧮 所得稅試算（例如：幫我算所得稅，年收入80萬）\n"
+        "📊 投資風險屬性測驗（例如：幫我做風險測驗）"
+    )
+
     result = orchestrate(user_msg)
     intent = result["intent"]
     params = result["params"]
@@ -546,18 +561,23 @@ def handle_message(event):
         log_response(user.id, user_msg, "news", (datetime.now() - t_start).total_seconds())
 
     elif intent == "tax":
-        # 過濾 GPT 回傳的 None 值，只保留有實際內容的欄位
-        collected = {k: v for k, v in params.items() if v is not None}
-        missing = [q for q in _TAX_QUESTIONS if q["field"] not in collected]
-        if not missing:
-            try:
-                _reply(event.reply_token, calculate_taiwan_tax_2026(collected))
-            except Exception as e:
-                print("[tax] calc error:", repr(e))
-                _reply(event.reply_token, "試算失敗，請稍後再試。")
+        # 關鍵字守衛：訊息裡沒有稅務字眼就視為 GPT 誤判，降為 unknown
+        _TAX_KEYWORDS = ["所得稅", "報稅", "繳稅", "退稅", "稅額", "稅務", "節稅", "稅率", "綜所稅"]
+        if not any(kw in user_msg for kw in _TAX_KEYWORDS):
+            _reply(event.reply_token, _UNKNOWN_REPLY)
         else:
-            _tax_sessions[line_user_id] = {"params": collected}
-            _reply(event.reply_token, missing[0]["question"])
+            # 過濾 GPT 回傳的 None 值，只保留有實際內容的欄位
+            collected = {k: v for k, v in params.items() if v is not None}
+            missing = [q for q in _TAX_QUESTIONS if q["field"] not in collected]
+            if not missing:
+                try:
+                    _reply(event.reply_token, calculate_taiwan_tax_2026(collected))
+                except Exception as e:
+                    print("[tax] calc error:", repr(e))
+                    _reply(event.reply_token, "試算失敗，請稍後再試。")
+            else:
+                _tax_sessions[line_user_id] = {"params": collected}
+                _reply(event.reply_token, missing[0]["question"])
 
     elif intent == "financial_qa":
         from backend.ai.rag_service import answer_financial_question
