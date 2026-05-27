@@ -96,7 +96,8 @@ def _fetch_source(
 
     # ── 抓 RSS ──────────────────────────────────────────────────
     try:
-        feed = feedparser.parse(source["rss_url"])
+        resp = requests.get(source["rss_url"], headers=HEADERS, timeout=15)
+        feed = feedparser.parse(resp.content)
         entries = feed.entries
     except Exception as e:
         print(f"[rss_fetcher] RSS error [{name}]: {e}")
@@ -211,10 +212,13 @@ def fetch_articles(
             executor.submit(_fetch_source, src, query_emb, hours_back, result_list, lock)
             for src in sources
         ]
-        for f in as_completed(futures):
-            exc = f.exception()
-            if exc:
-                print(f"[rss_fetcher] worker exception: {exc}")
+        try:
+            for f in as_completed(futures, timeout=60):
+                exc = f.exception()
+                if exc:
+                    print(f"[rss_fetcher] worker exception: {exc}")
+        except Exception:
+            print("[rss_fetcher] overall timeout reached, using partial results")
 
     # 依 similarity score 排序（高 → 低）
     result_list.sort(key=lambda a: a["score"], reverse=True)
