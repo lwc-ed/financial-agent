@@ -9,6 +9,7 @@ from linebot.v3.messaging import (
 from backend.routes.quiz_handler import FullInsuranceQuizHandler
 from backend.database import SessionLocal
 from backend.models.user import User
+from backend.models.conversation_memory import ConversationMemory
 from backend.models.wishlist import Wishlist
 from backend.models.record import Record
 from backend.routes.daily_news.daily_news_service import run_daily_news_pipeline
@@ -17,7 +18,7 @@ from backend.utils.token_tracker import upsert_pipeline_tokens, is_over_daily_li
 from backend.utils.response_logger import log_response
 from sqlalchemy import desc
 from openai import OpenAI
-from datetime import datetime
+from datetime import datetime, timedelta
 import threading
 import re
 import urllib.parse
@@ -51,6 +52,9 @@ quiz_engine = FullInsuranceQuizHandler()
 # 所得稅多輪對話 session（in-memory，伺服器重啟會清空）
 # --------------------------------------------------
 _tax_sessions: dict[str, dict] = {}
+MEMORY_TTL_HOURS = 2
+MEMORY_MAX_MESSAGES = 10
+MEMORY_MAX_CHARS_PER_MESSAGE = 500
 
 _TAX_QUESTIONS = [
     {
@@ -261,12 +265,88 @@ TOOLS = [
 ]
 
 
-def orchestrate(user_msg: str) -> dict:
+def _trim_memory_content(text: str) -> str:
+    text = (text or "").strip()
+    if len(text) <= MEMORY_MAX_CHARS_PER_MESSAGE:
+        return text
+    return text[:MEMORY_MAX_CHARS_PER_MESSAGE] + "..."
+
+
+def _remember_message(db, line_user_id: str, role: str, content: str) -> None:
+    content = _trim_memory_content(content)
+    if not line_user_id or not content:
+        return
+    now = datetime.utcnow()
+    db.add(ConversationMemory(
+        line_user_id=line_user_id,
+        role=role,
+        content=content,
+        created_at=now,
+        expires_at=now + timedelta(hours=MEMORY_TTL_HOURS),
+    ))
+
+
+def _load_recent_memory(db, line_user_id: str) -> list[dict]:
+    now = datetime.utcnow()
+    try:
+        db.query(ConversationMemory).filter(
+            ConversationMemory.line_user_id == line_user_id,
+            ConversationMemory.expires_at.isnot(None),
+            ConversationMemory.expires_at < now,
+        ).delete(synchronize_session=False)
+
+        rows = (
+            db.query(ConversationMemory)
+            .filter(
+                ConversationMemory.line_user_id == line_user_id,
+                (ConversationMemory.expires_at.is_(None)) | (ConversationMemory.expires_at >= now),
+            )
+            .order_by(desc(ConversationMemory.created_at))
+            .limit(MEMORY_MAX_MESSAGES)
+            .all()
+        )
+        return [
+            {"role": row.role, "content": _trim_memory_content(row.content)}
+            for row in reversed(rows)
+            if row.role in ("user", "assistant")
+        ]
+    except Exception as e:
+        print("[memory] load failed:", repr(e))
+        db.rollback()
+        return []
+
+
+def _remember_message_standalone(line_user_id: str, role: str, content: str) -> None:
+    db = SessionLocal()
+    try:
+        _remember_message(db, line_user_id, role, content)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print("[memory] standalone write failed:", repr(e))
+    finally:
+        db.close()
+
+
+def orchestrate(user_msg: str, memory_messages: list[dict] | None = None) -> dict:
     """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict, "token_info": dict}"""
     try:
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "你是 LINE 理財助理的意圖判斷器。"
+                    "你可以參考最近短期對話記憶來補全代名詞、省略的品項、商店、金額或主題，"
+                    "但如果新訊息明確改變主題，以新訊息為準。"
+                ),
+            }
+        ]
+        if memory_messages:
+            messages.extend(memory_messages)
+        messages.append({"role": "user", "content": user_msg})
         response = openai_client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[{"role": "user", "content": user_msg}],
+            messages=messages,
             tools=TOOLS,
             tool_choice="required",
         )
@@ -291,7 +371,7 @@ _dashboard_qr = QuickReply(items=[
     QuickReplyItem(action=URIAction(label="📊 儀表板", uri=LIFF_URL))
 ])
 
-def _reply(reply_token: str, text: str, line_user_id: str | None = None):
+def _reply(reply_token: str, text: str, line_user_id: str | None = None, db=None, remember: bool = True):
     in_quiz = line_user_id and line_user_id in quiz_engine.user_sessions
     try:
         line_bot_api.reply_message(
@@ -303,6 +383,8 @@ def _reply(reply_token: str, text: str, line_user_id: str | None = None):
                 )]
             )
         )
+        if remember and db is not None and line_user_id:
+            _remember_message(db, line_user_id, "assistant", text)
     except Exception as e:
         print("[linebot] reply failed:", repr(e))
 
@@ -316,7 +398,7 @@ def _reply_messages(reply_token: str, messages: list):
         print("[linebot] reply_messages failed:", repr(e))
 
 
-def _push(line_user_id: str, text: str):
+def _push(line_user_id: str, text: str, remember: bool = True):
     try:
         line_bot_api.push_message(
             PushMessageRequest(
@@ -324,6 +406,8 @@ def _push(line_user_id: str, text: str):
                 messages=[TextMessage(text=text, quick_reply=_dashboard_qr)]
             )
         )
+        if remember:
+            _remember_message_standalone(line_user_id, "assistant", text)
     except Exception as e:
         print("[linebot] push failed:", repr(e))
 
@@ -398,36 +482,48 @@ def handle_message(event):
             db.rollback()
             user = db.query(User).filter_by(line_user_id=line_user_id).first()
 
+    def reply(text: str, remember: bool = True):
+        _reply(
+            event.reply_token,
+            text,
+            line_user_id=line_user_id,
+            db=db,
+            remember=remember,
+        )
+
     # ---------- Daily token 用量限制 ----------
     if is_over_daily_limit(user.id):
-        _reply(event.reply_token, "⚠️ 您今日的使用量已達上限，請明日再試。")
+        reply("⚠️ 您今日的使用量已達上限，請明日再試。")
         db.close()
         return
     # ---------- Daily token 用量限制結束 ----------
+
+    memory_messages = _load_recent_memory(db, line_user_id)
+    _remember_message(db, line_user_id, "user", user_msg)
 
     # ---------- 所得稅多輪補問 ----------
     if line_user_id in _tax_sessions:
         if any(kw in user_msg for kw in ["取消", "算了", "停", "cancel"]):
             del _tax_sessions[line_user_id]
-            _reply(event.reply_token, "已取消所得稅試算。")
+            reply("已取消所得稅試算。")
         else:
             session = _tax_sessions[line_user_id]
             q = _get_next_tax_question(session)
             if q:
                 ok, err = _apply_tax_answer(session, q, user_msg)
                 if not ok:
-                    _reply(event.reply_token, f"⚠️ {err}")
+                    reply(f"⚠️ {err}")
                 else:
                     next_q = _get_next_tax_question(session)
                     if next_q:
-                        _reply(event.reply_token, next_q["question"])
+                        reply(next_q["question"])
                     else:
                         del _tax_sessions[line_user_id]
                         try:
-                            _reply(event.reply_token, calculate_taiwan_tax_2026(session["params"]))
+                            reply(calculate_taiwan_tax_2026(session["params"]))
                         except Exception as e:
                             print("[tax] calc error:", repr(e))
-                            _reply(event.reply_token, "試算失敗，請稍後再試。")
+                            reply("試算失敗，請稍後再試。")
         user.last_activity_time = datetime.now(taipei)
         db.commit()
         db.close()
@@ -447,7 +543,7 @@ def handle_message(event):
     # ---------- RR 等級查詢（RR1~RR5）----------
     rr_match = re.match(r"^(RR[1-5])$", user_msg.strip().upper())
     if rr_match:
-        _reply(event.reply_token, quiz_engine.get_rr_level_description(rr_match.group(1)))
+        reply(quiz_engine.get_rr_level_description(rr_match.group(1)))
         user.last_activity_time = datetime.now(taipei)
         db.commit()
         db.close()
@@ -478,14 +574,14 @@ def handle_message(event):
         "📚 金融知識問答（例如：什麼是ETF？複利怎麼算？）"
     )
 
-    result = orchestrate(user_msg)
+    result = orchestrate(user_msg, memory_messages)
     intent = result["intent"]
     params = result["params"]
     orchestrate_tokens = result["token_info"]
     print(f"[orchestrate] intent={intent}, params={params}")
 
     if intent == "credit_card":
-        _reply(event.reply_token, "🔍 正在為您查詢中，請稍候…")
+        reply("🔍 正在為您查詢中，請稍候…")
         query = params.get("query", user_msg)
         _uid, _input, _ts = user.id, user_msg, t_start
         def _run_credit_card():
@@ -509,7 +605,7 @@ def handle_message(event):
             db.rollback()
             print("[linebot] expense write error:", repr(e))
             reply_text = "記帳失敗 QQ，等等再試試看。"
-        _reply(event.reply_token, reply_text)
+        reply(reply_text)
 
     elif intent == "query_expense":
         try:
@@ -533,7 +629,7 @@ def handle_message(event):
         except Exception as e:
             print("[linebot] query_expense error:", repr(e))
             reply_text = "查詢失敗，請稍後再試。"
-        _reply(event.reply_token, reply_text)
+        reply(reply_text)
 
     elif intent == "wishlist":
         try:
@@ -550,10 +646,10 @@ def handle_message(event):
             db.rollback()
             print("[linebot] wishlist error:", repr(e))
             reply_text = f"新增失敗：{str(e)}"
-        _reply(event.reply_token, reply_text)
+        reply(reply_text)
 
     elif intent == "news":
-        _reply(event.reply_token, "📰 正在整理今日產業新聞，請稍候…")
+        reply("📰 正在整理今日產業新聞，請稍候…")
         final_reply = run_daily_news_pipeline(
             db=db, user_id=user.id, topic=params.get("topic", "綜合財經"),
             user_msg=user_msg,
@@ -565,24 +661,24 @@ def handle_message(event):
         # 關鍵字守衛：訊息裡沒有稅務字眼就視為 GPT 誤判，降為 unknown
         _TAX_KEYWORDS = ["所得稅", "報稅", "繳稅", "退稅", "稅額", "稅務", "節稅", "稅率", "綜所稅"]
         if not any(kw in user_msg for kw in _TAX_KEYWORDS):
-            _reply(event.reply_token, _UNKNOWN_REPLY)
+            reply(_UNKNOWN_REPLY)
         else:
             # 過濾 GPT 回傳的 None 值，只保留有實際內容的欄位
             collected = {k: v for k, v in params.items() if v is not None}
             missing = [q for q in _TAX_QUESTIONS if q["field"] not in collected]
             if not missing:
                 try:
-                    _reply(event.reply_token, calculate_taiwan_tax_2026(collected))
+                    reply(calculate_taiwan_tax_2026(collected))
                 except Exception as e:
                     print("[tax] calc error:", repr(e))
-                    _reply(event.reply_token, "試算失敗，請稍後再試。")
+                    reply("試算失敗，請稍後再試。")
             else:
                 _tax_sessions[line_user_id] = {"params": collected}
-                _reply(event.reply_token, missing[0]["question"])
+                reply(missing[0]["question"])
 
     elif intent == "financial_qa":
         from backend.ai.rag_service import answer_financial_question
-        _reply(event.reply_token, "📚 正在查詢金融知識庫，請稍候…")
+        reply("📚 正在查詢金融知識庫，請稍候…")
         query = params.get("query", user_msg)
         _uid, _input, _ts = user.id, user_msg, t_start
         def _run_financial_qa():
@@ -592,7 +688,7 @@ def handle_message(event):
         threading.Thread(target=_run_financial_qa, daemon=True).start()
 
     else:  # unknown
-        _reply(event.reply_token, _UNKNOWN_REPLY)
+        reply(_UNKNOWN_REPLY)
 
     # ---------- Token 用量記錄 + 回應時間 ----------
     elapsed = (datetime.now() - t_start).total_seconds()
