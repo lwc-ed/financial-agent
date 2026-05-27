@@ -7,7 +7,7 @@ DAILY_TOKEN_LIMIT = int(os.getenv("DAILY_TOKEN_LIMIT", "50000"))
 
 
 def upsert_pipeline_tokens(
-    line_user_id: str,
+    user_id: int,
     source: str,
     model_openai: str | None = None,
     openai_prompt: int = 0,
@@ -20,7 +20,7 @@ def upsert_pipeline_tokens(
     Pipeline 完成後呼叫一次。
     同一 user + date + source 已存在就累加，否則新增。
     """
-    if not line_user_id:
+    if not user_id:
         return
     today = date.today()
     oai_total = openai_prompt + openai_completion
@@ -30,7 +30,7 @@ def upsert_pipeline_tokens(
         db.execute(
             text("""
                 INSERT INTO user_token_logs (
-                    line_user_id, date, source,
+                    user_id, date, source,
                     model_openai, model_perplexity,
                     openai_prompt_tokens, openai_completion_tokens, openai_total_tokens,
                     perplexity_prompt_tokens, perplexity_completion_tokens, perplexity_total_tokens,
@@ -54,7 +54,7 @@ def upsert_pipeline_tokens(
                     updated_at                   = VALUES(updated_at)
             """),
             {
-                "uid":   line_user_id,
+                "uid":   user_id,
                 "dt":    today,
                 "src":   source,
                 "m_oai": model_openai,
@@ -69,7 +69,7 @@ def upsert_pipeline_tokens(
             },
         )
         db.commit()
-        print(f"[token_tracker] {source} | {line_user_id} "
+        print(f"[token_tracker] {source} | user_id={user_id} "
               f"| openai={oai_total} | perplexity={ppl_total}")
     except Exception as e:
         import traceback
@@ -82,15 +82,15 @@ def upsert_pipeline_tokens(
             pass
 
 
-def get_daily_total(line_user_id: str) -> int:
-    """今日 openai + perplexity 合計 token。"""
+def get_daily_total(user_id: int) -> int:
+    """今日 OpenAI token 總量。"""
     from backend.models.token_log import UserTokenLog
     try:
         db = SessionLocal()
         row = db.query(
             func.sum(UserTokenLog.openai_total_tokens)
         ).filter(
-            UserTokenLog.line_user_id == line_user_id,
+            UserTokenLog.user_id == user_id,
             UserTokenLog.date == date.today(),
         ).scalar()
         return row or 0
@@ -104,9 +104,9 @@ def get_daily_total(line_user_id: str) -> int:
             pass
 
 
-def is_over_daily_limit(line_user_id: str) -> bool:
-    used = get_daily_total(line_user_id)
+def is_over_daily_limit(user_id: int) -> bool:
+    used = get_daily_total(user_id)
     if used >= DAILY_TOKEN_LIMIT:
-        print(f"[token_tracker] {line_user_id} 已達日限 {used}/{DAILY_TOKEN_LIMIT}")
+        print(f"[token_tracker] user_id={user_id} 已達日限 {used}/{DAILY_TOKEN_LIMIT}")
         return True
     return False

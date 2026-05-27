@@ -10,7 +10,7 @@ class UserTokenLog(Base):
     )
 
     id                        = Column(Integer, primary_key=True, autoincrement=True)
-    line_user_id              = Column(String(64), nullable=False, index=True)
+    user_id                   = Column(Integer, nullable=False, index=True)
     date                      = Column(Date, nullable=False, index=True)
     source                    = Column(String(50), nullable=False)  # pipeline 名稱：credit_card / daily_news / expense / ...
     model_openai              = Column(String(50), nullable=True)

@@ -314,7 +314,7 @@ def _push(line_user_id: str, text: str):
         print("[linebot] push failed:", repr(e))
 
 
-def process_credit_card_query(user_msg: str, line_user_id: str | None = None) -> str:
+def process_credit_card_query(user_msg: str, user_id: int | None = None) -> str:
     """信用卡回饋查詢：GPT 解析品牌 → 查 DB → GPT 生成回覆，pipeline 結束後統一記錄 token。"""
     from backend.ai.ai_parser import normalize_input
     from backend.ai.benefit_query import query_benefits
@@ -330,9 +330,9 @@ def process_credit_card_query(user_msg: str, line_user_id: str | None = None) ->
     summary  = build_summary(parsed, results)
     reply, reply_tokens = generate_reply(user_msg, results, summary)
 
-    if line_user_id:
+    if user_id:
         upsert_pipeline_tokens(
-            line_user_id=line_user_id,
+            user_id=user_id,
             source="credit_card",
             model_openai="gpt-4o-mini",
             openai_prompt=parser_tokens["prompt_tokens"] + reply_tokens["prompt_tokens"],
@@ -361,13 +361,6 @@ def handle_message(event):
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
 
-    # ---------- Daily token 用量限制 ----------
-    if is_over_daily_limit(line_user_id):
-        _reply(event.reply_token, "⚠️ 您今日的使用量已達上限，請明日再試。")
-        db.close()
-        return
-    # ---------- Daily token 用量限制結束 ----------
-
     # ---------- Google 綁定檢查 ----------
     user = db.query(User).filter_by(line_user_id=line_user_id).first()
     if not user:
@@ -384,6 +377,13 @@ def handle_message(event):
             db.close()
             return
     # ---------- 綁定檢查完成 ----------
+
+    # ---------- Daily token 用量限制 ----------
+    if is_over_daily_limit(user.id):
+        _reply(event.reply_token, "⚠️ 您今日的使用量已達上限，請明日再試。")
+        db.close()
+        return
+    # ---------- Daily token 用量限制結束 ----------
 
     # ---------- 所得稅多輪補問 ----------
     if line_user_id in _tax_sessions:
@@ -445,7 +445,7 @@ def handle_message(event):
         _reply(event.reply_token, "🔍 正在為您查詢中，請稍候…")
         query = params.get("query", user_msg)
         threading.Thread(
-            target=lambda: _push(line_user_id, process_credit_card_query(query, line_user_id=line_user_id)),
+            target=lambda: _push(line_user_id, process_credit_card_query(query, user_id=user.id)),
             daemon=True,
         ).start()
 
@@ -515,7 +515,7 @@ def handle_message(event):
         _reply(event.reply_token, "📰 正在整理今日產業新聞，請稍候…")
         final_reply = run_daily_news_pipeline(
             db=db, user_id=user.id, topic=params.get("topic", "綜合財經"),
-            user_msg=user_msg, line_user_id=line_user_id,
+            user_msg=user_msg,
         )
         _push(line_user_id, final_reply)
 
@@ -557,7 +557,7 @@ def handle_message(event):
     # ---------- Token 用量記錄（credit_card / news 各自已記，其他 intent 記 orchestrate） ----------
     if intent not in ("credit_card", "news"):
         upsert_pipeline_tokens(
-            line_user_id=line_user_id,
+            user_id=user.id,
             source=intent,
             model_openai="gpt-4o-mini",
             openai_prompt=orchestrate_tokens["prompt_tokens"],

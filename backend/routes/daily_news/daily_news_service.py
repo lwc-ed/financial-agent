@@ -35,7 +35,7 @@ def _save_raw_data(raw_data: dict, topic: str) -> Path:
     return filename
 
 
-def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "", line_user_id: str | None = None) -> str:
+def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") -> str:
     """
     Pipeline：
       1. 意圖識別（recognize_intent）
@@ -143,9 +143,9 @@ def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "", li
         print(f"[daily_news] summary saved, no={row.no}")
 
         # ── Step 10：記錄 token 用量 ─────────────────────────────
-        if line_user_id:
+        if user_id:
             upsert_pipeline_tokens(
-                line_user_id=line_user_id,
+                user_id=user_id,
                 source="daily_news",
                 model_openai="gpt-4o-mini",
                 openai_prompt=token_info["prompt_tokens"],
