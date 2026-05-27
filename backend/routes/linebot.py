@@ -278,7 +278,7 @@ TOOLS = [
                     "category": {
                         "type": "string",
                         "description": "收入類別",
-                        "enum": ["薪資", "獎金", "投資收入", "兼職", "租金", "其他"]
+                        "enum": ["薪資", "獎金", "投資收入", "兼職", "租金", "其他", "零用錢"]
                     },
                     "amount":   {"type": "integer", "description": "收入金額（純數字）"},
                     "note":     {"type": "string",  "description": "細節備註，例如來源、公司、項目（可留空）"},
@@ -579,7 +579,7 @@ def handle_message(event):
                 type="expense",
                 category=params["category"],
                 amount=params["amount"],
-                note=params.get("note", ""),
+                note=params.get("note") or user_msg,
                 timestamp=datetime.now(taipei).replace(tzinfo=None),
             ))
             db.commit()
@@ -601,7 +601,7 @@ def handle_message(event):
                 type="income",
                 category=params["category"],
                 amount=params["amount"],
-                note=params.get("note", ""),
+                note=params.get("note") or user_msg,
                 timestamp=datetime.now(taipei).replace(tzinfo=None),
             ))
             db.commit()
