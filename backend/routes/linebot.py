@@ -316,7 +316,7 @@ TOOLS = [
     # {"type": "function", "function": {"name": "ml_predict",       "description": "...", "parameters": {...}}},
     # {"type": "function", "function": {"name": "budget_alert",     "description": "...", "parameters": {...}}},
     # {"type": "function", "function": {"name": "report",           "description": "...", "parameters": {...}}},
-]
+    }
 
 
 def _trim_memory_content(text: str) -> str:
