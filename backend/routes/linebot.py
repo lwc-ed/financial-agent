@@ -286,6 +286,12 @@ TOOLS = [
                     "note": {"type": "string", "description": "使用者提供的短期背景資訊"},
                 },
                 "required": ["note"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "income",
             "description": "記錄收入，使用者說領薪水、收到錢、收入了多少、獎金入帳",
             "parameters": {
@@ -316,7 +322,7 @@ TOOLS = [
     # {"type": "function", "function": {"name": "ml_predict",       "description": "...", "parameters": {...}}},
     # {"type": "function", "function": {"name": "budget_alert",     "description": "...", "parameters": {...}}},
     # {"type": "function", "function": {"name": "report",           "description": "...", "parameters": {...}}},
-    }
+]
 
 
 def _trim_memory_content(text: str) -> str:
@@ -632,8 +638,6 @@ def handle_message(event):
                         except Exception as e:
                             print("[tax] calc error:", repr(e))
                             reply("試算失敗，請稍後再試。")
-        user.last_activity_time = datetime.now(taipei)
-                            _reply(event.reply_token, "試算失敗，請稍後再試。")
         user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
@@ -658,8 +662,6 @@ def handle_message(event):
     rr_match = re.match(r"^(RR[1-5])$", user_msg.strip().upper())
     if rr_match:
         reply(quiz_engine.get_rr_level_description(rr_match.group(1)))
-        user.last_activity_time = datetime.now(taipei)
-        _reply(event.reply_token, quiz_engine.get_rr_level_description(rr_match.group(1)))
         user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
@@ -729,7 +731,6 @@ def handle_message(event):
             print("[linebot] expense write error:", repr(e))
             reply_text = "記帳失敗 QQ，等等再試試看。"
         reply(reply_text)
-        _reply(event.reply_token, reply_text)
         if ml_ok:
             threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
 
@@ -751,7 +752,7 @@ def handle_message(event):
             db.rollback()
             print("[linebot] income write error:", repr(e))
             reply_text = "記錄收入失敗 QQ，等等再試試看。"
-        _reply(event.reply_token, reply_text)
+        reply(reply_text)
         if ml_ok:
             threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
 
