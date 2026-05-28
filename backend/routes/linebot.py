@@ -661,10 +661,8 @@ def handle_message(event):
             db.commit()
             if added:
                 reply_text = f"已新增 {len(added)} 筆清單！\n" + "\n".join(f"✅ {i}" for i in added)
-                if skipped:
-                    reply_text += "\n\n已略過重複項目：\n" + "\n".join(f"↪ {i}" for i in skipped)
             elif skipped:
-                reply_text = "這些品項已經在願望清單裡，我沒有重複新增：\n" + "\n".join(f"↪ {i}" for i in skipped)
+                reply_text = "這個品項已經在你的願望清單裡囉。"
             else:
                 reply_text = "沒有找到有效的品項，請重新輸入。"
         except Exception as e:
