@@ -252,6 +252,24 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "remember_context",
+            "description": (
+                "使用者只是告訴你短期背景、接下來的計畫、偏好、地點或店家，"
+                "但沒有要求記帳、加入欲望清單、查信用卡、查新聞、算稅或問金融知識。"
+                "例如：我等等要去星巴克、我晚點要去百貨公司、我最近想看筆電。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "note": {"type": "string", "description": "使用者提供的短期背景資訊"},
+                },
+                "required": ["note"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "unknown",
             "description": "無法判斷意圖，使用者說的不屬於任何已知功能（例如打招呼、閒聊）",
             "parameters": {"type": "object", "properties": {}, "required": []},
@@ -332,6 +350,20 @@ def _normalize_item_name(name: str) -> str:
     return re.sub(r"\s+", "", (name or "").strip().lower())
 
 
+def _looks_like_wishlist_request(text: str) -> bool:
+    text = text or ""
+    wishlist_keywords = [
+        "願望清單", "欲望清單", "加入清單", "加到清單", "幫我加", "幫我加入",
+        "想買", "要買", "打算買", "想入手", "列入", "清單",
+    ]
+    price_markers = ["價格", "價錢", "售價", "$", "＄"]
+    return (
+        any(keyword in text for keyword in wishlist_keywords)
+        or any(marker in text for marker in price_markers)
+        or bool(re.search(r"\d+\s*元", text))
+    )
+
+
 def orchestrate(user_msg: str, memory_messages: list[dict] | None = None) -> dict:
     """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict, "token_info": dict}"""
     try:
@@ -346,6 +378,7 @@ def orchestrate(user_msg: str, memory_messages: list[dict] | None = None) -> dic
                     "只有當新訊息使用「剛剛那個」「也加入」「一起加入」「那家店」等需要承接前文的說法時，"
                     "才可以從記憶補上一輪內容。"
                     "不要只因為記憶中曾經出現某商品、商店或金額，就把它重複放進本輪參數。"
+                    "如果使用者只是說接下來要去哪裡、想做什麼、偏好或背景資訊，請使用 remember_context。"
                 ),
             }
         ]
@@ -586,6 +619,10 @@ def handle_message(event):
     intent = result["intent"]
     params = result["params"]
     orchestrate_tokens = result["token_info"]
+    if intent == "wishlist" and not _looks_like_wishlist_request(user_msg):
+        print("[orchestrate] wishlist guard downgraded to remember_context")
+        intent = "remember_context"
+        params = {"note": user_msg}
     print(f"[orchestrate] intent={intent}, params={params}")
 
     if intent == "credit_card":
@@ -709,6 +746,9 @@ def handle_message(event):
             _push(line_user_id, result)
             log_response(_uid, _input, "financial_qa", (datetime.now() - _ts).total_seconds())
         threading.Thread(target=_run_financial_qa, daemon=True).start()
+
+    elif intent == "remember_context":
+        reply("我記住了。")
 
     else:  # unknown
         reply(_UNKNOWN_REPLY)
