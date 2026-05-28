@@ -165,6 +165,7 @@ flowchart LR
             direction TB
             I5[news<br/>每日新聞]:::teal
             I6[tax / quiz<br/>稅務 & 保險測驗]:::blue
+            I7[remember context<br/>短期背景記憶]:::purple
         end
 
     end
@@ -206,7 +207,8 @@ flowchart LR
         T4[risk predictions<br/>BiGRU 風險預測結果]:::gray
         T5[user token logs<br/>Token 用量累計]:::gray
         T6[daily news<br/>每日新聞摘要快取]:::gray
-        T1 ~~~ T2 ~~~ T3 ~~~ T4 ~~~ T5 ~~~ T6
+        T7[conversation memory<br/>短期對話記憶 TTL 2h]:::gray
+        T1 ~~~ T2 ~~~ T3 ~~~ T4 ~~~ T5 ~~~ T6 ~~~ T7
     end
 
     subgraph CC["MySQL | 信用卡優惠"]
@@ -229,12 +231,15 @@ flowchart LR
     W6[每日新聞]:::blue
     W7[Google OAuth / LIFF]:::orange
 
+    W8[短期記憶模組]:::purple
+
     W7  -->|寫入 / 更新| T1
     W1  -->|寫入| T2
     W1  -->|讀取| T2
     W2  -->|寫入| T4
     W3  -->|累加寫入| T5
     W6  -->|快取寫入| T6
+    W8  -->|讀寫| T7
     W4  -->|FTS / LIKE 查詢| C1
     W5  -->|向量搜尋| V1
 
@@ -390,6 +395,40 @@ flowchart LR
     classDef teal    fill:#2E8B7A,stroke:#1E7A69,color:#fff
     classDef diamond fill:#3D5A9E,stroke:#2D4A8E,color:#fff
 ```
+---
+
+### 短期對話記憶
+```mermaid
+flowchart LR
+    A([使用者傳訊]):::orange
+    B[載入近期記憶<br/>_load_recent_memory<br/>最多 10 則 / TTL 2h]:::purple
+    C[刪除已過期記錄<br/>lazy cleanup]:::purple
+    D[orchestrate<br/>記憶作為 GPT context]:::blue
+    E{intent}:::diamond
+    F[remember_context<br/>回覆「我記住了」]:::purple
+    G[其他功能處理]:::blue
+    H[寫入使用者訊息<br/>_remember_message role=user]:::purple
+    I[寫入 Bot 回覆<br/>_remember_message role=assistant]:::purple
+    J[(conversation_memory 表<br/>MySQL)]:::gray
+
+    A --> B
+    B --> C
+    B --> D
+    D --> E
+    E -->|remember_context| F --> I
+    E -->|其他| G --> I
+    A --> H
+    H --> J
+    I --> J
+    B --> J
+
+    classDef orange  fill:#E8916A,stroke:#C97A52,color:#fff
+    classDef blue    fill:#4A6FA5,stroke:#3A5A8A,color:#fff
+    classDef purple  fill:#7A5AA8,stroke:#5A3A88,color:#fff
+    classDef gray    fill:#6B7280,stroke:#4B5260,color:#fff
+    classDef diamond fill:#3D5A9E,stroke:#2D4A8E,color:#fff
+```
+
 ---
 
 ## 第三層
