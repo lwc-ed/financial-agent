@@ -308,7 +308,7 @@ def _load_recent_memory(db, line_user_id: str) -> list[dict]:
         return [
             {"role": row.role, "content": _trim_memory_content(row.content)}
             for row in reversed(rows)
-            if row.role in ("user", "assistant")
+            if row.role == "user"
         ]
     except Exception as e:
         print("[memory] load failed:", repr(e))
@@ -328,6 +328,10 @@ def _remember_message_standalone(line_user_id: str, role: str, content: str) -> 
         db.close()
 
 
+def _normalize_item_name(name: str) -> str:
+    return re.sub(r"\s+", "", (name or "").strip().lower())
+
+
 def orchestrate(user_msg: str, memory_messages: list[dict] | None = None) -> dict:
     """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict, "token_info": dict}"""
     try:
@@ -338,6 +342,10 @@ def orchestrate(user_msg: str, memory_messages: list[dict] | None = None) -> dic
                     "你是 LINE 理財助理的意圖判斷器。"
                     "你可以參考最近短期對話記憶來補全代名詞、省略的品項、商店、金額或主題，"
                     "但如果新訊息明確改變主題，以新訊息為準。"
+                    "抽取 wishlist 或 expense 參數時，優先只抽取使用者這一則新訊息明確提到的項目與金額；"
+                    "只有當新訊息使用「剛剛那個」「也加入」「一起加入」「那家店」等需要承接前文的說法時，"
+                    "才可以從記憶補上一輪內容。"
+                    "不要只因為記憶中曾經出現某商品、商店或金額，就把它重複放進本輪參數。"
                 ),
             }
         ]
@@ -634,12 +642,29 @@ def handle_message(event):
     elif intent == "wishlist":
         try:
             added = []
+            skipped = []
+            existing_rows = db.query(Wishlist).filter(Wishlist.user_id == user.id).all()
+            existing_keys = {
+                (_normalize_item_name(row.item_name), int(row.price or 0))
+                for row in existing_rows
+            }
             for item_data in params.get("items", []):
-                db.add(Wishlist(user_id=user.id, item_name=item_data["item"], price=item_data["price"]))
-                added.append(f"{item_data['item']} (${item_data['price']})")
+                item_name = item_data["item"]
+                price = int(item_data["price"])
+                key = (_normalize_item_name(item_name), price)
+                if key in existing_keys:
+                    skipped.append(f"{item_name} (${price})")
+                    continue
+                db.add(Wishlist(user_id=user.id, item_name=item_name, price=price))
+                existing_keys.add(key)
+                added.append(f"{item_name} (${price})")
             db.commit()
             if added:
                 reply_text = f"已新增 {len(added)} 筆清單！\n" + "\n".join(f"✅ {i}" for i in added)
+                if skipped:
+                    reply_text += "\n\n已略過重複項目：\n" + "\n".join(f"↪ {i}" for i in skipped)
+            elif skipped:
+                reply_text = "這些品項已經在願望清單裡，我沒有重複新增：\n" + "\n".join(f"↪ {i}" for i in skipped)
             else:
                 reply_text = "沒有找到有效的品項，請重新輸入。"
         except Exception as e:
