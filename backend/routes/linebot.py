@@ -406,6 +406,100 @@ def _looks_like_wishlist_request(text: str) -> bool:
     )
 
 
+def _looks_like_context_note(text: str) -> bool:
+    text = text or ""
+    context_keywords = [
+        "等等", "等下", "待會", "晚點", "等一下", "要去", "會去", "準備去",
+        "正在", "最近", "目前", "今天", "明天", "想去",
+        "喜歡", "偏好", "常去", "不喜歡",
+    ]
+    return any(keyword in text for keyword in context_keywords)
+
+
+def _looks_like_credit_card_request(text: str) -> bool:
+    text = text or ""
+    credit_keywords = [
+        "信用卡", "哪張卡", "哪一張卡", "哪張", "哪一張", "刷哪", "刷卡",
+        "回饋", "優惠", "划算", "比較好", "推薦卡", "用什麼卡", "哪個卡",
+    ]
+    return any(keyword in text for keyword in credit_keywords)
+
+
+def _looks_like_expense_request(text: str) -> bool:
+    text = text or ""
+    expense_keywords = [
+        "記帳", "記錄", "紀錄", "花了", "花費", "支出", "消費", "付款",
+        "午餐", "早餐", "晚餐", "飲料", "咖啡", "交通", "捷運", "公車",
+        "加油", "停車", "房租", "水電", "餐費",
+    ]
+    has_amount = bool(re.search(r"\d+", text))
+    has_expense_keyword = any(keyword in text for keyword in expense_keywords)
+    return has_expense_keyword and has_amount
+
+
+def _looks_like_query_expense_request(text: str) -> bool:
+    text = text or ""
+    query_keywords = [
+        "查紀錄", "查記錄", "消費紀錄", "消費記錄", "記帳紀錄", "記帳記錄",
+        "最近花", "花了多少", "支出紀錄", "支出記錄", "我的紀錄", "我的記錄",
+    ]
+    return any(keyword in text for keyword in query_keywords)
+
+
+def _looks_like_news_request(text: str) -> bool:
+    text = text or ""
+    news_keywords = ["新聞", "財經新聞", "產業新聞", "今日新聞", "市場消息", "最新消息"]
+    return any(keyword in text for keyword in news_keywords)
+
+
+def _looks_like_financial_qa_request(text: str) -> bool:
+    text = text or ""
+    financial_keywords = [
+        "ETF", "股票", "基金", "債券", "保險", "投資", "理財", "複利",
+        "資產配置", "通膨", "利率", "股息", "股利", "殖利率", "風險",
+        "報酬", "定存", "年化", "本金",
+    ]
+    question_keywords = ["什麼", "為什麼", "怎麼", "如何", "可以", "嗎", "?", "？"]
+    return (
+        any(keyword in text for keyword in financial_keywords)
+        and any(keyword in text for keyword in question_keywords)
+    )
+
+
+def _validate_intent(intent: str, params: dict, user_msg: str) -> tuple[str, dict]:
+    if intent == "wishlist" and not _looks_like_wishlist_request(user_msg):
+        print("[orchestrate] wishlist guard downgraded")
+        return "remember_context", {"note": user_msg}
+
+    if intent == "credit_card" and not _looks_like_credit_card_request(user_msg):
+        print("[orchestrate] credit_card guard downgraded")
+        if _looks_like_context_note(user_msg):
+            return "remember_context", {"note": user_msg}
+        return "unknown", {}
+
+    if intent == "expense" and not _looks_like_expense_request(user_msg):
+        print("[orchestrate] expense guard downgraded")
+        return "unknown", {}
+
+    if intent == "query_expense" and not _looks_like_query_expense_request(user_msg):
+        print("[orchestrate] query_expense guard downgraded")
+        return "unknown", {}
+
+    if intent == "news" and not _looks_like_news_request(user_msg):
+        print("[orchestrate] news guard downgraded")
+        return "unknown", {}
+
+    if intent == "financial_qa" and not _looks_like_financial_qa_request(user_msg):
+        print("[orchestrate] financial_qa guard downgraded")
+        return "unknown", {}
+
+    if intent == "remember_context" and not _looks_like_context_note(user_msg):
+        print("[orchestrate] remember_context guard downgraded")
+        return "unknown", {}
+
+    return intent, params
+
+
 def orchestrate(user_msg: str, memory_messages: list[dict] | None = None) -> dict:
     """GPT 判斷意圖並抽出參數，回傳 {"intent": str, "params": dict, "token_info": dict}"""
     try:
@@ -696,10 +790,7 @@ def handle_message(event):
     intent = result["intent"]
     params = result["params"]
     orchestrate_tokens = result["token_info"]
-    if intent == "wishlist" and not _looks_like_wishlist_request(user_msg):
-        print("[orchestrate] wishlist guard downgraded to remember_context")
-        intent = "remember_context"
-        params = {"note": user_msg}
+    intent, params = _validate_intent(intent, params, user_msg)
     print(f"[orchestrate] intent={intent}, params={params}")
 
     if intent == "credit_card":
