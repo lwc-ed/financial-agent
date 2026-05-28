@@ -73,6 +73,7 @@ env/
 instance/
 *.db
 *.sqlite3
+!backend/ai/knowledge/chroma_db/chroma.sqlite3
 
 
 # ---- Test / Coverage ----

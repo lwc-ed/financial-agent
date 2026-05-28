@@ -229,9 +229,33 @@ sudo journalctl -u financial-agent -f
 
 ## 更新程式碼
 ```bash
+git restore backend/ai/knowledge/chroma_db/
 git pull
 sudo systemctl restart financial-agent
 ```
+
+> ChromaDB 每次啟動會自動修改自己的檔案，`git restore` 先把這些變更清掉才能順利 pull。
+
+## RAG 金融知識庫（chroma_db）更新
+
+EC2 RAM 只有 1.9GB，`google/embeddinggemma-300m`（1.27GB）rebuild 到一半會被 OOM kill。
+
+**務必在本機 Mac rebuild 後再 push，EC2 只做 git pull：**
+
+```bash
+# 本機 Mac 執行
+venv/bin/python -m backend.ai.rebuild_chroma
+git add -f backend/ai/knowledge/chroma_db/
+git commit -m "chroma_db 再建"
+git push
+
+# EC2 執行
+git restore backend/ai/knowledge/chroma_db/
+git pull
+sudo systemctl restart financial-agent
+```
+
+> 不可在 EC2 上直接執行 `rebuild_chroma.py`。
 
 ## 停止服務
 ```bash
@@ -251,7 +275,7 @@ sudo systemctl stop financial-agent
 
 ## 🖥 EC2 SSH
 ```bash
-ssh ubuntu@3.137.145.151
+ssh ubuntu@3.133.58.32
 ```
 
 ## 🗄 RDS MySQL
