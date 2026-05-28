@@ -388,6 +388,26 @@ def _remember_message_standalone(line_user_id: str, role: str, content: str) -> 
         db.close()
 
 
+def _clear_memory(db, line_user_id: str) -> None:
+    if not line_user_id:
+        return
+    db.query(ConversationMemory).filter(
+        ConversationMemory.line_user_id == line_user_id
+    ).delete(synchronize_session=False)
+
+
+def _clear_memory_standalone(line_user_id: str) -> None:
+    db = SessionLocal()
+    try:
+        _clear_memory(db, line_user_id)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print("[memory] standalone clear failed:", repr(e))
+    finally:
+        db.close()
+
+
 def _normalize_item_name(name: str) -> str:
     return re.sub(r"\s+", "", (name or "").strip().lower())
 
@@ -437,6 +457,17 @@ def _looks_like_expense_request(text: str) -> bool:
     return has_expense_keyword and has_amount
 
 
+def _looks_like_income_request(text: str) -> bool:
+    text = text or ""
+    income_keywords = [
+        "收入", "薪水", "薪資", "領薪", "發薪", "獎金", "入帳", "收到錢",
+        "兼職", "租金", "零用錢", "投資收入",
+    ]
+    has_amount = bool(re.search(r"\d+", text))
+    has_income_keyword = any(keyword in text for keyword in income_keywords)
+    return has_income_keyword and has_amount
+
+
 def _looks_like_query_expense_request(text: str) -> bool:
     text = text or ""
     query_keywords = [
@@ -479,6 +510,10 @@ def _validate_intent(intent: str, params: dict, user_msg: str) -> tuple[str, dic
 
     if intent == "expense" and not _looks_like_expense_request(user_msg):
         print("[orchestrate] expense guard downgraded")
+        return "unknown", {}
+
+    if intent == "income" and not _looks_like_income_request(user_msg):
+        print("[orchestrate] income guard downgraded")
         return "unknown", {}
 
     if intent == "query_expense" and not _looks_like_query_expense_request(user_msg):
@@ -714,6 +749,7 @@ def handle_message(event):
         if any(kw in user_msg for kw in _EXIT_KEYWORDS):
             del _tax_sessions[line_user_id]
             reply("已取消所得稅試算。")
+            _clear_memory(db, line_user_id)
         else:
             session = _tax_sessions[line_user_id]
             q = _get_next_tax_question(session)
@@ -732,6 +768,7 @@ def handle_message(event):
                         except Exception as e:
                             print("[tax] calc error:", repr(e))
                             reply("試算失敗，請稍後再試。")
+                        _clear_memory(db, line_user_id)
         user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
@@ -756,6 +793,7 @@ def handle_message(event):
     rr_match = re.match(r"^(RR[1-5])$", user_msg.strip().upper())
     if rr_match:
         reply(quiz_engine.get_rr_level_description(rr_match.group(1)))
+        _clear_memory(db, line_user_id)
         user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
@@ -767,6 +805,7 @@ def handle_message(event):
     if any(kw in user_msg for kw in _QUIZ_KEYWORDS):
         messages = quiz_engine.handle_start_quiz(line_user_id)
         _reply_messages(event.reply_token, messages)
+        _clear_memory(db, line_user_id)
         user.last_activity_time = datetime.now(taipei).replace(tzinfo=None)
         db.commit()
         db.close()
@@ -800,6 +839,7 @@ def handle_message(event):
         def _run_credit_card():
             result = process_credit_card_query(query, user_id=_uid)
             _push(line_user_id, result)
+            _clear_memory_standalone(line_user_id)
             log_response(_uid, _input, "credit_card", (datetime.now() - _ts).total_seconds())
         threading.Thread(target=_run_credit_card, daemon=True).start()
 
@@ -822,6 +862,7 @@ def handle_message(event):
             print("[linebot] expense write error:", repr(e))
             reply_text = "記帳失敗 QQ，等等再試試看。"
         reply(reply_text)
+        _clear_memory(db, line_user_id)
         if ml_ok:
             threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
 
@@ -844,6 +885,7 @@ def handle_message(event):
             print("[linebot] income write error:", repr(e))
             reply_text = "記錄收入失敗 QQ，等等再試試看。"
         reply(reply_text)
+        _clear_memory(db, line_user_id)
         if ml_ok:
             threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
 
@@ -870,6 +912,7 @@ def handle_message(event):
             print("[linebot] query_expense error:", repr(e))
             reply_text = "查詢失敗，請稍後再試。"
         reply(reply_text)
+        _clear_memory(db, line_user_id)
 
     elif intent == "wishlist":
         try:
@@ -902,6 +945,7 @@ def handle_message(event):
             print("[linebot] wishlist error:", repr(e))
             reply_text = f"新增失敗：{str(e)}"
         reply(reply_text)
+        _clear_memory(db, line_user_id)
 
     elif intent == "news":
         reply("📰 正在整理今日產業新聞，請稍候…")
@@ -910,6 +954,7 @@ def handle_message(event):
             user_msg=user_msg,
         )
         _push(line_user_id, final_reply)
+        _clear_memory(db, line_user_id)
         log_response(user.id, user_msg, "news", (datetime.now() - t_start).total_seconds())
 
     elif intent == "tax":
@@ -927,6 +972,7 @@ def handle_message(event):
                 except Exception as e:
                     print("[tax] calc error:", repr(e))
                     reply("試算失敗，請稍後再試。")
+                _clear_memory(db, line_user_id)
             else:
                 _tax_sessions[line_user_id] = {"params": collected}
                 reply(missing[0]["question"])
@@ -939,6 +985,7 @@ def handle_message(event):
         def _run_financial_qa():
             result = answer_financial_question(query)
             _push(line_user_id, result)
+            _clear_memory_standalone(line_user_id)
             log_response(_uid, _input, "financial_qa", (datetime.now() - _ts).total_seconds())
         threading.Thread(target=_run_financial_qa, daemon=True).start()
 
