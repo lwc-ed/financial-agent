@@ -55,6 +55,7 @@ quiz_engine = FullInsuranceQuizHandler()
 # 所得稅多輪對話 session（in-memory，伺服器重啟會清空）
 # --------------------------------------------------
 _tax_sessions: dict[str, dict] = {}
+_news_semaphore = threading.Semaphore(1)  # 同時最多一個新聞 pipeline，避免 OOM
 MEMORY_TTL_HOURS = 2
 MEMORY_MAX_MESSAGES = 10
 MEMORY_MAX_CHARS_PER_MESSAGE = 500
@@ -965,20 +966,26 @@ def handle_message(event):
         _clear_memory(db, line_user_id)
 
     elif intent == "news":
-        reply("📰 正在整理今日產業新聞，請稍候…")
-        _uid, _topic, _input, _ts = user.id, params.get("topic", "綜合財經"), user_msg, t_start
-        def _run_news():
-            _db = SessionLocal()
-            try:
-                final_reply = run_daily_news_pipeline(
-                    db=_db, user_id=_uid, topic=_topic, user_msg=_input,
-                )
-            finally:
-                _db.close()
-            _push(line_user_id, final_reply)
-            _clear_memory_standalone(line_user_id)
-            log_response(_uid, _input, "news", (datetime.now() - _ts).total_seconds())
-        threading.Thread(target=_run_news, daemon=True).start()
+        if not _news_semaphore.acquire(blocking=False):
+            reply("⏳ 新聞服務正忙，請稍後再試。", remember=False)
+        else:
+            reply("📰 正在整理今日產業新聞，請稍候…")
+            _uid, _topic, _input, _ts = user.id, params.get("topic", "綜合財經"), user_msg, t_start
+            def _run_news():
+                try:
+                    _db = SessionLocal()
+                    try:
+                        final_reply = run_daily_news_pipeline(
+                            db=_db, user_id=_uid, topic=_topic, user_msg=_input,
+                        )
+                    finally:
+                        _db.close()
+                    _push(line_user_id, final_reply)
+                    _clear_memory_standalone(line_user_id)
+                    log_response(_uid, _input, "news", (datetime.now() - _ts).total_seconds())
+                finally:
+                    _news_semaphore.release()
+            threading.Thread(target=_run_news, daemon=True).start()
 
     elif intent == "tax":
         # 關鍵字守衛：訊息裡沒有稅務字眼就視為 GPT 誤判，降為 unknown

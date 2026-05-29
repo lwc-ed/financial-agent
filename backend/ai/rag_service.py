@@ -1,26 +1,35 @@
 import os
 import re
+from typing import List
 from dotenv import load_dotenv
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+from langchain_core.embeddings import Embeddings
 from openai import OpenAI
+from backend.routes.daily_news.embedder import encode_query, encode_documents
 
 load_dotenv()
 
 _CHROMA_DIR = os.path.join(os.path.dirname(__file__), "knowledge", "chroma_db")
-_EMBEDDING_MODEL = "google/embeddinggemma-300m"
 
 _vector_store = None
 _openai_client = None
+
+
+class _SharedEmbeddings(Embeddings):
+    """langchain Embeddings wrapper，共用 embedder.py 的 singleton，避免重複載入模型。"""
+    def embed_documents(self, texts: List[str]) -> List[List[float]]:
+        return encode_documents(texts).tolist()
+
+    def embed_query(self, text: str) -> List[float]:
+        return encode_query(text).tolist()
 
 
 def _init():
     global _vector_store, _openai_client
     if _vector_store is not None:
         return
-    print("[rag_service] 初始化 embedding 模型與向量資料庫...")
-    embedding = HuggingFaceEmbeddings(model_name=_EMBEDDING_MODEL)
-    _vector_store = Chroma(persist_directory=_CHROMA_DIR, embedding_function=embedding)
+    print("[rag_service] 初始化向量資料庫（共用 embedder singleton）...")
+    _vector_store = Chroma(persist_directory=_CHROMA_DIR, embedding_function=_SharedEmbeddings())
     _openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     print("[rag_service] 初始化完成")
 
