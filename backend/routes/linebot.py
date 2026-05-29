@@ -822,7 +822,7 @@ def handle_message(event):
     # ---------- RR 等級查詢結束 ----------
 
     # ---------- 風險測驗關鍵字觸發（不走 GPT，避免誤判）----------
-    _QUIZ_KEYWORDS = ["風險測驗", "風險評估", "投資屬性", "風險屬性", "風險偏好測驗", "做測驗", "開始測驗"]
+    _QUIZ_KEYWORDS = ["風險測驗", "風險測試", "風險評估", "投資屬性", "風險屬性", "風險偏好測驗", "做測驗", "開始測驗", "做測試", "開始測試", "投資風險"]
     if any(kw in user_msg for kw in _QUIZ_KEYWORDS):
         messages = quiz_engine.handle_start_quiz(line_user_id)
         _reply_messages(event.reply_token, messages)
