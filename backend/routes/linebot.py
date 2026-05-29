@@ -313,6 +313,30 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "edit_expense",
+            "description": (
+                "修改最近一筆記帳記錄。"
+                "使用者說「記錯了」「改一下」「上一筆改成」「那筆應該是」「刪掉」等，才觸發。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "amount": {"type": "integer", "description": "新金額（若要修改金額）"},
+                    "category": {
+                        "type": "string",
+                        "description": "新類別（若要修改類別）",
+                        "enum": ["早餐","午餐","晚餐","宵夜","飲料","交通","購物","娛樂",
+                                 "醫療","房租","水電","通訊","學習","社交","日常用品","投資支出","其他"],
+                    },
+                    "note": {"type": "string", "description": "新備註（若要修改備註）"},
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "unknown",
             "description": "無法判斷意圖，使用者說的不屬於任何已知功能（例如打招呼、閒聊）",
             "parameters": {"type": "object", "properties": {}, "required": []},
@@ -463,6 +487,17 @@ def _looks_like_expense_request(text: str) -> bool:
     return has_amount and (has_expense_keyword or has_unit)
 
 
+def _looks_like_edit_expense_request(text: str) -> bool:
+    text = text or ""
+    keywords = [
+        "記錯", "改一下", "修改", "更正", "那筆", "上一筆",
+        "應該是", "改成", "不對", "錯了", "重新記",
+        "剛才那筆", "幫我改", "更改", "金額不對", "記錯了",
+        "刪掉", "刪除", "取消那筆", "再改", "輸入錯",
+    ]
+    return any(kw in text for kw in keywords)
+
+
 def _looks_like_income_request(text: str) -> bool:
     text = text or ""
     income_keywords = [
@@ -521,6 +556,10 @@ def _validate_intent(intent: str, params: dict, user_msg: str) -> tuple[str, dic
 
     if intent == "expense" and not _looks_like_expense_request(user_msg):
         print("[orchestrate] expense guard downgraded")
+        return "unknown", {}
+
+    if intent == "edit_expense" and not _looks_like_edit_expense_request(user_msg):
+        print("[orchestrate] edit_expense guard downgraded")
         return "unknown", {}
 
     if intent == "income" and not _looks_like_income_request(user_msg):
@@ -612,9 +651,8 @@ def _reply(reply_token: str, text: str, line_user_id: str | None = None, db=None
                 )]
             )
         )
-        # [短期記憶暫時停用]
-        # if remember and db is not None and line_user_id:
-        #     _remember_message(db, line_user_id, "assistant", text)
+        if remember and db is not None and line_user_id:
+            _remember_message(db, line_user_id, "assistant", text)
     except Exception as e:
         print("[linebot] reply failed:", repr(e))
 
@@ -636,9 +674,8 @@ def _push(line_user_id: str, text: str, remember: bool = True):
                 messages=[TextMessage(text=text, quick_reply=_dashboard_qr)]
             )
         )
-        # [短期記憶暫時停用]
-        # if remember:
-        #     _remember_message_standalone(line_user_id, "assistant", text)
+        if remember:
+            _remember_message_standalone(line_user_id, "assistant", text)
     except Exception as e:
         print("[linebot] push failed:", repr(e))
 
@@ -760,10 +797,8 @@ def handle_message(event):
         return
     # ---------- Daily token 用量限制結束 ----------
 
-    # [短期記憶暫時停用]
-    # memory_messages = _load_recent_memory(db, line_user_id)
-    # _remember_message(db, line_user_id, "user", user_msg)
-    memory_messages = []
+    memory_messages = _load_recent_memory(db, line_user_id)
+    _remember_message(db, line_user_id, "user", user_msg)
 
     # ---------- 所得稅多輪補問 ----------
     if line_user_id in _tax_sessions:
@@ -854,13 +889,12 @@ def handle_message(event):
     print(f"[orchestrate] intent={intent}, params={params}")
 
     if intent == "credit_card":
-        reply("🔍 正在為您查詢中，請稍候…")
+        reply("🔍 正在為您查詢中，請稍候…", remember=False)
         query = params.get("query", user_msg)
         _uid, _input, _ts = user.id, user_msg, t_start
         def _run_credit_card():
             result = process_credit_card_query(query, user_id=_uid)
             _push(line_user_id, result)
-            _clear_memory_standalone(line_user_id)
             log_response(_uid, _input, "credit_card", (datetime.now() - _ts).total_seconds())
         threading.Thread(target=_run_credit_card, daemon=True).start()
 
@@ -883,7 +917,6 @@ def handle_message(event):
             print("[linebot] expense write error:", repr(e))
             reply_text = "記帳失敗 QQ，等等再試試看。"
         reply(reply_text)
-        _clear_memory(db, line_user_id)
         if ml_ok:
             threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
 
@@ -906,9 +939,31 @@ def handle_message(event):
             print("[linebot] income write error:", repr(e))
             reply_text = "記錄收入失敗 QQ，等等再試試看。"
         reply(reply_text)
-        _clear_memory(db, line_user_id)
         if ml_ok:
             threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
+
+    elif intent == "edit_expense":
+        last = (
+            db.query(Record)
+            .filter(Record.line_user_id == line_user_id)
+            .order_by(desc(Record.timestamp), desc(Record.no))
+            .first()
+        )
+        if not last:
+            reply("找不到最近的記帳記錄，請先記一筆再修改。")
+        else:
+            old_summary = f"{last.category} {last.amount}元"
+            if "amount"   in params: last.amount   = params["amount"]
+            if "category" in params: last.category = params["category"]
+            if "note"     in params: last.note      = params["note"]
+            try:
+                db.commit()
+                new_summary = f"{last.category} {last.amount}元"
+                reply(f"「{old_summary}」已修改為「{new_summary}」✅")
+            except Exception as e:
+                db.rollback()
+                print("[linebot] edit_expense error:", repr(e))
+                reply("修改失敗，請稍後再試。")
 
     elif intent == "query_expense":
         try:
@@ -933,7 +988,6 @@ def handle_message(event):
             print("[linebot] query_expense error:", repr(e))
             reply_text = "查詢失敗，請稍後再試。"
         reply(reply_text)
-        _clear_memory(db, line_user_id)
 
     elif intent == "wishlist":
         try:
@@ -966,13 +1020,12 @@ def handle_message(event):
             print("[linebot] wishlist error:", repr(e))
             reply_text = f"新增失敗：{str(e)}"
         reply(reply_text)
-        _clear_memory(db, line_user_id)
 
     elif intent == "news":
         if not _news_semaphore.acquire(blocking=False):
             reply("⏳ 新聞服務正忙，請稍後再試。", remember=False)
         else:
-            reply("📰 正在整理今日產業新聞，請稍候…")
+            reply("📰 正在整理今日產業新聞，請稍候…", remember=False)
             _uid, _topic, _input, _ts = user.id, params.get("topic", "綜合財經"), user_msg, t_start
             def _run_news():
                 try:
@@ -1012,13 +1065,12 @@ def handle_message(event):
 
     elif intent == "financial_qa":
         from backend.ai.rag_service import answer_financial_question
-        reply("📚 正在查詢金融知識庫，請稍候…")
+        reply("📚 正在查詢金融知識庫，請稍候…", remember=False)
         query = params.get("query", user_msg)
         _uid, _input, _ts = user.id, user_msg, t_start
         def _run_financial_qa():
             result = answer_financial_question(query)
             _push(line_user_id, result)
-            _clear_memory_standalone(line_user_id)
             log_response(_uid, _input, "financial_qa", (datetime.now() - _ts).total_seconds())
         threading.Thread(target=_run_financial_qa, daemon=True).start()
 
