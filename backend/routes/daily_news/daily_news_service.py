@@ -117,11 +117,14 @@ def run_daily_news_pipeline(db, user_id: int, topic: str, user_msg: str = "") ->
         db_scraper = {"articles": articles, "market_data": market_data}
         if raw_data.get("perplexity_evidence"):
             db_scraper["perplexity_evidence"] = raw_data["perplexity_evidence"]
-        # MySQL JSON 欄位不接受 NaN/Infinity，先序列化再反序列化過濾掉
-        import json, math
-        db_scraper = json.loads(
-            json.dumps(db_scraper, ensure_ascii=False, default=lambda x: None if (isinstance(x, float) and not math.isfinite(x)) else x)
-        )
+        # MySQL JSON 欄位不接受 NaN/Infinity（Python json.dumps 會直接輸出 NaN 字串）
+        # 用 regex 在序列化後替換成 null
+        import json, re
+        _json_str = json.dumps(db_scraper, ensure_ascii=False)
+        _json_str = re.sub(r'\bNaN\b', 'null', _json_str)
+        _json_str = re.sub(r'\bInfinity\b', 'null', _json_str)
+        _json_str = re.sub(r'\b-Infinity\b', 'null', _json_str)
+        db_scraper = json.loads(_json_str)
         row = DailyNews(
             user_id=user_id,
             user_input=user_msg or normalized_topic,
