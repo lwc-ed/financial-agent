@@ -368,7 +368,6 @@ def _load_recent_memory(db, line_user_id: str) -> list[dict]:
         return [
             {"role": row.role, "content": _trim_memory_content(row.content)}
             for row in reversed(rows)
-            if row.role == "user"
         ]
     except Exception as e:
         print("[memory] load failed:", repr(e))
@@ -451,10 +450,13 @@ def _looks_like_expense_request(text: str) -> bool:
         "記帳", "記錄", "紀錄", "花了", "花費", "支出", "消費", "付款",
         "午餐", "早餐", "晚餐", "飲料", "咖啡", "交通", "捷運", "公車",
         "加油", "停車", "房租", "水電", "餐費",
+        "吃了", "買了", "喝了", "用了", "付了", "去吃", "去買", "去喝",
+        "吃飯", "吃了頓", "買了個", "買了一",
     ]
     has_amount = bool(re.search(r"\d+", text))
+    has_unit = "元" in text
     has_expense_keyword = any(keyword in text for keyword in expense_keywords)
-    return has_expense_keyword and has_amount
+    return has_amount and (has_expense_keyword or has_unit)
 
 
 def _looks_like_income_request(text: str) -> bool:
@@ -473,13 +475,18 @@ def _looks_like_query_expense_request(text: str) -> bool:
     query_keywords = [
         "查紀錄", "查記錄", "消費紀錄", "消費記錄", "記帳紀錄", "記帳記錄",
         "最近花", "花了多少", "支出紀錄", "支出記錄", "我的紀錄", "我的記錄",
+        "查帳", "查消費", "查一下", "看紀錄", "看記錄", "帳目",
     ]
     return any(keyword in text for keyword in query_keywords)
 
 
 def _looks_like_news_request(text: str) -> bool:
     text = text or ""
-    news_keywords = ["新聞", "財經新聞", "產業新聞", "今日新聞", "市場消息", "最新消息"]
+    news_keywords = [
+        "新聞", "財經新聞", "產業新聞", "今日新聞", "市場消息", "最新消息",
+        "台股", "美股", "股市", "大漲", "大跌", "漲跌", "行情", "指數",
+        "道瓊", "那斯達克", "S&P", "恆生", "日經", "漲停", "跌停",
+    ]
     return any(keyword in text for keyword in news_keywords)
 
 
@@ -488,7 +495,7 @@ def _looks_like_financial_qa_request(text: str) -> bool:
     financial_keywords = [
         "ETF", "股票", "基金", "債券", "保險", "投資", "理財", "複利",
         "資產配置", "通膨", "利率", "股息", "股利", "殖利率", "風險",
-        "報酬", "定存", "年化", "本金",
+        "報酬", "定存", "年化", "本金", "台股", "美股", "股市",
     ]
     question_keywords = ["什麼", "為什麼", "怎麼", "如何", "可以", "嗎", "?", "？"]
     return (
