@@ -529,10 +529,16 @@ def _validate_intent(intent: str, params: dict, user_msg: str) -> tuple[str, dic
 
     if intent == "news" and not _looks_like_news_request(user_msg):
         print("[orchestrate] news guard downgraded")
+        if _looks_like_financial_qa_request(user_msg):
+            print("[orchestrate] news → financial_qa fallback")
+            return "financial_qa", {"query": user_msg}
         return "unknown", {}
 
     if intent == "financial_qa" and not _looks_like_financial_qa_request(user_msg):
         print("[orchestrate] financial_qa guard downgraded")
+        if _looks_like_news_request(user_msg):
+            print("[orchestrate] financial_qa → news fallback")
+            return "news", {"topic": user_msg}
         return "unknown", {}
 
     if intent == "remember_context" and not _looks_like_context_note(user_msg):
@@ -602,8 +608,9 @@ def _reply(reply_token: str, text: str, line_user_id: str | None = None, db=None
                 )]
             )
         )
-        if remember and db is not None and line_user_id:
-            _remember_message(db, line_user_id, "assistant", text)
+        # [短期記憶暫時停用]
+        # if remember and db is not None and line_user_id:
+        #     _remember_message(db, line_user_id, "assistant", text)
     except Exception as e:
         print("[linebot] reply failed:", repr(e))
 
@@ -625,8 +632,9 @@ def _push(line_user_id: str, text: str, remember: bool = True):
                 messages=[TextMessage(text=text, quick_reply=_dashboard_qr)]
             )
         )
-        if remember:
-            _remember_message_standalone(line_user_id, "assistant", text)
+        # [短期記憶暫時停用]
+        # if remember:
+        #     _remember_message_standalone(line_user_id, "assistant", text)
     except Exception as e:
         print("[linebot] push failed:", repr(e))
 
@@ -748,8 +756,10 @@ def handle_message(event):
         return
     # ---------- Daily token 用量限制結束 ----------
 
-    memory_messages = _load_recent_memory(db, line_user_id)
-    _remember_message(db, line_user_id, "user", user_msg)
+    # [短期記憶暫時停用]
+    # memory_messages = _load_recent_memory(db, line_user_id)
+    # _remember_message(db, line_user_id, "user", user_msg)
+    memory_messages = []
 
     # ---------- 所得稅多輪補問 ----------
     if line_user_id in _tax_sessions:
@@ -968,7 +978,7 @@ def handle_message(event):
         # 關鍵字守衛：訊息裡沒有稅務字眼就視為 GPT 誤判，降為 unknown
         _TAX_KEYWORDS = ["所得稅", "報稅", "繳稅", "退稅", "稅額", "稅務", "節稅", "稅率", "綜所稅"]
         if not any(kw in user_msg for kw in _TAX_KEYWORDS):
-            reply(_UNKNOWN_REPLY)
+            reply(_UNKNOWN_REPLY, remember=False)
         else:
             # 過濾 GPT 回傳的 None 值，只保留有實際內容的欄位
             collected = {k: v for k, v in params.items() if v is not None}
@@ -1000,7 +1010,7 @@ def handle_message(event):
         reply("我記住了。")
 
     else:  # unknown
-        reply(_UNKNOWN_REPLY)
+        reply(_UNKNOWN_REPLY, remember=False)
 
     # ---------- Token 用量記錄 + 回應時間 ----------
     elapsed = (datetime.now() - t_start).total_seconds()
