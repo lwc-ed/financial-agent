@@ -37,3 +37,32 @@
 {"timestamp": "2026-05-27T21:04:45", "user_id": 27, "user_input": "我想買Air pods 價格6000", "pipeline": "wishlist", "elapsed_seconds": 2.902}
 {"timestamp": "2026-05-27T21:07:04", "user_id": 27, "user_input": "我想買麥當勞 價格120\n幫我加入願望清單", "pipeline": "wishlist", "elapsed_seconds": 4.408}
 
+{"timestamp": "2026-05-28T23:12:12", "user_id": 30, "user_input": "早安", "pipeline": "unknown", "elapsed_seconds": 2.635}
+{"timestamp": "2026-05-28T23:20:25", "user_id": 27, "user_input": "我等等要去星巴克", "pipeline": "credit_card", "elapsed_seconds": 12.509}
+{"timestamp": "2026-05-28T23:21:57", "user_id": 30, "user_input": "我等等要去星巴克", "pipeline": "remember_context", "elapsed_seconds": 1.682}
+{"timestamp": "2026-05-28T23:22:33", "user_id": 30, "user_input": "刷哪一張卡比較划算", "pipeline": "credit_card", "elapsed_seconds": 19.857}
+{"timestamp": "2026-05-28T23:23:02", "user_id": 30, "user_input": "早安你好", "pipeline": "credit_card", "elapsed_seconds": 8.751}
+{"timestamp": "2026-05-28T23:47:05", "user_id": 27, "user_input": "我等等要去星巴克", "pipeline": "credit_card", "elapsed_seconds": 13.664}
+{"timestamp": "2026-05-29T00:00:16", "user_id": 27, "user_input": "我等等要去星巴克", "pipeline": "remember_context", "elapsed_seconds": 2.268}
+{"timestamp": "2026-05-29T00:00:40", "user_id": 27, "user_input": "我要用哪一張信用卡比較划算", "pipeline": "credit_card", "elapsed_seconds": 9.989}
+{"timestamp": "2026-05-29T00:01:19", "user_id": 27, "user_input": "你好早安", "pipeline": "credit_card", "elapsed_seconds": 14.768}
+{"timestamp": "2026-05-29T00:15:23", "user_id": 27, "user_input": "我等一下要去麥當勞", "pipeline": "credit_card", "elapsed_seconds": 9.55}
+{"timestamp": "2026-05-29T00:16:10", "user_id": 27, "user_input": "我等等要去星巴克", "pipeline": "credit_card", "elapsed_seconds": 9.013}
+{"timestamp": "2026-05-29T00:23:04", "user_id": 27, "user_input": "我等一下要去麥當勞", "pipeline": "remember_context", "elapsed_seconds": 2.584}
+{"timestamp": "2026-05-29T00:23:26", "user_id": 27, "user_input": "要刷哪一張卡比較划算", "pipeline": "credit_card", "elapsed_seconds": 11.391}
+{"timestamp": "2026-05-29T00:23:33", "user_id": 27, "user_input": "早安你好", "pipeline": "unknown", "elapsed_seconds": 1.43}
+{"timestamp": "2026-05-29T00:23:46", "user_id": 27, "user_input": "今天午餐花了100", "pipeline": "expense", "elapsed_seconds": 1.275}
+{"timestamp": "2026-05-29T00:23:57", "user_id": 27, "user_input": "我剛吃完晚餐", "pipeline": "unknown", "elapsed_seconds": 1.173}
+{"timestamp": "2026-05-29T00:24:05", "user_id": 27, "user_input": "花了150塊", "pipeline": "expense", "elapsed_seconds": 1.381}
+{"timestamp": "2026-05-29T00:25:14", "user_id": 27, "user_input": "我今天看到一個新耳機🎧", "pipeline": "remember_context", "elapsed_seconds": 1.831}
+{"timestamp": "2026-05-29T00:25:21", "user_id": 27, "user_input": "好想買喔", "pipeline": "wishlist", "elapsed_seconds": 1.269}
+{"timestamp": "2026-05-29T00:25:59", "user_id": 27, "user_input": "這個耳機要2000", "pipeline": "remember_context", "elapsed_seconds": 1.057}
+{"timestamp": "2026-05-29T17:21:59", "user_id": 30, "user_input": "今天台股怎麼大漲", "pipeline": "unknown", "elapsed_seconds": 2.76}
+{"timestamp": "2026-05-29T17:22:13", "user_id": 30, "user_input": "今天台股怎麼大漲", "pipeline": "unknown", "elapsed_seconds": 0.828}
+{"timestamp": "2026-05-29T17:22:32", "user_id": 30, "user_input": "我想看今天台股", "pipeline": "unknown", "elapsed_seconds": 1.147}
+{"timestamp": "2026-05-29T18:35:39", "user_id": 30, "user_input": "我想吃午餐", "pipeline": "unknown", "elapsed_seconds": 6.283}
+{"timestamp": "2026-05-29T18:35:58", "user_id": 30, "user_input": "我剛剛吃了一百元的牛排", "pipeline": "unknown", "elapsed_seconds": 1.416}
+{"timestamp": "2026-05-29T18:38:11", "user_id": 30, "user_input": "ETF是什麼？", "pipeline": "unknown", "elapsed_seconds": 1.724}
+{"timestamp": "2026-05-29T18:54:02", "user_id": 30, "user_input": "ETF是什麼", "pipeline": "unknown", "elapsed_seconds": 3.286}
+{"timestamp": "2026-05-29T18:56:04", "user_id": 30, "user_input": "幫我記錄晚餐一百元", "pipeline": "unknown", "elapsed_seconds": 3.158}
+{"timestamp": "2026-05-29T18:56:58", "user_id": 30, "user_input": "幫我記錄晚餐一百元", "pipeline": "unknown", "elapsed_seconds": 2.017}
