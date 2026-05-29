@@ -454,8 +454,11 @@ def _looks_like_expense_request(text: str) -> bool:
         "吃了", "買了", "喝了", "用了", "付了", "去吃", "去買", "去喝",
         "吃飯", "吃了頓", "買了個", "買了一",
     ]
-    has_amount = bool(re.search(r"\d+", text))
-    has_unit = "元" in text
+    has_arabic_amount = bool(re.search(r"\d+", text))
+    has_chinese_amount = bool(re.search(r"[零一二三四五六七八九十百千萬兩]+[元塊]", text)) \
+        or bool(re.search(r"[零一二三四五六七八九十百千萬兩]+", text) and "元" in text)
+    has_amount = has_arabic_amount or has_chinese_amount
+    has_unit = "元" in text or "塊" in text
     has_expense_keyword = any(keyword in text for keyword in expense_keywords)
     return has_amount and (has_expense_keyword or has_unit)
 
