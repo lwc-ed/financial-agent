@@ -24,6 +24,7 @@ from openai import OpenAI
 from datetime import datetime, timedelta
 import threading
 import re
+import unicodedata
 import urllib.parse
 import pytz
 import json
@@ -754,7 +755,7 @@ def callback():
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     line_user_id = event.source.user_id
-    user_msg     = event.message.text
+    user_msg     = unicodedata.normalize('NFKC', event.message.text or "")
     t_start      = datetime.now()
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
