@@ -966,13 +966,19 @@ def handle_message(event):
 
     elif intent == "news":
         reply("📰 正在整理今日產業新聞，請稍候…")
-        final_reply = run_daily_news_pipeline(
-            db=db, user_id=user.id, topic=params.get("topic", "綜合財經"),
-            user_msg=user_msg,
-        )
-        _push(line_user_id, final_reply)
-        _clear_memory(db, line_user_id)
-        log_response(user.id, user_msg, "news", (datetime.now() - t_start).total_seconds())
+        _uid, _topic, _input, _ts = user.id, params.get("topic", "綜合財經"), user_msg, t_start
+        def _run_news():
+            _db = SessionLocal()
+            try:
+                final_reply = run_daily_news_pipeline(
+                    db=_db, user_id=_uid, topic=_topic, user_msg=_input,
+                )
+            finally:
+                _db.close()
+            _push(line_user_id, final_reply)
+            _clear_memory_standalone(line_user_id)
+            log_response(_uid, _input, "news", (datetime.now() - _ts).total_seconds())
+        threading.Thread(target=_run_news, daemon=True).start()
 
     elif intent == "tax":
         # 關鍵字守衛：訊息裡沒有稅務字眼就視為 GPT 誤判，降為 unknown
@@ -1014,7 +1020,7 @@ def handle_message(event):
 
     # ---------- Token 用量記錄 + 回應時間 ----------
     elapsed = (datetime.now() - t_start).total_seconds()
-    if intent not in ("credit_card", "financial_qa"):
+    if intent not in ("credit_card", "financial_qa", "news"):
         log_response(user.id, user_msg, intent, elapsed)
     if intent not in ("credit_card", "news"):
         upsert_pipeline_tokens(
