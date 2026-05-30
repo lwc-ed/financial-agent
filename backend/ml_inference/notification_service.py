@@ -8,6 +8,9 @@ notification_service.py
 
 from datetime import datetime, timedelta
 
+# 開發人員白名單：豁免通知冷卻與次數上限，方便測試
+NOTIFICATION_WHITELIST_USER_IDS = {27, 29, 30}
+
 # ── 通知規則（修改這裡即可調整上限）─────────────────────────────────
 # cooldown_days : 同等級多少天內不重複通知
 # max_per_30d   : 30 天滑動視窗內同等級最多幾次
@@ -69,8 +72,9 @@ def check_and_notify(user_id: int, result: dict, prediction_row, db) -> bool:
     else:
         direction = "same"
 
-    # 等級上升：無視所有限制，強制通知
-    if direction != "upgrade":
+    # 等級上升或白名單使用者：無視所有限制，強制通知
+    is_whitelisted = user_id in NOTIFICATION_WHITELIST_USER_IDS
+    if direction != "upgrade" and not is_whitelisted:
         config = NOTIFICATION_CONFIG[new_level]
 
         # 冷卻檢查
