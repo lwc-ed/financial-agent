@@ -76,11 +76,11 @@ def _load_assets() -> None:
 
 
 def _risk_level(ratio: float) -> int:
-    if ratio <= 0.5:
+    if ratio <= 0.8:
         return 1
     if ratio <= 1.0:
         return 2
-    if ratio <= 1.5:
+    if ratio <= 1.2:
         return 3
     return 4
 

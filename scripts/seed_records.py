@@ -13,10 +13,10 @@ from dotenv import load_dotenv
 import json
 import os
 
-load_dotenv()
+load_dotenv(dotenv_path="/Users/liweichen/financial-agent/.env", override=True)
 
 # ── 在這裡填入測試交易 ──────────────────────────────────────────────
-LINE_USER_ID = "Uf639e8983201e1cf87ee5052578a2d58"
+LINE_USER_ID = "Ud2546534b2de49217cca9fa903b9ad15"
 
 TRANSACTIONS = [
     # (描述, "YYYY-MM-DD HH:MM")
