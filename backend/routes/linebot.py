@@ -167,7 +167,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "expense",
-            "description": "記帳，使用者說要記錄消費、花費了多少錢",
+            "description": "記帳，使用者說花了多少錢、買了什麼東西、消費了多少，例如：花了五千元、買手機5000、午餐150元、剛剛花了三百塊",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -295,7 +295,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "income",
-            "description": "記錄收入，使用者說領薪水、收到錢、收入了多少、獎金入帳",
+            "description": "記錄收入，使用者說賺了多少錢、收到錢、領薪水、獎金、入帳，例如：賺了4000元、薪水入帳、收到獎金五千",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -480,8 +480,8 @@ def _looks_like_expense_request(text: str) -> bool:
         "吃飯", "吃了頓", "買了個", "買了一",
     ]
     has_arabic_amount = bool(re.search(r"\d+", text))
-    has_chinese_amount = bool(re.search(r"[零一二三四五六七八九十百千萬兩]+[元塊]", text)) \
-        or bool(re.search(r"[零一二三四五六七八九十百千萬兩]+", text) and "元" in text)
+    has_chinese_amount = bool(re.search(r"[零一二三四五六七八九十百千萬兩]{1,}[元塊]", text)) \
+        or bool(re.search(r"[零一二三四五六七八九十百千萬兩]{2,}", text))
     has_amount = has_arabic_amount or has_chinese_amount
     has_unit = "元" in text or "塊" in text
     has_expense_keyword = any(keyword in text for keyword in expense_keywords)
@@ -504,8 +504,12 @@ def _looks_like_income_request(text: str) -> bool:
     income_keywords = [
         "收入", "薪水", "薪資", "領薪", "發薪", "獎金", "入帳", "收到錢",
         "兼職", "租金", "零用錢", "投資收入",
+        "賺了", "賺到", "賺得", "賺了", "收了", "收到", "拿到",
     ]
-    has_amount = bool(re.search(r"\d+", text))
+    has_arabic_amount = bool(re.search(r"\d+", text))
+    has_chinese_amount = bool(re.search(r"[零一二三四五六七八九十百千萬兩]{1,}[元塊]", text)) \
+        or bool(re.search(r"[零一二三四五六七八九十百千萬兩]{2,}", text))
+    has_amount = has_arabic_amount or has_chinese_amount
     has_income_keyword = any(keyword in text for keyword in income_keywords)
     return has_income_keyword and has_amount
 
