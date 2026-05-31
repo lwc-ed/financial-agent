@@ -190,7 +190,7 @@ python3 app.py
 
 ## SSH 連線
 ```bash
-ssh ubuntu@3.133.58.32
+ssh ubuntu@3.17.73.32
 ```
 
 ## 安裝套件
@@ -263,7 +263,7 @@ sudo systemctl stop financial-agent
 
 ## 🖥 EC2 SSH
 ```bash
-ssh ubuntu@3.133.58.32
+ssh ubuntu@3.17.73.32
 ```
 
 ## 🗄 RDS MySQL
