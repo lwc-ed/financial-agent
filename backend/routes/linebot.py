@@ -24,6 +24,7 @@ from openai import OpenAI
 from datetime import datetime, timedelta
 import threading
 import re
+import unicodedata
 import urllib.parse
 import pytz
 import json
@@ -55,6 +56,7 @@ quiz_engine = FullInsuranceQuizHandler()
 # 所得稅多輪對話 session（in-memory，伺服器重啟會清空）
 # --------------------------------------------------
 _tax_sessions: dict[str, dict] = {}
+_news_semaphore = threading.Semaphore(1)  # 同時最多一個新聞 pipeline，避免 OOM
 MEMORY_TTL_HOURS = 2
 MEMORY_MAX_MESSAGES = 10
 MEMORY_MAX_CHARS_PER_MESSAGE = 500
@@ -165,7 +167,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "expense",
-            "description": "記帳，使用者說要記錄消費、花費了多少錢",
+            "description": "記帳，使用者說花了多少錢、買了什麼東西、消費了多少，例如：花了五千元、買手機5000、午餐150元、剛剛花了三百塊",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -293,7 +295,7 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "income",
-            "description": "記錄收入，使用者說領薪水、收到錢、收入了多少、獎金入帳",
+            "description": "記錄收入，使用者說賺了多少錢、收到錢、領薪水、獎金、入帳，例如：賺了4000元、薪水入帳、收到獎金五千",
             "parameters": {
                 "type": "object",
                 "properties": {
@@ -306,6 +308,32 @@ TOOLS = [
                     "note":     {"type": "string",  "description": "細節備註，例如來源、公司、項目（可留空）"},
                 },
                 "required": ["category", "amount"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "edit_expense",
+            "description": (
+                "修改或刪除最近一筆「已記過」的記帳記錄，"
+                "僅限使用者明確說「記錯了」「改一下」「上一筆改成」「那筆應該是」「刪掉那筆」「取消剛才」等修正語境才觸發。"
+                "注意：使用者直接說花了多少錢、消費了什麼（例如「花了五百」「早餐50元」），"
+                "是全新記帳，請用 expense，不要用 edit_expense。"
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "amount": {"type": "integer", "description": "新金額（若要修改金額）"},
+                    "category": {
+                        "type": "string",
+                        "description": "新類別（若要修改類別）",
+                        "enum": ["早餐","午餐","晚餐","宵夜","飲料","交通","購物","娛樂",
+                                 "醫療","房租","水電","通訊","學習","社交","日常用品","投資支出","其他"],
+                    },
+                    "note": {"type": "string", "description": "新備註（若要修改備註）"},
+                },
+                "required": [],
             },
         },
     },
@@ -368,7 +396,6 @@ def _load_recent_memory(db, line_user_id: str) -> list[dict]:
         return [
             {"role": row.role, "content": _trim_memory_content(row.content)}
             for row in reversed(rows)
-            if row.role == "user"
         ]
     except Exception as e:
         print("[memory] load failed:", repr(e))
@@ -451,10 +478,27 @@ def _looks_like_expense_request(text: str) -> bool:
         "記帳", "記錄", "紀錄", "花了", "花費", "支出", "消費", "付款",
         "午餐", "早餐", "晚餐", "飲料", "咖啡", "交通", "捷運", "公車",
         "加油", "停車", "房租", "水電", "餐費",
+        "吃了", "買了", "喝了", "用了", "付了", "去吃", "去買", "去喝",
+        "吃飯", "吃了頓", "買了個", "買了一",
     ]
-    has_amount = bool(re.search(r"\d+", text))
+    has_arabic_amount = bool(re.search(r"\d+", text))
+    has_chinese_amount = bool(re.search(r"[零一二三四五六七八九十百千萬兩]{1,}[元塊]", text)) \
+        or bool(re.search(r"[零一二三四五六七八九十百千萬兩]{2,}", text))
+    has_amount = has_arabic_amount or has_chinese_amount
+    has_unit = "元" in text or "塊" in text
     has_expense_keyword = any(keyword in text for keyword in expense_keywords)
-    return has_expense_keyword and has_amount
+    return has_amount and (has_expense_keyword or has_unit)
+
+
+def _looks_like_edit_expense_request(text: str) -> bool:
+    text = text or ""
+    keywords = [
+        "記錯", "改一下", "修改", "更正", "那筆", "上一筆",
+        "應該是", "改成", "不對", "錯了", "重新記",
+        "剛才那筆", "幫我改", "更改", "金額不對", "記錯了",
+        "刪掉", "刪除", "取消那筆", "再改", "輸入錯",
+    ]
+    return any(kw in text for kw in keywords)
 
 
 def _looks_like_income_request(text: str) -> bool:
@@ -462,8 +506,12 @@ def _looks_like_income_request(text: str) -> bool:
     income_keywords = [
         "收入", "薪水", "薪資", "領薪", "發薪", "獎金", "入帳", "收到錢",
         "兼職", "租金", "零用錢", "投資收入",
+        "賺了", "賺到", "賺得", "賺了", "收了", "收到", "拿到",
     ]
-    has_amount = bool(re.search(r"\d+", text))
+    has_arabic_amount = bool(re.search(r"\d+", text))
+    has_chinese_amount = bool(re.search(r"[零一二三四五六七八九十百千萬兩]{1,}[元塊]", text)) \
+        or bool(re.search(r"[零一二三四五六七八九十百千萬兩]{2,}", text))
+    has_amount = has_arabic_amount or has_chinese_amount
     has_income_keyword = any(keyword in text for keyword in income_keywords)
     return has_income_keyword and has_amount
 
@@ -473,13 +521,18 @@ def _looks_like_query_expense_request(text: str) -> bool:
     query_keywords = [
         "查紀錄", "查記錄", "消費紀錄", "消費記錄", "記帳紀錄", "記帳記錄",
         "最近花", "花了多少", "支出紀錄", "支出記錄", "我的紀錄", "我的記錄",
+        "查帳", "查消費", "查一下", "看紀錄", "看記錄", "帳目",
     ]
     return any(keyword in text for keyword in query_keywords)
 
 
 def _looks_like_news_request(text: str) -> bool:
     text = text or ""
-    news_keywords = ["新聞", "財經新聞", "產業新聞", "今日新聞", "市場消息", "最新消息"]
+    news_keywords = [
+        "新聞", "財經新聞", "產業新聞", "今日新聞", "市場消息", "最新消息",
+        "台股", "美股", "股市", "大漲", "大跌", "漲跌", "行情", "指數",
+        "道瓊", "那斯達克", "S&P", "恆生", "日經", "漲停", "跌停",
+    ]
     return any(keyword in text for keyword in news_keywords)
 
 
@@ -488,7 +541,7 @@ def _looks_like_financial_qa_request(text: str) -> bool:
     financial_keywords = [
         "ETF", "股票", "基金", "債券", "保險", "投資", "理財", "複利",
         "資產配置", "通膨", "利率", "股息", "股利", "殖利率", "風險",
-        "報酬", "定存", "年化", "本金",
+        "報酬", "定存", "年化", "本金", "台股", "美股", "股市",
     ]
     question_keywords = ["什麼", "為什麼", "怎麼", "如何", "可以", "嗎", "?", "？"]
     return (
@@ -512,6 +565,13 @@ def _validate_intent(intent: str, params: dict, user_msg: str) -> tuple[str, dic
         print("[orchestrate] expense guard downgraded")
         return "unknown", {}
 
+    if intent == "edit_expense" and not _looks_like_edit_expense_request(user_msg):
+        print("[orchestrate] edit_expense guard downgraded")
+        if _looks_like_expense_request(user_msg):
+            print("[orchestrate] edit_expense → expense fallback")
+            return "expense", params
+        return "unknown", {}
+
     if intent == "income" and not _looks_like_income_request(user_msg):
         print("[orchestrate] income guard downgraded")
         return "unknown", {}
@@ -522,10 +582,16 @@ def _validate_intent(intent: str, params: dict, user_msg: str) -> tuple[str, dic
 
     if intent == "news" and not _looks_like_news_request(user_msg):
         print("[orchestrate] news guard downgraded")
+        if _looks_like_financial_qa_request(user_msg):
+            print("[orchestrate] news → financial_qa fallback")
+            return "financial_qa", {"query": user_msg}
         return "unknown", {}
 
     if intent == "financial_qa" and not _looks_like_financial_qa_request(user_msg):
         print("[orchestrate] financial_qa guard downgraded")
+        if _looks_like_news_request(user_msg):
+            print("[orchestrate] financial_qa → news fallback")
+            return "news", {"topic": user_msg}
         return "unknown", {}
 
     if intent == "remember_context" and not _looks_like_context_note(user_msg):
@@ -640,7 +706,7 @@ def _run_ml_risk_push(user_id: int, line_user_id: str) -> None:
                 _db.add(row)
             row.predicted_expense_7d = result["predicted_expense_7d"]
             row.monthly_income_avg = result["monthly_income_avg"]
-            row.risk_ratio = result["risk_ratio"]
+            row.risk_ratio = result["risk_score"]
             row.risk_level = result["risk_level"]
             row.alarm = result["alarm"]
             row.data_days = result["data_days"]
@@ -698,7 +764,7 @@ def callback():
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     line_user_id = event.source.user_id
-    user_msg     = event.message.text
+    user_msg     = unicodedata.normalize('NFKC', event.message.text or "")
     t_start      = datetime.now()
     print(f"🟢 收到 LINE 訊息：{user_msg}")
     db = SessionLocal()
@@ -801,7 +867,7 @@ def handle_message(event):
     # ---------- RR 等級查詢結束 ----------
 
     # ---------- 風險測驗關鍵字觸發（不走 GPT，避免誤判）----------
-    _QUIZ_KEYWORDS = ["風險測驗", "風險評估", "投資屬性", "風險屬性", "風險偏好測驗", "做測驗", "開始測驗"]
+    _QUIZ_KEYWORDS = ["風險測驗", "風險測試", "風險評估", "投資屬性", "風險屬性", "風險偏好測驗", "做測驗", "開始測驗", "做測試", "開始測試", "投資風險"]
     if any(kw in user_msg for kw in _QUIZ_KEYWORDS):
         messages = quiz_engine.handle_start_quiz(line_user_id)
         _reply_messages(event.reply_token, messages)
@@ -833,13 +899,12 @@ def handle_message(event):
     print(f"[orchestrate] intent={intent}, params={params}")
 
     if intent == "credit_card":
-        reply("🔍 正在為您查詢中，請稍候…")
+        reply("🔍 正在為您查詢中，請稍候…", remember=False)
         query = params.get("query", user_msg)
         _uid, _input, _ts = user.id, user_msg, t_start
         def _run_credit_card():
             result = process_credit_card_query(query, user_id=_uid)
             _push(line_user_id, result)
-            _clear_memory_standalone(line_user_id)
             log_response(_uid, _input, "credit_card", (datetime.now() - _ts).total_seconds())
         threading.Thread(target=_run_credit_card, daemon=True).start()
 
@@ -862,7 +927,6 @@ def handle_message(event):
             print("[linebot] expense write error:", repr(e))
             reply_text = "記帳失敗 QQ，等等再試試看。"
         reply(reply_text)
-        _clear_memory(db, line_user_id)
         if ml_ok:
             threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
 
@@ -885,9 +949,31 @@ def handle_message(event):
             print("[linebot] income write error:", repr(e))
             reply_text = "記錄收入失敗 QQ，等等再試試看。"
         reply(reply_text)
-        _clear_memory(db, line_user_id)
         if ml_ok:
             threading.Thread(target=_run_ml_risk_push, args=(user.id, line_user_id), daemon=True).start()
+
+    elif intent == "edit_expense":
+        last = (
+            db.query(Record)
+            .filter(Record.line_user_id == line_user_id)
+            .order_by(desc(Record.timestamp), desc(Record.no))
+            .first()
+        )
+        if not last:
+            reply("找不到最近的記帳記錄，請先記一筆再修改。")
+        else:
+            old_summary = f"{last.category} {last.amount}元"
+            if "amount"   in params: last.amount   = params["amount"]
+            if "category" in params: last.category = params["category"]
+            if "note"     in params: last.note      = params["note"]
+            try:
+                db.commit()
+                new_summary = f"{last.category} {last.amount}元"
+                reply(f"「{old_summary}」已修改為「{new_summary}」✅")
+            except Exception as e:
+                db.rollback()
+                print("[linebot] edit_expense error:", repr(e))
+                reply("修改失敗，請稍後再試。")
 
     elif intent == "query_expense":
         try:
@@ -912,7 +998,6 @@ def handle_message(event):
             print("[linebot] query_expense error:", repr(e))
             reply_text = "查詢失敗，請稍後再試。"
         reply(reply_text)
-        _clear_memory(db, line_user_id)
 
     elif intent == "wishlist":
         try:
@@ -945,23 +1030,34 @@ def handle_message(event):
             print("[linebot] wishlist error:", repr(e))
             reply_text = f"新增失敗：{str(e)}"
         reply(reply_text)
-        _clear_memory(db, line_user_id)
 
     elif intent == "news":
-        reply("📰 正在整理今日產業新聞，請稍候…")
-        final_reply = run_daily_news_pipeline(
-            db=db, user_id=user.id, topic=params.get("topic", "綜合財經"),
-            user_msg=user_msg,
-        )
-        _push(line_user_id, final_reply)
-        _clear_memory(db, line_user_id)
-        log_response(user.id, user_msg, "news", (datetime.now() - t_start).total_seconds())
+        if not _news_semaphore.acquire(blocking=False):
+            reply("⏳ 新聞服務正忙，請稍後再試。", remember=False)
+        else:
+            reply("📰 正在整理今日產業新聞，請稍候…", remember=False)
+            _uid, _topic, _input, _ts = user.id, params.get("topic", "綜合財經"), user_msg, t_start
+            def _run_news():
+                try:
+                    _db = SessionLocal()
+                    try:
+                        final_reply = run_daily_news_pipeline(
+                            db=_db, user_id=_uid, topic=_topic, user_msg=_input,
+                        )
+                    finally:
+                        _db.close()
+                    _push(line_user_id, final_reply)
+                    _clear_memory_standalone(line_user_id)
+                    log_response(_uid, _input, "news", (datetime.now() - _ts).total_seconds())
+                finally:
+                    _news_semaphore.release()
+            threading.Thread(target=_run_news, daemon=True).start()
 
     elif intent == "tax":
         # 關鍵字守衛：訊息裡沒有稅務字眼就視為 GPT 誤判，降為 unknown
         _TAX_KEYWORDS = ["所得稅", "報稅", "繳稅", "退稅", "稅額", "稅務", "節稅", "稅率", "綜所稅"]
         if not any(kw in user_msg for kw in _TAX_KEYWORDS):
-            reply(_UNKNOWN_REPLY)
+            reply(_UNKNOWN_REPLY, remember=False)
         else:
             # 過濾 GPT 回傳的 None 值，只保留有實際內容的欄位
             collected = {k: v for k, v in params.items() if v is not None}
@@ -979,13 +1075,12 @@ def handle_message(event):
 
     elif intent == "financial_qa":
         from backend.ai.rag_service import answer_financial_question
-        reply("📚 正在查詢金融知識庫，請稍候…")
+        reply("📚 正在查詢金融知識庫，請稍候…", remember=False)
         query = params.get("query", user_msg)
         _uid, _input, _ts = user.id, user_msg, t_start
         def _run_financial_qa():
             result = answer_financial_question(query)
             _push(line_user_id, result)
-            _clear_memory_standalone(line_user_id)
             log_response(_uid, _input, "financial_qa", (datetime.now() - _ts).total_seconds())
         threading.Thread(target=_run_financial_qa, daemon=True).start()
 
@@ -993,11 +1088,11 @@ def handle_message(event):
         reply("我記住了。")
 
     else:  # unknown
-        reply(_UNKNOWN_REPLY)
+        reply(_UNKNOWN_REPLY, remember=False)
 
     # ---------- Token 用量記錄 + 回應時間 ----------
     elapsed = (datetime.now() - t_start).total_seconds()
-    if intent not in ("credit_card", "financial_qa"):
+    if intent not in ("credit_card", "financial_qa", "news"):
         log_response(user.id, user_msg, intent, elapsed)
     if intent not in ("credit_card", "news"):
         upsert_pipeline_tokens(

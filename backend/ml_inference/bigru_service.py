@@ -76,11 +76,11 @@ def _load_assets() -> None:
 
 
 def _risk_level(ratio: float) -> int:
-    if ratio <= 0.5:
+    if ratio <= 0.85:
         return 1
     if ratio <= 1.0:
         return 2
-    if ratio <= 1.5:
+    if ratio <= 1.2:
         return 3
     return 4
 
@@ -133,10 +133,40 @@ def get_monthly_income_avg(line_user_id: str, db, months: int = 6) -> float:
     return float(total) / months
 
 
+def get_net_cash_flow_30d(line_user_id: str, db) -> float:
+    from sqlalchemy import func as sqlfunc
+    from backend.models.record import Record
+
+    cutoff = datetime.now() - timedelta(days=30)
+    income = (
+        db.query(sqlfunc.sum(Record.amount))
+        .filter(
+            Record.line_user_id == line_user_id,
+            Record.type == "income",
+            Record.timestamp >= cutoff,
+        )
+        .scalar()
+    ) or 0.0
+    expense = (
+        db.query(sqlfunc.sum(Record.amount))
+        .filter(
+            Record.line_user_id == line_user_id,
+            Record.type == "expense",
+            Record.timestamp >= cutoff,
+        )
+        .scalar()
+    ) or 0.0
+    return float(income) - float(expense)
+
+
 def predict_risk_for_user(line_user_id: str, db) -> dict | None:
     """
     從 DB 取消費紀錄 → 計算 aligned features → BiGRU ensemble 預測 → 回傳風險評估結果。
     若消費紀錄不足 30 天則回傳 None（silent skip）。
+
+    Risk Score = 0.6 × Spending Pressure + 0.4 × Cash Flow Risk
+      Spending Pressure = 預測未來7天消費 / 未來7天可動用收入
+      Cash Flow Risk    = 1 - clip(Net Cash Flow 30d / 月均收入, -2, 2)
     """
     _load_assets()
 
@@ -160,19 +190,30 @@ def predict_risk_for_user(line_user_id: str, db) -> dict | None:
     predicted_7d = max(0.0, predicted_7d)
 
     monthly_income_avg = get_monthly_income_avg(line_user_id, db)
+
     if monthly_income_avg <= 0:
-        risk_ratio = 99.0
+        spending_pressure = 99.0
+        net_cash_flow = None
+        cf_risk = 3.0  # 無收入紀錄視為高風險
     else:
         future_available_7d = (monthly_income_avg / 30.0) * 7.0
-        risk_ratio = min(predicted_7d / future_available_7d, 99.0)
+        spending_pressure = min(predicted_7d / future_available_7d, 99.0)
 
-    level = _risk_level(risk_ratio)
-    alarm = "high_risk" if risk_ratio > 1.0 else "low_risk"
+        net_cash_flow = get_net_cash_flow_30d(line_user_id, db)
+        saving_rate = np.clip(net_cash_flow / monthly_income_avg, -2.0, 2.0)
+        cf_risk = 1.0 - saving_rate
+
+    risk_score = 0.6 * spending_pressure + 0.4 * cf_risk
+    level = _risk_level(risk_score)
+    alarm = "high_risk" if risk_score > 1.0 else "low_risk"
 
     return {
         "predicted_expense_7d": predicted_7d,
         "monthly_income_avg": monthly_income_avg,
-        "risk_ratio": risk_ratio,
+        "spending_pressure": spending_pressure,
+        "net_cash_flow_30d": net_cash_flow,
+        "cf_risk": cf_risk,
+        "risk_score": risk_score,
         "risk_level": level,
         "alarm": alarm,
         "data_days": len(daily_df),

@@ -48,7 +48,7 @@ C2 --> E3[ai_reply.py]
 C3 --> F[MySQL RDS]
 C4 --> G[CTBC / CUBE / DBS Benefit JSON]
 
-User2[User via Browser] --> LIFF[LIFF Frontend - React + Vite]
+User2[User via Browser] --> LIFF[Flask LIFF / Dashboard Templates]
 LIFF --> C
 ```
 
@@ -85,15 +85,11 @@ backend
 │   ├── format_benefit_summary.py
 │   └── test_full_flow.py
 ├── app.py
-├── base_models.py
 ├── database.py
-├── linebot_handler.py
-├── main.py
 ├── models
 │   ├── user.py
 │   ├── wishlist.py
 │   ├── record.py
-│   ├── expense_model.py
 │   ├── credit_card_benefit_model/
 │   │   ├── ctbc_linepay_benefits_model.py
 │   │   ├── ctbc_linepay_debit_benefits_model.py
@@ -142,9 +138,9 @@ backend
 
 ---
 
-# 🌐 Frontend Overview
+# 🌐 LIFF / Dashboard Overview
 
-React + Vite + LIFF 用於：
+Flask templates + LIFF 用於：
 - Google Login
 - 個人資料填寫
 - 顯示消費紀錄與進度條
@@ -190,20 +186,11 @@ pip install -r requirements.txt
 python3 app.py
 ```
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm start
-```
-
----
-
 # ☁️ Deployment（部署）
 
 ## SSH 連線
 ```bash
-ssh ubuntu@3.133.58.32
+ssh ubuntu@3.17.73.32
 ```
 
 ## 安裝套件
@@ -276,7 +263,7 @@ sudo systemctl stop financial-agent
 
 ## 🖥 EC2 SSH
 ```bash
-ssh ubuntu@3.133.58.32
+ssh ubuntu@3.17.73.32
 ```
 
 ## 🗄 RDS MySQL
