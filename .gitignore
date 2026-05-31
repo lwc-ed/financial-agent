@@ -172,4 +172,4 @@ AGENTS.md.*
 !ml_ibm/model_outputs/*/
 !ml_ibm/model_outputs/*/summary.txt
 !ml_ibm/model_outputs/*/*.csv
-!ml_ibm/model_outputs/README.md
+!ml_ibm/model_outputs/README.mdbackend/logs/*.jsonl
