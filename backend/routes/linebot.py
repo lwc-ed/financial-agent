@@ -701,7 +701,7 @@ def _run_ml_risk_push(user_id: int, line_user_id: str) -> None:
                 _db.add(row)
             row.predicted_expense_7d = result["predicted_expense_7d"]
             row.monthly_income_avg = result["monthly_income_avg"]
-            row.risk_ratio = result["risk_ratio"]
+            row.risk_ratio = result["risk_score"]
             row.risk_level = result["risk_level"]
             row.alarm = result["alarm"]
             row.data_days = result["data_days"]
