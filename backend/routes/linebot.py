@@ -316,8 +316,10 @@ TOOLS = [
         "function": {
             "name": "edit_expense",
             "description": (
-                "修改最近一筆記帳記錄。"
-                "使用者說「記錯了」「改一下」「上一筆改成」「那筆應該是」「刪掉」等，才觸發。"
+                "修改或刪除最近一筆「已記過」的記帳記錄，"
+                "僅限使用者明確說「記錯了」「改一下」「上一筆改成」「那筆應該是」「刪掉那筆」「取消剛才」等修正語境才觸發。"
+                "注意：使用者直接說花了多少錢、消費了什麼（例如「花了五百」「早餐50元」），"
+                "是全新記帳，請用 expense，不要用 edit_expense。"
             ),
             "parameters": {
                 "type": "object",
@@ -565,6 +567,9 @@ def _validate_intent(intent: str, params: dict, user_msg: str) -> tuple[str, dic
 
     if intent == "edit_expense" and not _looks_like_edit_expense_request(user_msg):
         print("[orchestrate] edit_expense guard downgraded")
+        if _looks_like_expense_request(user_msg):
+            print("[orchestrate] edit_expense → expense fallback")
+            return "expense", params
         return "unknown", {}
 
     if intent == "income" and not _looks_like_income_request(user_msg):
