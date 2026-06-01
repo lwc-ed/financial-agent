@@ -80,6 +80,12 @@ def save_expense():
         db.commit()
         db.refresh(rec)
 
+        # web 端記帳也要刷新「財務狀況」指標（背景跑，不阻塞回應）
+        if line_user_id and line_user_id != "anonymous":
+            import threading
+            from backend.ml_inference.financial_status_service import refresh_for_user
+            threading.Thread(target=refresh_for_user, args=(line_user_id,), daemon=True).start()
+
         return jsonify({
             "status": "ok",
             "message": "已新增消費",

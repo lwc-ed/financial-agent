@@ -11,6 +11,7 @@ from backend.routes.profile import profile_bp
 from backend.routes.liff_test import liff_test_bp
 from backend.routes.dashboard import dashboard_bp
 from backend.routes.ml_risk import ml_risk_bp
+from backend.routes.financial_status import financial_status_bp
 from dotenv import load_dotenv
 import subprocess
 import os
@@ -31,6 +32,7 @@ import backend.models.token_log  # noqa: F401
 import backend.models.conversation_memory  # noqa: F401
 import backend.models.risk_prediction  # noqa: F401
 import backend.models.risk_notification  # noqa: F401
+import backend.models.financial_status  # noqa: F401
 
 # 建立資料表
 Base.metadata.create_all(bind=engine)
@@ -56,6 +58,7 @@ app.register_blueprint(liff_test_bp)
 app.register_blueprint(dashboard_bp)
 app.register_blueprint(saving_challenge_bp)
 app.register_blueprint(ml_risk_bp, url_prefix="/api/ml")
+app.register_blueprint(financial_status_bp, url_prefix="/api/financial-status")
 
 
 import threading
