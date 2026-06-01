@@ -28,4 +28,3 @@ ADD COLUMN brands_text VARCHAR(255)
             '"]', ''),
         '","', ', ')
     ) STORED;
-    
