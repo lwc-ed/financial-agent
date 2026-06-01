@@ -129,6 +129,24 @@
           <canvas id="home-trend-chart"></canvas>
         </div>
       </div>
+
+      <!-- 財務狀況（AI 白話摘要） -->
+      <div class="card p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="font-semibold text-slate-700 flex items-center gap-2">
+            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-500"></i> 財務狀況
+          </h3>
+          <span class="text-[10px] text-slate-300">AI 摘要</span>
+        </div>
+        <div id="fin-status-body">
+          <!-- 由 renderFinancialStatus() 注入 -->
+          <div class="animate-pulse space-y-2">
+            <div class="h-4 bg-slate-100 rounded w-3/4"></div>
+            <div class="h-4 bg-slate-100 rounded w-2/3"></div>
+            <div class="h-4 bg-slate-100 rounded w-5/6"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Section: Report (Monthly Report - The new feature) -->
@@ -299,6 +317,61 @@
     }
   }
 
+  async function loadFinancialStatusFromAPI() {
+    try {
+      const res = await fetch(`/api/financial-status/?line_user_id=${currentUserId}`);
+      const json = await res.json();
+      state.finStatus = json;
+    } catch (e) {
+      console.error("loadFinancialStatusFromAPI failed", e);
+      state.finStatus = null;
+    }
+  }
+
+  const FIN_COLOR_MAP = {
+    emerald: 'bg-emerald-50 text-emerald-700',
+    blue:    'bg-blue-50 text-blue-700',
+    amber:   'bg-amber-50 text-amber-700',
+    red:     'bg-red-50 text-red-700',
+  };
+
+  function renderFinancialStatus() {
+    const el = document.getElementById('fin-status-body');
+    if (!el) return;
+    const fs = state.finStatus;
+
+    if (!fs || fs.status === 'error') {
+      el.innerHTML = `<p class="text-sm text-slate-400">目前無法取得財務狀況，稍後再試試看～</p>`;
+      return;
+    }
+
+    if (fs.status === 'insufficient') {
+      el.innerHTML = `
+        <div class="flex items-center gap-3 text-slate-500">
+          <span class="text-2xl">🌱</span>
+          <p class="text-sm">${fs.body}</p>
+        </div>`;
+      return;
+    }
+
+    // status === 'ok'
+    const badge = FIN_COLOR_MAP[fs.color] || FIN_COLOR_MAP.emerald;
+    const bodyHtml = (fs.body || '').split('\n').map(line => {
+      const t = line.trim();
+      if (!t) return '';
+      if (t.startsWith('👉')) {
+        return `<p class="text-sm text-slate-600 mt-2 leading-relaxed">${t}</p>`;
+      }
+      return `<p class="text-sm text-slate-600 leading-relaxed">${t}</p>`;
+    }).join('');
+
+    el.innerHTML = `
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-bold mb-3 ${badge}">
+        <span>${fs.emoji}</span><span>${fs.title}</span>
+      </div>
+      <div class="space-y-0.5">${bodyHtml}</div>`;
+  }
+
   async function loadSummaryFromAPI() {
     try {
       const res = await fetch(`/api/expense_history/summary?line_user_id=${currentUserId}`);
@@ -332,7 +405,7 @@
     }
 
     if (currentUserId) {
-      await Promise.all([loadRecordsFromAPI(), loadChallengesFromAPI(), loadSummaryFromAPI()]);
+      await Promise.all([loadRecordsFromAPI(), loadChallengesFromAPI(), loadSummaryFromAPI(), loadFinancialStatusFromAPI()]);
     }
 
     render();
@@ -345,6 +418,7 @@
     tab: 'overview',
     month: new Date(),
     balance: 0,
+    finStatus: null,
     records: [],
     challenges: [],
     recordType: 'expense',
@@ -574,6 +648,7 @@
     if(state.section === 'home') {
       document.getElementById('home-balance').innerText = '$' + state.balance.toLocaleString();
       renderHomeTrend();
+      renderFinancialStatus();
     } else if(state.section === 'report') {
       renderReportContent();
     } else if(state.section === 'saving') {

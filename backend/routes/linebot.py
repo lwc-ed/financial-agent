@@ -711,6 +711,13 @@ def _run_ml_risk_push(user_id: int, line_user_id: str) -> None:
             row.alarm = result["alarm"]
             row.data_days = result["data_days"]
 
+            # 順手算好「財務狀況」指標存 DB（不接 LLM，文字於開 dashboard 時才生成）
+            try:
+                from backend.ml_inference.financial_status_service import compute_and_store
+                compute_and_store(_db, user_id, line_user_id, result)
+            except Exception as e:
+                print(f"[financial_status] compute_and_store 失敗：{repr(e)}")
+
             # 判斷是否通知（會同步更新 row.last_notified_* 並寫入歷史）
             msg = check_and_notify(user_id, result, row, _db)
             _db.commit()
