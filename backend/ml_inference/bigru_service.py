@@ -1,7 +1,7 @@
 """
 bigru_service.py
 ================
-串接 ml_ibm/bigru_TL_alignment 訓練好的模型，
+串接 ml/ml_ibm/bigru_TL_alignment 訓練好的模型，
 從使用者 DB 紀錄預測未來 7 天消費並計算財務風險等級。
 """
 
@@ -16,7 +16,7 @@ import torch
 
 # ── Path setup ─────────────────────────────────────────────────────────────────
 _HERE = Path(__file__).resolve().parent
-_BIGRU_DIR = _HERE.parent.parent / "ml_ibm" / "bigru_TL_alignment"
+_BIGRU_DIR = _HERE.parent.parent / "ml" / "ml_ibm" / "bigru_TL_alignment"
 _ARTIFACTS_DIR = _BIGRU_DIR / "artifacts_bigru_tl"
 
 if str(_BIGRU_DIR) not in sys.path:

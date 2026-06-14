@@ -1,36 +1,36 @@
 # model & outputs
-ml/bigru/artifacts/
-ml/processed_data/artifacts/
+ml/ml_walmart/bigru/artifacts/
+ml/ml_walmart/processed_data/artifacts/
 *.parquet
 
-# ml model_outputs：只允許上傳 per_seed_metrics_*.csv
-ml/model_outputs/**
-!ml/model_outputs/
-!ml/model_outputs/*/
-!ml/model_outputs/*/*.csv
+# ml_walmart model_outputs：只允許上傳 per_seed_metrics_*.csv
+ml/ml_walmart/model_outputs/**
+!ml/ml_walmart/model_outputs/
+!ml/ml_walmart/model_outputs/*/
+!ml/ml_walmart/model_outputs/*/*.csv
 
 
 # ml_ibm — 原始資料、中間產物、模型輸出全部不上傳
-ml_ibm/ibm_data/
-ml_ibm/processed_data/artifacts/
-ml_ibm/**/artifacts*/
-ml_ibm/**/models/
-ml_ibm/**/results/
-ml_ibm/**/data/
+ml/ml_ibm/ibm_data/
+ml/ml_ibm/processed_data/artifacts/
+ml/ml_ibm/**/artifacts*/
+ml/ml_ibm/**/models/
+ml/ml_ibm/**/results/
+ml/ml_ibm/**/data/
 
 # ml_ibm model_outputs：只允許上傳 summary.txt 與 csv
-ml_ibm/model_outputs/**
-!ml_ibm/model_outputs/
-!ml_ibm/model_outputs/*/
-!ml_ibm/model_outputs/*/summary.txt
-!ml_ibm/model_outputs/*/*.csv
-!ml_ibm/model_outputs/README.md
+ml/ml_ibm/model_outputs/**
+!ml/ml_ibm/model_outputs/
+!ml/ml_ibm/model_outputs/*/
+!ml/ml_ibm/model_outputs/*/summary.txt
+!ml/ml_ibm/model_outputs/*/*.csv
+!ml/ml_ibm/model_outputs/README.md
 
 
 # experiment folders
-ml/ml_alignment_kyh/
-ml/ml_alignment_kyh_v2/
-ml/ml_alignment_kyh_v3/
+ml/ml_walmart/ml_alignment_kyh/
+ml/ml_walmart/ml_alignment_kyh_v2/
+ml/ml_walmart/ml_alignment_kyh_v3/
 
 
 # ---- files ----
@@ -149,7 +149,7 @@ ml/**/checkpoints/**/*.npy
 ml/**/checkpoints/**/*.pth
 ml/**/checkpoints/**/*.pkl
 
-ml/ml_alignment_lwc/artifacts_aligned/metrics_aligned.json
+ml/ml_walmart/ml_alignment_lwc/artifacts_aligned/metrics_aligned.json
 
 
 # ---- Claude ----
@@ -164,13 +164,18 @@ AGENTS.md.*
 
 # ---- allow selected model outputs ----
 
-!ml/model_outputs/
-!ml/model_outputs/*/
-!ml/model_outputs/*/*.csv
+!ml/ml_walmart/model_outputs/
+!ml/ml_walmart/model_outputs/*/
+!ml/ml_walmart/model_outputs/*/*.csv
 
-!ml_ibm/model_outputs/
-!ml_ibm/model_outputs/*/
-!ml_ibm/model_outputs/*/summary.txt
-!ml_ibm/model_outputs/*/*.csv
-!ml_ibm/model_outputs/README.md
+!ml/ml_ibm/model_outputs/
+!ml/ml_ibm/model_outputs/*/
+!ml/ml_ibm/model_outputs/*/summary.txt
+!ml/ml_ibm/model_outputs/*/*.csv
+!ml/ml_ibm/model_outputs/README.md
 backend/logs/*.jsonl
+
+
+# ---- per_seed 逐 seed 指標檔不上傳（保留 summary.txt 與 predictions.csv）----
+# 放在最後，蓋過上方 model_outputs 的 *.csv 白名單
+per_seed*

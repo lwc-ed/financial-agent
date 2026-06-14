@@ -62,7 +62,7 @@ LIFF --> C
 - 慾望清單管理
 - 儲蓄挑戰自動規劃
 - AI 信用卡回饋比對
-- LIFF 個人資料填寫（含 Google Login）
+- LIFF 個人資料填寫（含 LINE Login）
 
 ### English
 - Expense recording
@@ -112,7 +112,7 @@ backend
 │       ├── dbs_eco_benefits.json
 │       └── dbs_eco_raw_benefits.json
 ├── setup_rich_menu.py
-├── templates/
+├── liff/              # LIFF 前端頁面（Flask 服務的 HTML，原 templates/）
 └── requirements.txt
 ```
 
@@ -141,7 +141,7 @@ backend
 # 🌐 LIFF / Dashboard Overview
 
 Flask templates + LIFF 用於：
-- Google Login
+- LINE Login
 - 個人資料填寫
 - 顯示消費紀錄與進度條
 

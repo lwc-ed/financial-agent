@@ -37,7 +37,7 @@ import backend.models.financial_status  # noqa: F401
 # 建立資料表
 Base.metadata.create_all(bind=engine)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="liff")
 CORS(app)
 
 
