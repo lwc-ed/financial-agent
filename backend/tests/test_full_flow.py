@@ -8,10 +8,10 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from backend.ai.ai_parser import normalize_input
-from backend.ai.benefit_query import query_benefits
-from backend.ai.format_benefit_summary import build_summary
-from backend.ai.ai_reply import generate_reply
+from backend.features.credit_card.ai_parser import normalize_input
+from backend.features.credit_card.benefit_query import query_benefits
+from backend.features.credit_card.format_benefit_summary import build_summary
+from backend.features.credit_card.ai_reply import generate_reply
 
 
 def run_test(user_input):

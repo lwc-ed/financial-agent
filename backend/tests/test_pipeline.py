@@ -13,18 +13,18 @@ from pathlib import Path
 
 # ── 讓 import 找得到 backend 套件 ──────────────────────────────────
 ROOT = Path(__file__).resolve().parents[2]
-DAILY_NEWS_DIR = ROOT / "backend" / "routes" / "daily_news"
+DAILY_NEWS_DIR = ROOT / "backend" / "features" / "news"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv
 load_dotenv(ROOT / ".env", override=True)
 
-from backend.routes.daily_news.intent_recognizer import recognize_intent
-from backend.routes.daily_news.rss_fetcher        import fetch_articles
-from backend.routes.daily_news.market_data         import fetch_market_data, fetch_historical_data
-from backend.routes.daily_news.openai_news         import summarize_news_with_openai
-from backend.routes.daily_news.perplexity_search   import (
+from backend.features.news.intent_recognizer import recognize_intent
+from backend.features.news.rss_fetcher        import fetch_articles
+from backend.features.news.market_data         import fetch_market_data, fetch_historical_data
+from backend.features.news.openai_news         import summarize_news_with_openai
+from backend.features.news.perplexity_search   import (
     search_with_perplexity, FALLBACK_ARTICLE_THRESHOLD
 )
 

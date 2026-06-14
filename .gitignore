@@ -39,7 +39,7 @@ ml/ml_walmart/ml_alignment_kyh_v3/
 *.pkl
 *.csv
 *.json
-!backend/routes/daily_news/rss_config.json
+!backend/features/news/rss_config.json
 
 
 # ---- Conda 環境 ----
@@ -73,7 +73,7 @@ env/
 instance/
 *.db
 *.sqlite3
-!backend/ai/knowledge/chroma_db/chroma.sqlite3
+!backend/features/qa_rag/knowledge/chroma_db/chroma.sqlite3
 
 
 # ---- Test / Coverage ----
@@ -179,3 +179,11 @@ backend/logs/*.jsonl
 # ---- per_seed 逐 seed 指標檔不上傳（保留 summary.txt 與 predictions.csv）----
 # 放在最後，蓋過上方 model_outputs 的 *.csv 白名單
 per_seed*
+
+
+# ---- feature-based 重構後：保留搬移過來的既有資料檔（grandfathered）----
+!backend/features/risk/artifacts/feature_config.json
+!backend/features/risk/artifacts/risk_model.pkl
+!backend/features/credit_card/scrapers/ctbc_linepay_benefits.json
+!backend/features/credit_card/scrapers/cube_benefits_list.json
+!backend/features/credit_card/scrapers/dbs_eco_benefits.json
