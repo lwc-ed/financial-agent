@@ -582,3 +582,4 @@ python3 -m backend.core.monthly_stats 2026-04
 - `ml/ml_walmart/`、`ml/ml_ibm/`：離線訓練實驗（GRU / BiGRU / Transfer Learning），是獨立隔離的環境，與線上服務無關，不會影響主程式。
 
 ---
+
