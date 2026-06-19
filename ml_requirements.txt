@@ -1,6 +1,6 @@
 # ────────────────────────────────────────────────
 # ML Requirements — 六個 TL 模型共用
-# 適用：ml/ 與 ml_ibm/ 下的 gru / bilstm / bigru TL_alignment
+# 適用：ml/ml_walmart/ 與 ml/ml_ibm/ 下的 gru / bilstm / bigru TL_alignment
 #
 # ⚠️  GPU 安裝（伺服器：RTX 4090 / CUDA 12.2）
 #    torch 需要搭配 CUDA wheel，請用以下指令安裝：

@@ -1,0 +1,16 @@
+[
+  {
+    "model_name": "base_aligned",
+    "mae": 3137.3835690661176,
+    "rmse": 8291.2006758236,
+    "rows": 615,
+    "feature_count": 12
+  },
+  {
+    "model_name": "finetuned_aligned",
+    "mae": 1314.1014387053203,
+    "rmse": 3231.1954057807566,
+    "rows": 615,
+    "feature_count": 12
+  }
+]

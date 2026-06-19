@@ -1,0 +1,25 @@
+Bi-LSTM Adapter Pretrain Result
+================================
+model         : BiLSTMWithAdapter（Adapter: 5→7, BiLSTM body from pretrain）
+best_seeds    : [777, 2024]
+val_mae       : 792.940186
+val_rmse      : 1197.356323
+test_mae      : 748.819946
+test_rmse     : 1161.481445
+test_smape    : 77.64%
+input_features: daily_expense, roll_7d_mean, roll_30d_mean, dow_sin, dow_cos
+adapter       : Linear(5→7, random init) + LayerNorm + ReLU
+bilstm_body   : 繼承 Walmart aligned pretrain weights
+
+==============================================================
+              五方比較（Test MAE，越低越好）
+==============================================================
+  No Pretrain                 : 836.29
+  Naive TL (GRU v5)           : 851.48
+  GRU Aligned Pretrain        : 795.24
+  Bi-LSTM Aligned Pretrain    : 778.92
+  Bi-LSTM Adapter (本模型)    : 748.82
+==============================================================
+  同學 Bi-LSTM（無 pretrain） : 743.51
+  本模型                      : 748.82
+==============================================================

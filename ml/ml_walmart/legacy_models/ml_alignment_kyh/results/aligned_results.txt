@@ -1,0 +1,12 @@
+Model: base_aligned
+Rows: 615
+Feature count: 12
+MAE: 3137.3836
+RMSE: 8291.2007
+
+Model: finetuned_aligned
+Rows: 615
+Feature count: 12
+MAE: 1314.1014
+RMSE: 3231.1954
+

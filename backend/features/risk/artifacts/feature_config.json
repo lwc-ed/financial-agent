@@ -1,0 +1,22 @@
+{
+  "model_version": "bootstrap-v1",
+  "threshold": 0.5,
+  "feature_order": [
+    "monthly_income",
+    "monthly_expense",
+    "debt_ratio",
+    "missed_payment_count"
+  ],
+  "numeric_features": [
+    "monthly_income",
+    "monthly_expense",
+    "debt_ratio",
+    "missed_payment_count"
+  ],
+  "defaults": {
+    "monthly_income": 0.0,
+    "monthly_expense": 0.0,
+    "debt_ratio": 0.0,
+    "missed_payment_count": 0.0
+  }
+}

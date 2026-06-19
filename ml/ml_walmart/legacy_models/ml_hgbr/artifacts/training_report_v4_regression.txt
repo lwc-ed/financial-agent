@@ -1,0 +1,41 @@
+Training Run Summary v4_regression
+model_name: mlp_v4_regression
+target_column: future_expense_7d_sum
+searched_subsets: 2000
+subset_size_range: 7-21
+best_trial_id: 823
+best_val_metric: 690.888916
+best_val_rmse: 957.058384
+test_mae: 851.702454
+test_rmse: 1215.862914
+
+Dataset Sizes
+train_rows: 1218
+val_rows: 486
+test_rows: 530
+feature_pool_count: 25
+selected_feature_count: 7
+
+Selected Features
+- expense_7d_mean
+- expense_7d_sum
+- has_expense
+- income_txn_count
+- is_weekend
+- net_30d_sum
+- txn_7d_sum
+
+Baselines
+naive_7d_sum mae: 1430.788696
+naive_7d_sum rmse: 1977.608467
+moving_avg_30d_x7 mae: 1091.896729
+moving_avg_30d_x7 rmse: 1553.339467
+
+beat_moving_avg_30d_x7: True
+
+Artifacts
+best_model: /Users/liweichen/financial-agent/ml_hgbr/artifacts/best_mlp_model_v4_regression.pkl
+feature_search_results_csv: /Users/liweichen/financial-agent/ml_hgbr/artifacts/feature_search_results_v4_regression.csv
+best_features_json: /Users/liweichen/financial-agent/ml_hgbr/artifacts/best_features_v4_regression.json
+test_metrics_json: /Users/liweichen/financial-agent/ml_hgbr/artifacts/test_metrics_v4_regression.json
+predictions_csv: /Users/liweichen/financial-agent/ml_hgbr/artifacts/predictions_test_v4_regression.csv

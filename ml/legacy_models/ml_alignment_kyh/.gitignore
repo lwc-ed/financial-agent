@@ -1,8 +1,0 @@
-__pycache__/
-*.pyc
-
-data/processed/
-models/
-
-results/predictions_*.csv
-results/*valid_predictions.csv

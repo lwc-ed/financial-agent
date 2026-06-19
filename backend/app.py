@@ -1,17 +1,17 @@
 from flask import Flask
 from flask_cors import CORS
-from backend.database import engine, Base
-from backend.routes.auth import auth_bp
-from backend.routes.linebot import linebot_bp
-from backend.routes.expense_record import expense_record_bp
-from backend.routes.expense_history import expense_history_bp
-from backend.routes.wishlist import wishlist_bp
-from backend.routes.saving_challenge import saving_challenge_bp
-from backend.routes.profile import profile_bp
-from backend.routes.liff_test import liff_test_bp
-from backend.routes.dashboard import dashboard_bp
-from backend.routes.ml_risk import ml_risk_bp
-from backend.routes.financial_status import financial_status_bp
+from backend.core.database import engine, Base
+from backend.features.web.auth import auth_bp
+from backend.features.linebot.linebot import linebot_bp
+from backend.features.expense.expense_record import expense_record_bp
+from backend.features.expense.expense_history import expense_history_bp
+from backend.features.wishlist.wishlist import wishlist_bp
+from backend.features.saving_challenge.saving_challenge import saving_challenge_bp
+from backend.features.web.profile import profile_bp
+from backend.features.web.liff_test import liff_test_bp
+from backend.features.web.dashboard import dashboard_bp
+from backend.features.risk.ml_risk import ml_risk_bp
+from backend.features.financial_status.financial_status import financial_status_bp
 from dotenv import load_dotenv
 import subprocess
 import os
@@ -28,16 +28,16 @@ except Exception:
     print("🚀 Financial Agent starting... (git commit unknown)")
 
 # 確保所有 model 被 import，才能被 create_all 建到
-import backend.models.token_log  # noqa: F401
-import backend.models.conversation_memory  # noqa: F401
-import backend.models.risk_prediction  # noqa: F401
-import backend.models.risk_notification  # noqa: F401
-import backend.models.financial_status  # noqa: F401
+import backend.core.token_log  # noqa: F401
+import backend.features.linebot.conversation_memory  # noqa: F401
+import backend.features.risk.risk_prediction  # noqa: F401
+import backend.features.risk.risk_notification  # noqa: F401
+import backend.features.financial_status.financial_status_model  # noqa: F401
 
 # 建立資料表
 Base.metadata.create_all(bind=engine)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="features/web/liff")
 CORS(app)
 
 
@@ -65,7 +65,7 @@ import threading
 
 def _warmup_ml():
     try:
-        from backend.ml_inference.bigru_service import _load_assets
+        from backend.features.risk.bigru_service import _load_assets
         _load_assets()
     except Exception as e:
         print(f"[app] ML 預熱失敗（不影響主服務）：{repr(e)}")
