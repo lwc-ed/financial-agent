@@ -2,7 +2,7 @@
 # 一鍵執行無對齊對照 pipeline（1→5）。需 GPU / 足夠記憶體。
 set -e
 cd "$(dirname "$0")"
-PY="../../.venv/bin/python"
+PY="python"
 
 echo "===== [1/5] IBM 前處理（raw） ====="
 $PY 1_preprocess_ibm.py
